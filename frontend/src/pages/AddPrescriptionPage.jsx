@@ -1,7 +1,14 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { usePatients } from "../context/PatientsContext";
 
-function AddPrescription({ patient, onBack, onPrescriptionAdded }) {
+function AddPrescriptionPage() {
+  const navigate = useNavigate();
+  const { patientId } = useParams();
+  const { findPatientById, addPrescription } = usePatients();
+  const patient = findPatientById(patientId);
+
   const [formData, setFormData] = useState({
     symptoms: "",
     diagnosis: "",
@@ -13,27 +20,47 @@ function AddPrescription({ patient, onBack, onPrescriptionAdded }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  if (!patient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg text-center space-y-4">
+          <p className="text-lg font-semibold text-gray-800">
+            Patient not found. Please return to the details page.
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            Return to Search
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleMedicineChange = (index, field, value) => {
-    const newMedicines = [...medicines];
-    newMedicines[index][field] = value;
-    setMedicines(newMedicines);
+    setMedicines((prev) => {
+      const updated = [...prev];
+      updated[index][field] = value;
+      return updated;
+    });
   };
 
-  const addMedicine = () => {
-    setMedicines([...medicines, { name: "", dosage: "" }]);
+  const addMedicineField = () => {
+    setMedicines((prev) => [...prev, { name: "", dosage: "" }]);
   };
 
-  const removeMedicine = (index) => {
-    if (medicines.length > 1) {
-      setMedicines(medicines.filter((_, i) => i !== index));
-    }
+  const removeMedicineField = (index) => {
+    setMedicines((prev) =>
+      prev.length > 1 ? prev.filter((_, i) => i !== index) : prev
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -53,6 +80,7 @@ function AddPrescription({ patient, onBack, onPrescriptionAdded }) {
     const validMedicines = medicines
       .map((med) => ({ name: med.name.trim(), dosage: med.dosage.trim() }))
       .filter((med) => med.name && med.dosage);
+
     if (validMedicines.length === 0) {
       setError("Please add at least one medicine");
       return;
@@ -74,13 +102,14 @@ function AddPrescription({ patient, onBack, onPrescriptionAdded }) {
         prescribed_at: new Date().toISOString(),
       };
 
+      addPrescription(patient.id, newPrescription);
       setSuccess(true);
       setTimeout(() => {
-        onPrescriptionAdded(newPrescription);
-      }, 1200);
+        navigate(`/patients/${patient.id}`);
+      }, 1000);
     } catch (err) {
-      setError("Failed to save prescription. Please try again.");
       console.error(err);
+      setError("Failed to save prescription. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -91,7 +120,7 @@ function AddPrescription({ patient, onBack, onPrescriptionAdded }) {
       <div className="max-w-3xl mx-auto">
         <div className="mb-6">
           <button
-            onClick={onBack}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -153,7 +182,7 @@ function AddPrescription({ patient, onBack, onPrescriptionAdded }) {
                 </label>
                 <button
                   type="button"
-                  onClick={addMedicine}
+                  onClick={addMedicineField}
                   className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
@@ -185,7 +214,7 @@ function AddPrescription({ patient, onBack, onPrescriptionAdded }) {
                     {medicines.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => removeMedicine(index)}
+                        onClick={() => removeMedicineField(index)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -247,7 +276,7 @@ function AddPrescription({ patient, onBack, onPrescriptionAdded }) {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={onBack}
+                onClick={() => navigate(-1)}
                 className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition"
               >
                 Cancel
@@ -271,4 +300,4 @@ function AddPrescription({ patient, onBack, onPrescriptionAdded }) {
   );
 }
 
-export default AddPrescription;
+export default AddPrescriptionPage;

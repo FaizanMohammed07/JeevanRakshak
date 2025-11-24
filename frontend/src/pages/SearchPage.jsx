@@ -1,7 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
+import { usePatients } from "../context/PatientsContext";
 
-function SearchPatient({ patients, onPatientFound }) {
+function SearchPage() {
+  const navigate = useNavigate();
+  const { findPatientByHealthId, upsertPatient } = usePatients();
   const [healthId, setHealthId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -9,8 +13,16 @@ function SearchPatient({ patients, onPatientFound }) {
   const handleSearch = async (e) => {
     e.preventDefault();
 
-    if (!healthId.trim()) {
+    const trimmedId = healthId.trim();
+    if (!trimmedId) {
       setError("Please enter a Migrant Health ID");
+      return;
+    }
+
+    const cachedPatient = findPatientByHealthId(trimmedId);
+    if (cachedPatient) {
+      navigate(`/patients/${cachedPatient.id}`);
+      setHealthId("");
       return;
     }
 
@@ -18,34 +30,39 @@ function SearchPatient({ patients, onPatientFound }) {
     setError("");
 
     try {
+      const headers = { "Content-Type": "application/json" };
+      const token = localStorage.getItem("doctorToken");
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const response = await fetch(
         "http://localhost:3030/api/doctors/patient-by-phone",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("doctorToken")}`,
-          },
-          body: JSON.stringify({ phoneNumber: healthId }),
+          headers,
+          body: JSON.stringify({ phoneNumber: trimmedId }),
         }
       );
 
+      const payload = await response.json().catch(() => null);
       if (!response.ok) {
-        const err = await response.json();
-        setError(err.msg || "Patient not found");
-        setLoading(false);
+        setError(payload?.msg || payload?.error || "Patient not found");
         return;
       }
 
-      const data = await response.json();
-
-      // pass patient ID to parent component
-      onPatientFound(data.patient._id);
-
-      setHealthId("");
+      const normalizedPatient = upsertPatient(
+        payload?.patient || payload?.data
+      );
+      if (!normalizedPatient) {
+        setError("Patient not found. Please check the Health ID.");
+      } else {
+        navigate(`/patients/${normalizedPatient.id}`);
+        setHealthId("");
+      }
     } catch (err) {
       console.error(err);
-      setError("Server error. Try again.", err.message);
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -101,4 +118,4 @@ function SearchPatient({ patients, onPatientFound }) {
   );
 }
 
-export default SearchPatient;
+export default SearchPage;

@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   User,
   Calendar,
@@ -11,14 +13,36 @@ import {
   Pill,
   Phone,
 } from "lucide-react";
+import { usePatients } from "../context/PatientsContext";
 
-function PatientDetails({
-  patient,
-  onBack,
-  onAddPrescription,
-  onUploadDocument,
-  onUpdateInfo,
-}) {
+function PatientDetailsPage() {
+  const { patientId } = useParams();
+  const navigate = useNavigate();
+  const { findPatientById } = usePatients();
+
+  const patient = useMemo(
+    () => findPatientById(patientId),
+    [findPatientById, patientId]
+  );
+
+  if (!patient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg text-center space-y-4">
+          <p className="text-lg font-semibold text-gray-800">
+            Patient not found or no longer available.
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            Return to Search
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const vaccinations = patient.vaccinations || [];
   const visits = patient.visits || [];
   const prescriptions = patient.prescriptions || [];
@@ -40,7 +64,7 @@ function PatientDetails({
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
           <button
-            onClick={onBack}
+            onClick={() => navigate("/")}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -95,7 +119,7 @@ function PatientDetails({
               </div>
 
               <button
-                onClick={onUpdateInfo}
+                onClick={() => navigate(`/patients/${patient.id}/update`)}
                 className="w-full mt-6 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
               >
                 Add Missing Info
@@ -173,7 +197,9 @@ function PatientDetails({
           <div className="lg:col-span-2 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
-                onClick={onAddPrescription}
+                onClick={() =>
+                  navigate(`/patients/${patient.id}/prescriptions/new`)
+                }
                 className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition flex items-center gap-4"
               >
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -188,7 +214,9 @@ function PatientDetails({
               </button>
 
               <button
-                onClick={onUploadDocument}
+                onClick={() =>
+                  navigate(`/patients/${patient.id}/documents/upload`)
+                }
                 className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition flex items-center gap-4"
               >
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -366,4 +394,4 @@ function PatientDetails({
   );
 }
 
-export default PatientDetails;
+export default PatientDetailsPage;

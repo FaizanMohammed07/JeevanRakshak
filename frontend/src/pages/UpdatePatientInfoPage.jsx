@@ -1,18 +1,27 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { usePatients } from "../context/PatientsContext";
 
-function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
-  const [allergies, setAllergies] = useState(patient.allergies || []);
+const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+function UpdatePatientInfoPage() {
+  const navigate = useNavigate();
+  const { patientId } = useParams();
+  const { findPatientById, updatePatientInfo } = usePatients();
+  const patient = findPatientById(patientId);
+
+  const [allergies, setAllergies] = useState(patient?.allergies || []);
   const [chronicDiseases, setChronicDiseases] = useState(
-    patient.chronic_diseases || []
+    patient?.chronic_diseases || []
   );
   const [currentMedication, setCurrentMedication] = useState(
-    patient.current_medication || []
+    patient?.current_medication || []
   );
   const [emergencyContact, setEmergencyContact] = useState(
-    patient.emergency_contact || ""
+    patient?.emergency_contact || ""
   );
-  const [bloodGroup, setBloodGroup] = useState(patient.blood_group || "");
+  const [bloodGroup, setBloodGroup] = useState(patient?.blood_group || "");
 
   const [newAllergy, setNewAllergy] = useState("");
   const [newDisease, setNewDisease] = useState("");
@@ -22,39 +31,33 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  if (!patient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg text-center space-y-4">
+          <p className="text-lg font-semibold text-gray-800">
+            Patient not found. Please return to the details page.
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            Return to Search
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  const addAllergy = () => {
-    if (newAllergy.trim()) {
-      setAllergies([...allergies, newAllergy.trim()]);
-      setNewAllergy("");
+  const addEntry = (setter, entries, value, reset) => {
+    if (value.trim()) {
+      setter([...entries, value.trim()]);
+      reset("");
     }
   };
 
-  const removeAllergy = (index) => {
-    setAllergies(allergies.filter((_, i) => i !== index));
-  };
-
-  const addDisease = () => {
-    if (newDisease.trim()) {
-      setChronicDiseases([...chronicDiseases, newDisease.trim()]);
-      setNewDisease("");
-    }
-  };
-
-  const removeDisease = (index) => {
-    setChronicDiseases(chronicDiseases.filter((_, i) => i !== index));
-  };
-
-  const addMedication = () => {
-    if (newMedication.trim()) {
-      setCurrentMedication([...currentMedication, newMedication.trim()]);
-      setNewMedication("");
-    }
-  };
-
-  const removeMedication = (index) => {
-    setCurrentMedication(currentMedication.filter((_, i) => i !== index));
+  const removeEntry = (setter, entries, index) => {
+    setter(entries.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -66,21 +69,21 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const updatedInfo = {
+      updatePatientInfo(patient.id, {
         allergies,
         chronicDiseases,
         currentMedication,
         emergencyContact: emergencyContact.trim(),
         bloodGroup,
-      };
+      });
 
       setSuccess(true);
       setTimeout(() => {
-        onInfoUpdated(updatedInfo);
-      }, 1200);
+        navigate(`/patients/${patient.id}`);
+      }, 1000);
     } catch (err) {
-      setError("Failed to update patient information. Please try again.");
       console.error(err);
+      setError("Failed to update patient information. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -91,7 +94,7 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
       <div className="max-w-3xl mx-auto">
         <div className="mb-6">
           <button
-            onClick={onBack}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -162,7 +165,9 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
                     <span className="text-gray-800">{allergy}</span>
                     <button
                       type="button"
-                      onClick={() => removeAllergy(index)}
+                      onClick={() =>
+                        removeEntry(setAllergies, allergies, index)
+                      }
                       className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -175,15 +180,24 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
                   type="text"
                   value={newAllergy}
                   onChange={(e) => setNewAllergy(e.target.value)}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addAllergy())
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(),
+                    addEntry(
+                      setAllergies,
+                      allergies,
+                      newAllergy,
+                      setNewAllergy
+                    ))
                   }
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                   placeholder="Add new allergy"
                 />
                 <button
                   type="button"
-                  onClick={addAllergy}
+                  onClick={() =>
+                    addEntry(setAllergies, allergies, newAllergy, setNewAllergy)
+                  }
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
@@ -205,7 +219,9 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
                     <span className="text-gray-800">{disease}</span>
                     <button
                       type="button"
-                      onClick={() => removeDisease(index)}
+                      onClick={() =>
+                        removeEntry(setChronicDiseases, chronicDiseases, index)
+                      }
                       className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -218,15 +234,29 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
                   type="text"
                   value={newDisease}
                   onChange={(e) => setNewDisease(e.target.value)}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addDisease())
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(),
+                    addEntry(
+                      setChronicDiseases,
+                      chronicDiseases,
+                      newDisease,
+                      setNewDisease
+                    ))
                   }
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                   placeholder="Add chronic disease"
                 />
                 <button
                   type="button"
-                  onClick={addDisease}
+                  onClick={() =>
+                    addEntry(
+                      setChronicDiseases,
+                      chronicDiseases,
+                      newDisease,
+                      setNewDisease
+                    )
+                  }
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
@@ -248,7 +278,13 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
                     <span className="text-gray-800">{med}</span>
                     <button
                       type="button"
-                      onClick={() => removeMedication(index)}
+                      onClick={() =>
+                        removeEntry(
+                          setCurrentMedication,
+                          currentMedication,
+                          index
+                        )
+                      }
                       className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -261,15 +297,29 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
                   type="text"
                   value={newMedication}
                   onChange={(e) => setNewMedication(e.target.value)}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addMedication())
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(),
+                    addEntry(
+                      setCurrentMedication,
+                      currentMedication,
+                      newMedication,
+                      setNewMedication
+                    ))
                   }
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                   placeholder="Add current medication"
                 />
                 <button
                   type="button"
-                  onClick={addMedication}
+                  onClick={() =>
+                    addEntry(
+                      setCurrentMedication,
+                      currentMedication,
+                      newMedication,
+                      setNewMedication
+                    )
+                  }
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
@@ -293,7 +343,7 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={onBack}
+                onClick={() => navigate(-1)}
                 className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition"
               >
                 Cancel
@@ -317,4 +367,4 @@ function UpdatePatientInfo({ patient, onBack, onInfoUpdated }) {
   );
 }
 
-export default UpdatePatientInfo;
+export default UpdatePatientInfoPage;

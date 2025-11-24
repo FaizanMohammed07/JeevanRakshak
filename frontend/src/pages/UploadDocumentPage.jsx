@@ -1,7 +1,25 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, File, CheckCircle } from "lucide-react";
+import { usePatients } from "../context/PatientsContext";
 
-function UploadDocument({ patient, onBack, onDocumentUploaded }) {
+const documentTypes = [
+  "Lab Report",
+  "X-Ray",
+  "MRI Scan",
+  "CT Scan",
+  "Prescription",
+  "Discharge Summary",
+  "Medical Certificate",
+  "Other",
+];
+
+function UploadDocumentPage() {
+  const navigate = useNavigate();
+  const { patientId } = useParams();
+  const { findPatientById, addDocument } = usePatients();
+  const patient = findPatientById(patientId);
+
   const [formData, setFormData] = useState({
     documentName: "",
     documentType: "",
@@ -13,38 +31,43 @@ function UploadDocument({ patient, onBack, onDocumentUploaded }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const documentTypes = [
-    "Lab Report",
-    "X-Ray",
-    "MRI Scan",
-    "CT Scan",
-    "Prescription",
-    "Discharge Summary",
-    "Medical Certificate",
-    "Other",
-  ];
+  if (!patient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg text-center space-y-4">
+          <p className="text-lg font-semibold text-gray-800">
+            Patient not found. Please return to the details page.
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            Return to Search
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
 
-      if (selectedFile.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setFilePreview(reader.result);
-        };
-        reader.readAsDataURL(selectedFile);
-      } else {
-        setFilePreview("");
-      }
+    setFile(selectedFile);
+
+    if (selectedFile.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onloadend = () => setFilePreview(reader.result?.toString() || "");
+      reader.readAsDataURL(selectedFile);
+    } else {
+      setFilePreview("");
     }
   };
 
@@ -83,13 +106,14 @@ function UploadDocument({ patient, onBack, onDocumentUploaded }) {
         uploaded_at: new Date().toISOString(),
       };
 
+      addDocument(patient.id, newDocument);
       setSuccess(true);
       setTimeout(() => {
-        onDocumentUploaded(newDocument);
-      }, 1200);
+        navigate(`/patients/${patient.id}`);
+      }, 1000);
     } catch (err) {
-      setError("Failed to upload document. Please try again.");
       console.error(err);
+      setError("Failed to upload document. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -100,7 +124,7 @@ function UploadDocument({ patient, onBack, onDocumentUploaded }) {
       <div className="max-w-2xl mx-auto">
         <div className="mb-6">
           <button
-            onClick={onBack}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -240,7 +264,7 @@ function UploadDocument({ patient, onBack, onDocumentUploaded }) {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={onBack}
+                onClick={() => navigate(-1)}
                 className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition"
               >
                 Cancel
@@ -264,4 +288,4 @@ function UploadDocument({ patient, onBack, onDocumentUploaded }) {
   );
 }
 
-export default UploadDocument;
+export default UploadDocumentPage;

@@ -1,0 +1,11 @@
+POST http://localhost:3030/api/patients/signup
+Content-Type: application/json
+
+{
+    "name": "Faizan Sk",
+    "age": 20,
+    "phoneNumber": 1234567890,
+    "password": "securepassword",
+    "passwordConfirm": "securepassword"
+}
+

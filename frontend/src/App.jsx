@@ -1,135 +1,34 @@
-import { useMemo, useState } from "react";
-import SearchPatient from "./components/SearchPatient";
-import PatientDetails from "./components/PatientDetails";
-import AddPrescription from "./components/AddPrescription";
-import UploadDocument from "./components/UploadDocument";
-import UpdatePatientInfo from "./components/UpdatePatientInfo";
-import { mockPatients } from "./data/mockPatients";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { PatientsProvider } from "./context/PatientsContext";
+import SearchPage from "./pages/SearchPage";
+import PatientDetailsPage from "./pages/PatientDetailsPage";
+import AddPrescriptionPage from "./pages/AddPrescriptionPage";
+import UploadDocumentPage from "./pages/UploadDocumentPage";
+import UpdatePatientInfoPage from "./pages/UpdatePatientInfoPage";
 
 function App() {
-  const [currentView, setCurrentView] = useState("search");
-  const [patients, setPatients] = useState(mockPatients);
-  const [selectedPatientId, setSelectedPatientId] = useState(null);
-
-  const selectedPatient = useMemo(
-    () => patients.find((patient) => patient.id === selectedPatientId) || null,
-    [patients, selectedPatientId]
-  );
-
-  const handlePatientFound = (patientId) => {
-    setSelectedPatientId(patientId);
-    setCurrentView("details");
-  };
-
-  const handleBackToSearch = () => {
-    setCurrentView("search");
-    setSelectedPatientId(null);
-  };
-
-  const handleBackToDetails = () => {
-    setCurrentView("details");
-  };
-
-  const handleAddPrescription = () => {
-    setCurrentView("prescription");
-  };
-
-  const handleUploadDocument = () => {
-    setCurrentView("upload");
-  };
-
-  const handleUpdateInfo = () => {
-    setCurrentView("update");
-  };
-
-  const updatePatientRecord = (patientId, updater) => {
-    setPatients((prevPatients) =>
-      prevPatients.map((patient) =>
-        patient.id === patientId ? updater(patient) : patient
-      )
-    );
-  };
-
-  const handlePrescriptionAdded = (newPrescription) => {
-    if (!selectedPatient) return;
-
-    updatePatientRecord(selectedPatient.id, (patient) => ({
-      ...patient,
-      prescriptions: [newPrescription, ...(patient.prescriptions || [])],
-    }));
-
-    setCurrentView("details");
-  };
-
-  const handleDocumentUploaded = (newDocument) => {
-    if (!selectedPatient) return;
-
-    updatePatientRecord(selectedPatient.id, (patient) => ({
-      ...patient,
-      documents: [newDocument, ...(patient.documents || [])],
-    }));
-
-    setCurrentView("details");
-  };
-
-  const handleInfoUpdated = (updatedInfo) => {
-    if (!selectedPatient) return;
-
-    updatePatientRecord(selectedPatient.id, (patient) => ({
-      ...patient,
-      allergies: updatedInfo.allergies,
-      chronic_diseases: updatedInfo.chronicDiseases,
-      current_medication: updatedInfo.currentMedication,
-      emergency_contact: updatedInfo.emergencyContact,
-      blood_group: updatedInfo.bloodGroup,
-    }));
-
-    setCurrentView("details");
-  };
-
   return (
-    <>
-      {currentView === "search" && (
-        <SearchPatient
-          patients={patients}
-          onPatientFound={handlePatientFound}
-        />
-      )}
-
-      {currentView === "details" && selectedPatient && (
-        <PatientDetails
-          patient={selectedPatient}
-          onBack={handleBackToSearch}
-          onAddPrescription={handleAddPrescription}
-          onUploadDocument={handleUploadDocument}
-          onUpdateInfo={handleUpdateInfo}
-        />
-      )}
-
-      {currentView === "prescription" && selectedPatient && (
-        <AddPrescription
-          patient={selectedPatient}
-          onBack={handleBackToDetails}
-          onPrescriptionAdded={handlePrescriptionAdded}
-        />
-      )}
-
-      {currentView === "upload" && selectedPatient && (
-        <UploadDocument
-          patient={selectedPatient}
-          onBack={handleBackToDetails}
-          onDocumentUploaded={handleDocumentUploaded}
-        />
-      )}
-
-      {currentView === "update" && selectedPatient && (
-        <UpdatePatientInfo
-          patient={selectedPatient}
-          onBack={handleBackToDetails}
-          onInfoUpdated={handleInfoUpdated}
-        />
-      )}
-    </>
+    <BrowserRouter>
+      <PatientsProvider>
+        <Routes>
+          <Route path="/" element={<SearchPage />} />
+          <Route path="/patients/:patientId" element={<PatientDetailsPage />} />
+          <Route
+            path="/patients/:patientId/prescriptions/new"
+            element={<AddPrescriptionPage />}
+          />
+          <Route
+            path="/patients/:patientId/documents/upload"
+            element={<UploadDocumentPage />}
+          />
+          <Route
+            path="/patients/:patientId/update"
+            element={<UpdatePatientInfoPage />}
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </PatientsProvider>
+    </BrowserRouter>
   );
 }
 
