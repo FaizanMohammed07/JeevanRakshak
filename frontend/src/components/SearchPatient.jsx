@@ -18,22 +18,34 @@ function SearchPatient({ patients, onPatientFound }) {
     setError("");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-
-      const normalizedId = healthId.trim().toLowerCase();
-      const patient = patients.find(
-        (item) => item.migrant_health_id.toLowerCase() === normalizedId
+      const response = await fetch(
+        "http://localhost:3030/api/doctors/patient-by-phone",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("doctorToken")}`,
+          },
+          body: JSON.stringify({ phoneNumber: healthId }),
+        }
       );
 
-      if (!patient) {
-        setError("Patient not found. Please check the Health ID.");
-      } else {
-        onPatientFound(patient.id);
-        setHealthId("");
+      if (!response.ok) {
+        const err = await response.json();
+        setError(err.msg || "Patient not found");
+        setLoading(false);
+        return;
       }
+
+      const data = await response.json();
+
+      // pass patient ID to parent component
+      onPatientFound(data.patient._id);
+
+      setHealthId("");
     } catch (err) {
-      setError("Error searching for patient. Please try again.");
       console.error(err);
+      setError("Server error. Try again.", err.message);
     } finally {
       setLoading(false);
     }

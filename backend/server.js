@@ -12,6 +12,29 @@ dotenv.config();
 const app = express();
 const port = 3030;
 
+const allowedOrigins = [
+  // "https://newmetro.online",
+  // "https://www.newmetro.online",
+  // "http://localhost:5175",
+  "http://localhost:5173",
+  // "https://admin-newmetro.onrender.com"
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // app.use(express.static(path.join(__dirname, "public")));
