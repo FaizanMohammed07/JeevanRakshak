@@ -8,17 +8,6 @@ const doctorSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please enter your name"],
   },
-  //   age: { type: Number, required: [true, "Please enter your age"] },
-  password: {
-    type: String,
-    required: [true, "Please provide a password"],
-    minlength: [8, "Password must be at least 8 characters long"],
-    select: false,
-  },
-  passwordConfirm: {
-    type: String,
-    required: false,
-  },
   phoneNumber: {
     type: String,
     unique: true,
@@ -30,6 +19,17 @@ const doctorSchema = new mongoose.Schema({
       },
       message: "Phone number must be exactly 10 digits",
     },
+  },
+  //   age: { type: Number, required: [true, "Please enter your age"] },
+  password: {
+    type: String,
+    required: [true, "Please provide a password"],
+    minlength: [8, "Password must be at least 8 characters long"],
+    select: false,
+  },
+  passwordConfirm: {
+    type: String,
+    required: false,
   },
 });
 

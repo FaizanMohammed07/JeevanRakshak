@@ -11,7 +11,7 @@ const router = express.Router();
 router.post("/signup", signup);
 router.post("/login", login);
 
-// router.post("/patient-by-phone", protectDoctor, getPatientByPhone);
-router.post("/patient-by-phone", getPatientByPhone);
+// router.get("/patients", protectDoctor, getPatientByPhone);
+// router.post("/patient-by-phone", getPatientByPhone);
 
 export default router;
