@@ -31,6 +31,22 @@ const patientSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  //added features
+  district:{
+    type:String,
+    required:[true, "Please provide a district"],
+  },
+  taluk:{
+    type:String,
+    required:[true, "Please provide a taluk"]
+  },
+  village:{
+    type:String,
+    required:[true, "Please provide a village"]
+  },
+  address:{
+    type:String
+  }
 });
 
 // // ENCRYPT PASSWORD
