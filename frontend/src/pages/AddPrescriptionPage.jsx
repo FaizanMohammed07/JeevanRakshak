@@ -1,13 +1,23 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { usePatients } from "../context/PatientsContext";
+import { usePatients, useFetchPatient } from "../context/PatientsContext";
 
 function AddPrescriptionPage() {
   const navigate = useNavigate();
   const { patientId } = useParams();
   const { findPatientById, addPrescription } = usePatients();
-  const patient = findPatientById(patientId);
+  const { patient, loading2 } = useFetchPatient(patientId);
+
+  // --- Loading Check ---
+  if (loading2) {
+    return <div className="p-6">Loading patient data...</div>;
+  }
+
+  if (!patient) {
+    return <div className="p-6">Patient not found.</div>;
+  }
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     symptoms: "",
@@ -16,7 +26,6 @@ function AddPrescriptionPage() {
     prescribedBy: "",
   });
   const [medicines, setMedicines] = useState([{ name: "", dosage: "" }]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
@@ -105,7 +114,7 @@ function AddPrescriptionPage() {
       addPrescription(patient.id, newPrescription);
       setSuccess(true);
       setTimeout(() => {
-        navigate(`/patients/${patient.id}`);
+        navigate(`/patients/${patient.migrant_health_id}`);
       }, 1000);
     } catch (err) {
       console.error(err);

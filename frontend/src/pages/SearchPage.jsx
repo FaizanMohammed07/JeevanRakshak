@@ -19,53 +19,53 @@ function SearchPage() {
       return;
     }
 
-    const cachedPatient = findPatientByHealthId(trimmedId);
-    if (cachedPatient) {
-      navigate(`/patients/${cachedPatient.id}`);
-      setHealthId("");
-      return;
-    }
+    // const cachedPatient = findPatientByHealthId(trimmedId);
+    // if (cachedPatient) {
+    //   navigate(`/patients/${cachedPatient.id}`);
+    //   setHealthId("");
+    //   return;
+    // }
 
-    setLoading(true);
+    // setLoading(true);
     setError("");
 
-    try {
-      const headers = { "Content-Type": "application/json" };
-      const token = localStorage.getItem("doctorToken");
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
+    // try {
+    //   const headers = { "Content-Type": "application/json" };
+    //   const token = localStorage.getItem("doctorToken");
+    //   if (token) {
+    //     headers.Authorization = `Bearer ${token}`;
+    //   }
 
-      const response = await fetch(
-        "http://localhost:3030/api/doctors/patient-by-phone",
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ phoneNumber: trimmedId }),
-        }
-      );
+    // const response = await fetch(
+    //   "http://localhost:3030/api/doctors/patient-by-phone",
+    //   {
+    //     method: "POST",
+    //     headers,
+    //     body: JSON.stringify({ phoneNumber: trimmedId }),
+    //   }
+    // );
 
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        setError(payload?.msg || payload?.error || "Patient not found");
-        return;
-      }
+    // const payload = await response.json().catch(() => null);
+    // if (!response.ok) {
+    //   setError(payload?.msg || payload?.error || "Patient not found");
+    //   return;
+    // }
 
-      const normalizedPatient = upsertPatient(
-        payload?.patient || payload?.data
-      );
-      if (!normalizedPatient) {
-        setError("Patient not found. Please check the Health ID.");
-      } else {
-        navigate(`/patients/${normalizedPatient.id}`);
-        setHealthId("");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    // const normalizedPatient = upsertPatient(
+    //   payload?.patient || payload?.data
+    // );
+    // if (!normalizedPatient) {
+    //   setError("Patient not found. Please check the Health ID.");
+    // } else {
+    setHealthId("");
+    navigate(`/patients/${trimmedId}`);
+    // }
+    // } catch (err) {
+    //   console.error(err);
+    //   setError("Something went wrong. Please try again.");
+    // } finally {
+    // setLoading(false);
+    // }
   };
 
   return (

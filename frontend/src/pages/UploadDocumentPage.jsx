@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, File, CheckCircle } from "lucide-react";
-import { usePatients } from "../context/PatientsContext";
+import { usePatients, useFetchPatient } from "../context/PatientsContext";
 
 const documentTypes = [
   "Lab Report",
@@ -18,7 +18,16 @@ function UploadDocumentPage() {
   const navigate = useNavigate();
   const { patientId } = useParams();
   const { findPatientById, addDocument } = usePatients();
-  const patient = findPatientById(patientId);
+  const { patient, loading2 } = useFetchPatient(patientId);
+
+  // --- Loading Check ---
+  if (loading2) {
+    return <div className="p-6">Loading patient data...</div>;
+  }
+
+  if (!patient) {
+    return <div className="p-6">Patient not found.</div>;
+  }
 
   const [formData, setFormData] = useState({
     documentName: "",
@@ -109,7 +118,7 @@ function UploadDocumentPage() {
       addDocument(patient.id, newDocument);
       setSuccess(true);
       setTimeout(() => {
-        navigate(`/patients/${patient.id}`);
+        navigate(`/patients/${patient.migrant_health_id}`);
       }, 1000);
     } catch (err) {
       console.error(err);

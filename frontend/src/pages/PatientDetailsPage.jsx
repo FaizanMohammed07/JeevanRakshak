@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react"; // Added useEffect, useState
 import { useNavigate, useParams } from "react-router-dom";
 import {
   User,
@@ -13,34 +13,29 @@ import {
   Pill,
   Phone,
 } from "lucide-react";
-import { usePatients } from "../context/PatientsContext";
+import { usePatients, useFetchPatient } from "../context/PatientsContext";
 
 function PatientDetailsPage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
-  const { findPatientById } = usePatients();
 
-  const patient = useMemo(
-    () => findPatientById(patientId),
-    [findPatientById, patientId]
-  );
+  // --- THE NEW WAY (Simple) ---
+  // You do NOT need useState, useEffect, or useContext here anymore.
+  // The hook handles all the logic, caching, and state updates for you.
+  const { patient, loading, error } = useFetchPatient(patientId);
+  console.log(patient);
+
+  // --- Render Logic ---
+  if (loading) {
+    return <div>Loading...</div>; // Or your full screen loader component
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   if (!patient) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg text-center space-y-4">
-          <p className="text-lg font-semibold text-gray-800">
-            Patient not found or no longer available.
-          </p>
-          <button
-            onClick={() => navigate("/")}
-            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
-          >
-            Return to Search
-          </button>
-        </div>
-      </div>
-    );
+    return <div>Patient not found</div>;
   }
 
   const vaccinations = patient.vaccinations || [];
@@ -119,7 +114,9 @@ function PatientDetailsPage() {
               </div>
 
               <button
-                onClick={() => navigate(`/patients/${patient.id}/update`)}
+                onClick={() =>
+                  navigate(`/patients/${patient.migrant_health_id}/update`)
+                }
                 className="w-full mt-6 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
               >
                 Add Missing Info
@@ -198,7 +195,9 @@ function PatientDetailsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
                 onClick={() =>
-                  navigate(`/patients/${patient.id}/prescriptions/new`)
+                  navigate(
+                    `/patients/${patient.migrant_health_id}/prescriptions/new`
+                  )
                 }
                 className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition flex items-center gap-4"
               >
@@ -215,7 +214,9 @@ function PatientDetailsPage() {
 
               <button
                 onClick={() =>
-                  navigate(`/patients/${patient.id}/documents/upload`)
+                  navigate(
+                    `/patients/${patient.migrant_health_id}/documents/upload`
+                  )
                 }
                 className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition flex items-center gap-4"
               >

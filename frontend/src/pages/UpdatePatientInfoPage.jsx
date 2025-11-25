@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { usePatients } from "../context/PatientsContext";
+import { usePatients, useFetchPatient } from "../context/PatientsContext";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -9,7 +9,16 @@ function UpdatePatientInfoPage() {
   const navigate = useNavigate();
   const { patientId } = useParams();
   const { findPatientById, updatePatientInfo } = usePatients();
-  const patient = findPatientById(patientId);
+  const { patient, loading2 } = useFetchPatient(patientId);
+
+  // --- Loading Check ---
+  if (loading2) {
+    return <div className="p-6">Loading patient data...</div>;
+  }
+
+  if (!patient) {
+    return <div className="p-6">Patient not found.</div>;
+  }
 
   const [allergies, setAllergies] = useState(patient?.allergies || []);
   const [chronicDiseases, setChronicDiseases] = useState(
@@ -79,7 +88,7 @@ function UpdatePatientInfoPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        navigate(`/patients/${patient.id}`);
+        navigate(`/patients/${patient.migrant_health_id}`);
       }, 1000);
     } catch (err) {
       console.error(err);

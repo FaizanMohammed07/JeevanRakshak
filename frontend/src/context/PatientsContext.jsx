@@ -4,19 +4,57 @@ import {
   useContext,
   useMemo,
   useState,
+  useEffect,
 } from "react";
-import { mockPatients } from "../data/mockPatients";
+// import { mockPatients } from "../data/mockPatients"; // FIX 1: Comment out mock data
 
 const PatientsContext = createContext(undefined);
 
+// A smart hook that handles the cache-or-fetch logic for you
+export function useFetchPatient(patientId) {
+  const { findPatientById, fetchPatient } = usePatients();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // 1. Check Cache immediately
+  const cachedPatient = findPatientById(patientId);
+
+  useEffect(() => {
+    // If we have data in cache, we don't need to load!
+    if (cachedPatient) {
+      setLoading(false);
+      return;
+    }
+
+    // If not, we fetch
+    const load = async () => {
+      setLoading(true);
+      try {
+        await fetchPatient(patientId);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (patientId) load();
+  }, [patientId, cachedPatient, fetchPatient]);
+
+  // Return the cached patient if available (instant), otherwise the fetch status
+  return { patient: cachedPatient, loading, error };
+}
+
 export function PatientsProvider({ children }) {
-  const [patients, setPatients] = useState(mockPatients);
+  // FIX 1: Start with empty array for real production feel
+  const [patients, setPatients] = useState([]);
 
   const normalizePatientShape = useCallback((patient) => {
     if (!patient) return null;
 
     return {
-      id: patient.id || patient._id,
+      // Ensure we catch MongoDB's '_id' or a string 'id'
+      id: patient.id || patient._id || patient.migrant_health_id,
       migrant_health_id:
         patient.migrant_health_id ||
         patient.health_id ||
@@ -42,7 +80,15 @@ export function PatientsProvider({ children }) {
   }, []);
 
   const findPatientById = useCallback(
-    (patientId) => patients.find((patient) => patient.id === patientId) || null,
+    (patientId) => {
+      // Loose check (==) allows matching string "123" with number 123 if needed
+      return (
+        patients.find(
+          (patient) =>
+            patient.id == patientId || patient.migrant_health_id == patientId
+        ) || null
+      );
+    },
     [patients]
   );
 
@@ -85,6 +131,44 @@ export function PatientsProvider({ children }) {
       return normalized;
     },
     [normalizePatientShape]
+  );
+
+  // --- API FETCH FUNCTION ---
+  const fetchPatient = useCallback(
+    async (identifier) => {
+      try {
+        const headers = { "Content-Type": "application/json" };
+        const token = localStorage.getItem("doctorToken");
+        if (token) headers.Authorization = `Bearer ${token}`;
+
+        const response = await fetch(
+          `http://localhost:3030/api/doctors/${identifier}`,
+          {
+            method: "POST",
+            headers,
+            // sending identifier (which is coming from URL) as phoneNumber
+            // body: JSON.stringify({ phoneNumber: identifier }),
+          }
+        );
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload?.msg || "Patient not found");
+        }
+
+        const patientData = payload?.patient || payload?.data;
+
+        // Normalize and save to Context state
+        const savedPatient = upsertPatient(patientData);
+
+        return savedPatient; // Return the clean data to the component
+      } catch (err) {
+        console.error("Context Fetch Error:", err);
+        throw err;
+      }
+    },
+    [upsertPatient]
   );
 
   const addPrescription = useCallback(
@@ -130,12 +214,14 @@ export function PatientsProvider({ children }) {
     [updatePatientRecord]
   );
 
+  // FIX 2: Add fetchPatient to the value object
   const value = useMemo(
     () => ({
       patients,
       findPatientById,
       findPatientByHealthId,
       upsertPatient,
+      fetchPatient, // <--- CRITICAL: This was missing!
       addPrescription,
       addDocument,
       updatePatientInfo,
@@ -145,6 +231,7 @@ export function PatientsProvider({ children }) {
       findPatientById,
       findPatientByHealthId,
       upsertPatient,
+      fetchPatient, // <--- Add to dependency array
       addPrescription,
       addDocument,
       updatePatientInfo,
