@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import patientRoutes from "./routes/patientRoutes.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
+import prescriptionRoutes from "./routes/prescriptionRoutes.js";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -36,6 +38,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 // app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
@@ -56,6 +59,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
+app.use("/api/prescriptions", prescriptionRoutes);
 
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);

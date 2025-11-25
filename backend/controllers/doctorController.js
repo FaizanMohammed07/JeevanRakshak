@@ -2,6 +2,37 @@ import bcrypt from "bcryptjs";
 import Doctor from "../models/doctorModel.js";
 import Patient from "../models/patientModel.js";
 import jwt from "jsonwebtoken";
+import { serialize } from "cookie";
+
+const signToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "90d",
+  });
+};
+
+const createAndSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  const serialized = serialize("jwt", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 60 * 60 * 24 * 90,
+    path: "/",
+  });
+  res.setHeader("Set-Cookie", serialized);
+  // console.log("Set-Cookie header:", res.getHeaders()["set-cookie"]);
+
+  user.password = undefined;
+
+  res.status(statusCode).json({
+    status: "success",
+    token,
+    data: {
+      user,
+    },
+  });
+};
 
 export const login = async (req, res) => {
   try {
@@ -17,7 +48,8 @@ export const login = async (req, res) => {
       expiresIn: "7d",
     });
 
-    res.json({ msg: "Login successful", token, doctor });
+    // res.json({ msg: "Login successful", token, doctor });
+    createAndSendToken(doctor, 201, res);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -46,10 +78,11 @@ export const signup = async (req, res) => {
 
     newDoctor.password = undefined;
 
-    res.status(201).json({
-      msg: "Signup successful",
-      doctor: newDoctor,
-    });
+    // res.status(201).json({
+    //   msg: "Signup successful",
+    //   doctor: newDoctor,
+    // });
+    createAndSendToken(newDoctor, 201, res);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -57,7 +90,7 @@ export const signup = async (req, res) => {
 
 export const getPatientByPhone = async (req, res) => {
   try {
-    const { phoneNumber } = req.body;
+    const { phoneNumber } = req.params;
 
     if (!phoneNumber)
       return res.status(400).json({ msg: "Phone number is required" });
