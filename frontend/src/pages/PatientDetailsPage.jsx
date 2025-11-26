@@ -17,7 +17,7 @@ import {
   useFetchPatient,
   usePrescriptions,
 } from "../context/PatientsContext";
-import { useFetchPatient } from "../context/PatientsContext";
+// import { useFetchPatient } from "../context/PatientsContext";
 import DashboardLayout from "../components/DashboardLayout";
 
 function PatientDetailsPage() {
