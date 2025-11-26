@@ -24,7 +24,7 @@ export const login = async (req, res) => {
 
 export const signup = async (req, res) => {
   try {
-    const { name, age, phoneNumber, password, passwordConfirm } = req.body;
+    const { name, age, phoneNumber, password, passwordConfirm,district,taluk,village,address} = req.body;
 
     if (!name || !phoneNumber || !password || !passwordConfirm)
       return res.status(400).json({ msg: "Please fill all fields" });
@@ -40,7 +40,12 @@ export const signup = async (req, res) => {
       age,
       phoneNumber,
       password: hashedPassword, // hashed value stored
-      passwordConfirm: undefined, // remove confirm field
+      passwordConfirm: undefined,
+      district,
+      taluk,
+      village,
+      address
+       // remove confirm field
     });
 
     newPatient.password = undefined;
