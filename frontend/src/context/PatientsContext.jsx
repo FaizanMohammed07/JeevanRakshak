@@ -45,6 +45,40 @@ export function useFetchPatient(patientId) {
   return { patient: cachedPatient, loading, error };
 }
 
+export function usePrescriptions(patientId) {
+  const { findPatientById, fetchPatientPrescriptions } = usePatients();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Get patient from cache to see if we already have prescriptions
+  const patient = findPatientById(patientId);
+  const prescriptions = patient?.prescriptions || [];
+
+  useEffect(() => {
+    // If patient exists but has no prescriptions loaded yet (or empty array), fetch them.
+    // You might want to add a flag like 'hasLoadedPrescriptions' to the patient object
+    // if you want to distinguish between "not fetched" and "empty list".
+    // For now, we fetch every time the component mounts to be safe.
+
+    if (!patientId) return;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        await fetchPatientPrescriptions(patientId);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [patientId, fetchPatientPrescriptions]);
+
+  return { prescriptions, loading, error };
+}
+
 export function PatientsProvider({ children }) {
   // FIX 1: Start with empty array for real production feel
   const [patients, setPatients] = useState([]);
@@ -155,14 +189,69 @@ export function PatientsProvider({ children }) {
   );
 
   const addPrescription = useCallback(
-    (patientId, newPrescription) => {
-      updatePatientRecord(patientId, (patient) => ({
-        ...patient,
-        prescriptions: [newPrescription, ...(patient.prescriptions || [])],
-      }));
+    async (patientId, prescriptionDetails) => {
+      try {
+        // 1. Make the API Call
+        const response = await api.post("/prescriptions", {
+          patientId,
+          ...prescriptionDetails,
+        });
+
+        // 2. Extract the NEW prescription object from the response
+        // (Adjust the path .data.prescription based on exactly what your backend sends)
+        const newPrescription =
+          response.data?.prescription || response.data?.data?.prescription;
+
+        if (!newPrescription) {
+          throw new Error("Server did not return the new prescription data");
+        }
+
+        // 3. Update the Patient in Local State manually
+        // We find the patient by ID, keep all their existing data (...patient),
+        // and just add the new prescription to the start of their list.
+        // updatePatientRecord(patientId, (patient) => ({
+        //   ...patient,
+        //   prescriptions: [newPrescription, ...(patient.prescriptions || [])],
+        // }));
+
+        return newPrescription;
+      } catch (err) {
+        console.error("Add Prescription Error:", err);
+        const message = err.response?.data?.msg || "Failed to add prescription";
+        throw new Error(message);
+      }
     },
-    [updatePatientRecord]
+    [] // We depend on this helper now, not upsertPatient
   );
+
+  const fetchPatientPrescriptions = useCallback(async (patientId) => {
+    try {
+      // 1. Call API
+      // Adjust URL based on your backend route (e.g., /patients/:id/prescriptions)
+      const response = await api.get(`/prescriptions/patient/${patientId}`);
+
+      // 2. Extract Data
+      // Check if your backend returns { data: { prescriptions: [...] } } or just { prescriptions: [...] }
+      const prescriptionsList =
+        response.data?.data?.prescriptions ||
+        response.data?.prescriptions ||
+        [];
+
+      // 3. Update Local State
+      // We find the patient and specifically replace their 'prescriptions' array
+      // updatePatientRecord(patientId, (patient) => ({
+      //   ...patient,
+      //   prescriptions: prescriptionsList,
+      // }));
+
+      return prescriptionsList;
+    } catch (err) {
+      console.error("Fetch Prescriptions Error:", err);
+      const message =
+        err.response?.data?.msg || "Failed to fetch prescriptions";
+      throw new Error(message);
+    }
+  }, []);
 
   const addDocument = useCallback(
     (patientId, newDocument) => {
@@ -205,6 +294,7 @@ export function PatientsProvider({ children }) {
       findPatientByHealthId,
       upsertPatient,
       fetchPatient, // <--- CRITICAL: This was missing!
+      fetchPatientPrescriptions,
       addPrescription,
       addDocument,
       updatePatientInfo,
@@ -215,6 +305,7 @@ export function PatientsProvider({ children }) {
       findPatientByHealthId,
       upsertPatient,
       fetchPatient, // <--- Add to dependency array
+      fetchPatientPrescriptions,
       addPrescription,
       addDocument,
       updatePatientInfo,

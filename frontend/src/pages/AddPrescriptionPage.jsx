@@ -1,69 +1,52 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Calendar, AlertTriangle } from "lucide-react";
 import { usePatients, useFetchPatient } from "../context/PatientsContext";
 
 function AddPrescriptionPage() {
   const navigate = useNavigate();
   const { patientId } = useParams();
-  const { findPatientById, addPrescription } = usePatients();
-  const { patient, loading2 } = useFetchPatient(patientId);
+  const { addPrescription } = usePatients();
 
-  // --- Loading Check ---
-  if (loading2) {
-    return <div className="p-6">Loading patient data...</div>;
-  }
+  const { patient, loading: fetchLoading } = useFetchPatient(patientId);
 
-  if (!patient) {
-    return <div className="p-6">Patient not found.</div>;
-  }
-  const [loading, setLoading] = useState(false);
-
-  const [formData, setFormData] = useState({
-    symptoms: "",
-    diagnosis: "",
-    notes: "",
-    prescribedBy: "",
-  });
-  const [medicines, setMedicines] = useState([{ name: "", dosage: "" }]);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  if (!patient) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-lg text-center space-y-4">
-          <p className="text-lg font-semibold text-gray-800">
-            Patient not found. Please return to the details page.
-          </p>
-          <button
-            onClick={() => navigate("/")}
-            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
-          >
-            Return to Search
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Form State matching Mongoose Schema
+  const [formData, setFormData] = useState({
+    symptoms: "",
+    durationOfSymptoms: "", // New Field
+    suspectedDisease: "", // New Field
+    confirmedDisease: "", // New Field
+    followUpDate: "", // New Field
+    notes: "",
+    contagious: false, // New Field
+  });
+
+  // Medicines State (Array of Strings to match medicinesIssued: [String])
+  const [medicines, setMedicines] = useState([""]);
+
+  if (fetchLoading) return <div className="p-6">Loading patient data...</div>;
+  if (!patient) return <div className="p-6">Patient not found</div>;
 
   const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  const handleMedicineChange = (index, field, value) => {
-    setMedicines((prev) => {
-      const updated = [...prev];
-      updated[index][field] = value;
-      return updated;
-    });
+  const handleMedicineChange = (index, value) => {
+    const updated = [...medicines];
+    updated[index] = value;
+    setMedicines(updated);
   };
 
   const addMedicineField = () => {
-    setMedicines((prev) => [...prev, { name: "", dosage: "" }]);
+    setMedicines((prev) => [...prev, ""]);
   };
 
   const removeMedicineField = (index) => {
@@ -77,50 +60,58 @@ function AddPrescriptionPage() {
     setError("");
     setSuccess(false);
 
-    if (
-      !formData.symptoms.trim() ||
-      !formData.diagnosis.trim() ||
-      !formData.prescribedBy.trim()
-    ) {
-      setError("Please fill in all required fields");
+    // Validation based on Schema 'required: true'
+    if (!formData.symptoms.trim()) {
+      setError("Please enter symptoms");
+      return;
+    }
+    if (!formData.durationOfSymptoms.trim()) {
+      setError("Please enter duration of symptoms");
       return;
     }
 
+    // Filter empty medicines
     const validMedicines = medicines
-      .map((med) => ({ name: med.name.trim(), dosage: med.dosage.trim() }))
-      .filter((med) => med.name && med.dosage);
+      .map((med) => med.trim())
+      .filter((med) => med.length > 0);
 
     if (validMedicines.length === 0) {
-      setError("Please add at least one medicine");
+      setError("Please list at least one medicine");
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Construct Payload matching Schema
+      const payload = {
+        patient: patient.id, // Matches 'patient' ref
+        // 'doctor' ref should be handled by backend via req.user from token
 
-      const newPrescription = {
-        id: `rx-${Date.now()}`,
-        patient_id: patient.id,
         symptoms: formData.symptoms.trim(),
-        diagnosis: formData.diagnosis.trim(),
-        medicines: validMedicines,
+        durationOfSymptoms: formData.durationOfSymptoms.trim(),
+        contagious: formData.contagious,
+        medicinesIssued: validMedicines, // Matches [String]
+
+        suspectedDisease: formData.suspectedDisease.trim(),
+        confirmedDisease: formData.confirmedDisease.trim(),
+        followUpDate: formData.followUpDate || null,
         notes: formData.notes.trim(),
-        prescribed_by: formData.prescribedBy.trim(),
-        prescribed_at: new Date().toISOString(),
+
+        dateOfIssue: new Date().toISOString(),
       };
 
-      addPrescription(patient.id, newPrescription);
+      await addPrescription(patient.id, payload);
+
       setSuccess(true);
       setTimeout(() => {
         navigate(`/patients/${patient.migrant_health_id}`);
       }, 1000);
     } catch (err) {
       console.error(err);
-      setError("Failed to save prescription. Please try again.");
+      setError(err.message || "Failed to save prescription.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -138,64 +129,114 @@ function AddPrescriptionPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Add Prescription
+          <div className="mb-6 border-b pb-4">
+            <h2 className="text-2xl font-bold text-gray-800 mb-1">
+              New Prescription
             </h2>
             <p className="text-gray-600">
-              Patient: {patient.name} ({patient.migrant_health_id})
+              Patient: <span className="font-semibold">{patient.name}</span> (
+              {patient.migrant_health_id})
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="symptoms"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Symptoms <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="symptoms"
-                name="symptoms"
-                value={formData.symptoms}
-                onChange={handleInputChange}
-                rows="3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                placeholder="Describe the patient's symptoms"
-              />
+            {/* --- Section 1: Symptoms & Nature --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Symptoms <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="symptoms"
+                  value={formData.symptoms}
+                  onChange={handleInputChange}
+                  rows="3"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="High fever, cough, fatigue..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Duration <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="durationOfSymptoms"
+                  value={formData.durationOfSymptoms}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="e.g., 3 days, 1 week"
+                />
+              </div>
+
+              <div className="flex items-center h-full pt-6">
+                <label className="flex items-center cursor-pointer space-x-3">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      name="contagious"
+                      checked={formData.contagious}
+                      onChange={handleInputChange}
+                      className="sr-only peer"
+                    />
+                    <div className="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                  </div>
+                  <span
+                    className={`font-medium ${
+                      formData.contagious ? "text-red-600" : "text-gray-600"
+                    }`}
+                  >
+                    {formData.contagious
+                      ? "Contagious / High Risk"
+                      : "Not Contagious"}
+                  </span>
+                </label>
+              </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="diagnosis"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Diagnosis <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="diagnosis"
-                name="diagnosis"
-                value={formData.diagnosis}
-                onChange={handleInputChange}
-                rows="3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                placeholder="Enter your diagnosis"
-              />
+            {/* --- Section 2: Diagnosis --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-xl">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Suspected Disease
+                </label>
+                <input
+                  type="text"
+                  name="suspectedDisease"
+                  value={formData.suspectedDisease}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="Provisional diagnosis"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirmed Disease
+                </label>
+                <input
+                  type="text"
+                  name="confirmedDisease"
+                  value={formData.confirmedDisease}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                  placeholder="Final diagnosis (if available)"
+                />
+              </div>
             </div>
 
+            {/* --- Section 3: Medicines Issued --- */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Medicines <span className="text-red-500">*</span>
+                  Medicines Issued <span className="text-red-500">*</span>
                 </label>
                 <button
                   type="button"
                   onClick={addMedicineField}
                   className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
-                  <Plus className="w-4 h-4" />
-                  Add Medicine
+                  <Plus className="w-4 h-4" /> Add Item
                 </button>
               </div>
 
@@ -204,21 +245,12 @@ function AddPrescriptionPage() {
                   <div key={index} className="flex gap-2">
                     <input
                       type="text"
-                      value={medicine.name}
+                      value={medicine}
                       onChange={(e) =>
-                        handleMedicineChange(index, "name", e.target.value)
+                        handleMedicineChange(index, e.target.value)
                       }
-                      placeholder="Medicine name"
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    />
-                    <input
-                      type="text"
-                      value={medicine.dosage}
-                      onChange={(e) =>
-                        handleMedicineChange(index, "dosage", e.target.value)
-                      }
-                      placeholder="Dosage (e.g., 1-0-1)"
-                      className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                      placeholder={`Medicine ${index + 1} (Name & Dosage)`}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                     />
                     {medicines.length > 1 && (
                       <button
@@ -234,45 +266,39 @@ function AddPrescriptionPage() {
               </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="notes"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Additional Notes
-              </label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                rows="3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                placeholder="Any additional instructions or notes"
-              />
+            {/* --- Section 4: Follow Up & Notes --- */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" /> Follow-up Date
+                </label>
+                <input
+                  type="date"
+                  name="followUpDate"
+                  value={formData.followUpDate}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Doctor's Remarks / Notes
+                </label>
+                <input
+                  type="text"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  placeholder="Any additional instructions"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="prescribedBy"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Doctor Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="prescribedBy"
-                name="prescribedBy"
-                value={formData.prescribedBy}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                placeholder="Enter your name"
-              />
-            </div>
-
+            {/* Messages */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-                {error}
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" /> {error}
               </div>
             )}
 
@@ -282,24 +308,25 @@ function AddPrescriptionPage() {
               </div>
             )}
 
-            <div className="flex gap-3">
+            {/* Actions */}
+            <div className="flex gap-3 pt-4">
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition"
+                className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={loading || success}
+                disabled={submitting || success}
                 className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-blue-300 disabled:cursor-not-allowed"
               >
-                {loading
+                {submitting
                   ? "Saving..."
                   : success
                   ? "Saved!"
-                  : "Save Prescription"}
+                  : "Submit Prescription"}
               </button>
             </div>
           </form>
