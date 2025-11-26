@@ -26,6 +26,7 @@ const prescriptionSchema = new mongoose.Schema({
     type: Boolean,
     required: true,
     default: false,
+    required: true,
   },
 
   medicinesIssued: {
@@ -39,6 +40,7 @@ const prescriptionSchema = new mongoose.Schema({
 
   confirmedDisease: {
     type: String,
+    required: [true, "Please mention the disease"],
   },
 
   dateOfIssue: {

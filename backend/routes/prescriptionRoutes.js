@@ -4,6 +4,7 @@ import {
   getMyPrescriptions,
   getDoctorPrescriptions,
   getPrescriptionsForPatient,
+  diseasesByArea,
 } from "../controllers/prescriptionController.js";
 import {
   allowDoctorsOnly,
@@ -29,5 +30,7 @@ router.get(
   allowDoctorsOnly,
   getPrescriptionsForPatient
 );
+
+router.get("/diseases", diseasesByArea);
 
 export default router;
