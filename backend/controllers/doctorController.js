@@ -88,6 +88,22 @@ export const signup = async (req, res) => {
   }
 };
 
+export const logout = (req, res, next) => {
+  const serialized = serialize("jwt", null, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: -1,
+    path: "/",
+  });
+  res.setHeader("Set-Cookie", serialized);
+
+  // res.clearCookie("jwt");
+  // console.log("cookie cleared");
+
+  res.status(200).json({ status: "success" });
+};
+
 export const getPatientByPhone = async (req, res) => {
   try {
     const { phoneNumber } = req.params;

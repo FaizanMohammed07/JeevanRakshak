@@ -1,11 +1,33 @@
 import express from "express";
-import { addPrescription } from "../controllers/prescriptionController.js";
-import { protectDoctor } from "../middleware/protect.js";
+import {
+  addPrescription,
+  getMyPrescriptions,
+  getDoctorPrescriptions,
+  getPrescriptionsForPatient,
+} from "../controllers/prescriptionController.js";
+import {
+  allowDoctorsOnly,
+  allowPatientsOnly,
+  protect,
+} from "../middleware/protect.js";
 
 const router = express.Router();
 
 // Doctor adds prescription
-router.post("/", protectDoctor, addPrescription);
-// router.post("/", addPrescription);
+router.post("/", protect, allowDoctorsOnly, addPrescription);
+
+//get my prescriptions (patient)
+router.get("/my", protect, allowPatientsOnly, getMyPrescriptions);
+
+// Doctor Dashboard Data
+router.get("/doctor/my", protect, allowDoctorsOnly, getDoctorPrescriptions);
+
+//get all prescriptions of specific patient
+router.get(
+  "/patient/:patientId",
+  protect,
+  allowDoctorsOnly,
+  getPrescriptionsForPatient
+);
 
 export default router;
