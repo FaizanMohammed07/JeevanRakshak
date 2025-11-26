@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
   Search,
@@ -17,9 +17,10 @@ import {
   Stethoscope,
   ScanLine,
 } from "lucide-react";
+import { useDoctors } from "../context/DoctorsContext";
 
 export default function DashboardLayout({ children }) {
-  const { doctor, signOut } = useAuth();
+  const { doctor, signOut } = useDoctors();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

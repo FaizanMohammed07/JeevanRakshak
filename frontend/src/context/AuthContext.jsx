@@ -1,4 +1,4 @@
-import { DoctorsProvider, useDoctors } from "../context/DoctorsContext";
+import { DoctorsProvider, useDoctors } from "./DoctorsContext";
 
 export function AuthProvider({ children }) {
   return <DoctorsProvider>{children}</DoctorsProvider>;

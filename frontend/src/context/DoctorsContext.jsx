@@ -89,9 +89,17 @@ export function DoctorsProvider({ children }) {
   }, []);
 
   // 3. Logout Action
-  const logout = useCallback(() => {
-    setDoctor(null);
-    setError("");
+  const logout = useCallback(async () => {
+    try {
+      // Call the backend to clear the HttpOnly cookie
+      await api.get("/doctors/logout");
+    } catch (e) {
+      console.error("Logout error:", e);
+    } finally {
+      // Always clear the local state, even if the API fails (e.g., network error)
+      setDoctor(null);
+      setError("");
+    }
   }, []);
 
   const updateDoctor = useCallback((updates) => {

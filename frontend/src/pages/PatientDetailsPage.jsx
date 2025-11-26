@@ -11,6 +11,8 @@ import {
   Plus,
   Pill,
   Phone,
+  HomeIcon,
+  Home,
 } from "lucide-react";
 import {
   usePatients,
@@ -19,16 +21,18 @@ import {
 } from "../context/PatientsContext";
 // import { useFetchPatient } from "../context/PatientsContext";
 import DashboardLayout from "../components/DashboardLayout";
+import { useDoctors } from "../context/DoctorsContext";
 
 function PatientDetailsPage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
+  const { doctor } = useDoctors();
 
   // --- THE NEW WAY (Simple) ---
   // You do NOT need useState, useEffect, or useContext here anymore.
   // The hook handles all the logic, caching, and state updates for you.
   const { patient, loading, error } = useFetchPatient(patientId);
-  // console.log(patient);
+  console.log(patient);
   const {
     prescriptions,
     loading: prescriptionsLoading,
@@ -122,29 +126,42 @@ function PatientDetailsPage() {
                   </span>
                 </div>
 
-                {patient.blood_group && (
+                {patient.district && (
                   <div className="flex items-center gap-3 text-gray-700">
-                    <Droplet className="w-5 h-5 text-red-500" />
-                    <span>Blood Group: {patient.blood_group}</span>
+                    <Home className="w-5 h-5 text-green-500" />
+                    <span>District: {patient.district},</span>
                   </div>
                 )}
 
-                {patient.emergency_contact && (
+                {patient.taluk && (
                   <div className="flex items-center gap-3 text-gray-700">
-                    <Phone className="w-5 h-5 text-green-600" />
-                    <span>{patient.emergency_contact}</span>
+                    <Home className="w-5 h-5 text-green-600" />
+                    <span>Taluk: {patient.taluk},</span>
+                  </div>
+                )}
+                {patient.village && (
+                  <div className="flex items-center gap-3 text-gray-700">
+                    <Home className="w-5 h-5 text-green-600" />
+                    <span>Village: {patient.village},</span>
+                  </div>
+                )}
+
+                {patient.address && (
+                  <div className="flex items-center gap-3 text-gray-700">
+                    <Home className="w-5 h-5 text-green-600" />
+                    <span>Address: {patient.address},</span>
                   </div>
                 )}
               </div>
 
-              <button
+              {/* <button
                 onClick={() =>
                   navigate(`/patients/${patient.migrant_health_id}/update`)
                 }
                 className="w-full mt-6 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
               >
                 Add Missing Info
-              </button>
+              </button> */}
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -346,15 +363,13 @@ function PatientDetailsPage() {
                           {rx.diagnosis}
                         </h4>
                         <span className="text-sm text-gray-500">
-                          {formatDate(rx.prescribed_at)}
+                          {formatDate(new Date().toISOString())}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">
                         Symptoms: {rx.symptoms}
                       </p>
-                      <p className="text-sm text-gray-600">
-                        Dr. {rx.prescribed_by}
-                      </p>
+                      <p className="text-sm text-gray-600">Dr. {doctor.name}</p>
                       {rx.medicines && rx.medicines.length > 0 && (
                         <div className="mt-2 pt-2 border-t border-gray-200">
                           <p className="text-xs text-gray-500 mb-1">

@@ -110,6 +110,10 @@ export function PatientsProvider({ children }) {
       visits: patient.visits || [],
       prescriptions: patient.prescriptions || [],
       documents: patient.documents || [],
+      district: patient.district || "",
+      taluk: patient.taluk || "",
+      village: patient.village || "",
+      address: patient.address || "",
     };
   }, []);
 
@@ -171,12 +175,13 @@ export function PatientsProvider({ children }) {
   const fetchPatient = useCallback(
     async (identifier) => {
       try {
-        console.log("identifier = " + identifier);
         const response = await api.get(`/patients/${identifier}`);
 
         const payload = response.data;
         const patientData = payload?.patient || payload?.data;
         const savedPatient = upsertPatient(patientData);
+        // console.log("raw data " + patientData);
+        // console.log("saved patient " + savedPatient);
 
         return savedPatient;
       } catch (err) {
