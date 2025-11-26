@@ -209,10 +209,10 @@ export function PatientsProvider({ children }) {
         // 3. Update the Patient in Local State manually
         // We find the patient by ID, keep all their existing data (...patient),
         // and just add the new prescription to the start of their list.
-        // updatePatientRecord(patientId, (patient) => ({
-        //   ...patient,
-        //   prescriptions: [newPrescription, ...(patient.prescriptions || [])],
-        // }));
+        updatePatientRecord(patientId, (patient) => ({
+          ...patient,
+          prescriptions: [newPrescription, ...(patient.prescriptions || [])],
+        }));
 
         return newPrescription;
       } catch (err) {
@@ -221,37 +221,40 @@ export function PatientsProvider({ children }) {
         throw new Error(message);
       }
     },
-    [] // We depend on this helper now, not upsertPatient
+    [updatePatientRecord] // We depend on this helper now, not upsertPatient
   );
 
-  const fetchPatientPrescriptions = useCallback(async (patientId) => {
-    try {
-      // 1. Call API
-      // Adjust URL based on your backend route (e.g., /patients/:id/prescriptions)
-      const response = await api.get(`/prescriptions/patient/${patientId}`);
+  const fetchPatientPrescriptions = useCallback(
+    async (patientId) => {
+      try {
+        // 1. Call API
+        // Adjust URL based on your backend route (e.g., /patients/:id/prescriptions)
+        const response = await api.get(`/prescriptions/patient/${patientId}`);
+        console.log(response);
+        // 2. Extract Data
+        // Check if your backend returns { data: { prescriptions: [...] } } or just { prescriptions: [...] }
+        const prescriptionsList =
+          response.data?.data?.prescriptions ||
+          response.data?.prescriptions ||
+          [];
 
-      // 2. Extract Data
-      // Check if your backend returns { data: { prescriptions: [...] } } or just { prescriptions: [...] }
-      const prescriptionsList =
-        response.data?.data?.prescriptions ||
-        response.data?.prescriptions ||
-        [];
+        // 3. Update Local State
+        // We find the patient and specifically replace their 'prescriptions' array
+        updatePatientRecord(patientId, (patient) => ({
+          ...patient,
+          prescriptions: prescriptionsList,
+        }));
 
-      // 3. Update Local State
-      // We find the patient and specifically replace their 'prescriptions' array
-      // updatePatientRecord(patientId, (patient) => ({
-      //   ...patient,
-      //   prescriptions: prescriptionsList,
-      // }));
-
-      return prescriptionsList;
-    } catch (err) {
-      console.error("Fetch Prescriptions Error:", err);
-      const message =
-        err.response?.data?.msg || "Failed to fetch prescriptions";
-      throw new Error(message);
-    }
-  }, []);
+        return prescriptionsList;
+      } catch (err) {
+        console.error("Fetch Prescriptions Error:", err);
+        const message =
+          err.response?.data?.msg || "Failed to fetch prescriptions";
+        throw new Error(message);
+      }
+    },
+    [updatePatientRecord]
+  );
 
   const addDocument = useCallback(
     (patientId, newDocument) => {

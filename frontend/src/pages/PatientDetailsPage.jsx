@@ -27,25 +27,17 @@ function PatientDetailsPage() {
   // You do NOT need useState, useEffect, or useContext here anymore.
   // The hook handles all the logic, caching, and state updates for you.
   const { patient, loading, error } = useFetchPatient(patientId);
-  console.log(patient);
+  // console.log(patient);
   const {
     prescriptions,
     loading: prescriptionsLoading,
     error: prescriptionsError,
   } = usePrescriptions(patient?.id);
+  // console.log(prescriptions);
 
   // 3. NOW you can do your conditional returns (after all hooks are declared)
 
   // Combined loading state (optional, or handle individually)
-  if (prescriptionsLoading) {
-    return <div className="p-8 text-center">Loading patient data...</div>;
-  }
-
-  if (prescriptionsError) {
-    return (
-      <div className="p-8 text-center text-red-500">{prescriptionsError}</div>
-    );
-  }
 
   // --- Render Logic ---
   if (loading) {
@@ -58,6 +50,15 @@ function PatientDetailsPage() {
 
   if (!patient) {
     return <div>Patient not found</div>;
+  }
+  if (prescriptionsLoading) {
+    return <div className="p-8 text-center">Loading patient data...</div>;
+  }
+
+  if (prescriptionsError) {
+    return (
+      <div className="p-8 text-center text-red-500">{prescriptionsError}</div>
+    );
   }
 
   const vaccinations = patient.vaccinations || [];
