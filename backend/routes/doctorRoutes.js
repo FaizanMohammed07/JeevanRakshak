@@ -4,13 +4,14 @@ import {
   login,
   signup,
   getPatientByPhone,
+  getMe,
 } from "../controllers/doctorController.js";
 
 const router = express.Router();
 
 router.post("/signup", signup);
 router.post("/login", login);
-
+router.get("/me", protectDoctor, getMe);
 // router.get("/patients", protectDoctor, getPatientByPhone);
 // router.post("/patient-by-phone", getPatientByPhone);
 

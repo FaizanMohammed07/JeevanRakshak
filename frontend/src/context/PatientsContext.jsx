@@ -7,7 +7,7 @@ import {
   useEffect,
 } from "react";
 // import { mockPatients } from "../data/mockPatients"; // FIX 1: Comment out mock data
-
+import api from "../api/axios";
 const PatientsContext = createContext(undefined);
 
 // A smart hook that handles the cache-or-fetch logic for you
@@ -137,35 +137,18 @@ export function PatientsProvider({ children }) {
   const fetchPatient = useCallback(
     async (identifier) => {
       try {
-        const headers = { "Content-Type": "application/json" };
-        const token = localStorage.getItem("doctorToken");
-        if (token) headers.Authorization = `Bearer ${token}`;
+        console.log("identifier = " + identifier);
+        const response = await api.get(`/patients/${identifier}`);
 
-        const response = await fetch(
-          `http://localhost:3030/api/doctors/${identifier}`,
-          {
-            method: "POST",
-            headers,
-            // sending identifier (which is coming from URL) as phoneNumber
-            // body: JSON.stringify({ phoneNumber: identifier }),
-          }
-        );
-
-        const payload = await response.json();
-
-        if (!response.ok) {
-          throw new Error(payload?.msg || "Patient not found");
-        }
-
+        const payload = response.data;
         const patientData = payload?.patient || payload?.data;
-
-        // Normalize and save to Context state
         const savedPatient = upsertPatient(patientData);
 
-        return savedPatient; // Return the clean data to the component
+        return savedPatient;
       } catch (err) {
         console.error("Context Fetch Error:", err);
-        throw err;
+        const message = err.response?.data?.msg || "Patient not found";
+        throw new Error(message);
       }
     },
     [upsertPatient]

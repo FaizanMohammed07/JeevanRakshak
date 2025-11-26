@@ -3,14 +3,20 @@ import Doctor from "../models/doctorModel.js";
 
 export const protectDoctor = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    let token;
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer ")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    } else if (req.cookies && req.cookies.jwt) {
+      token = req.cookies.jwt;
+    }
 
-    if (!authHeader || !authHeader.startsWith("Bearer "))
-      return res
-        .status(401)
-        .json({ msg: "Not authorized. No token provided." });
-
-    const token = authHeader.split(" ")[1];
+    // If no token found in either place
+    if (!token) {
+      return res.status(401).json({ msg: "Not authorized. Please log in." });
+    }
 
     // verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

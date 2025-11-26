@@ -104,3 +104,12 @@ export const getPatientByPhone = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const getMe = (req, res, next) => {
+  res.status(200).json({
+    status: "success",
+    data: {
+      user: req.user, // This comes from the protectDoctor middleware
+    },
+  });
+};
