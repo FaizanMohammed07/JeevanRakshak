@@ -1,4 +1,3 @@
-import { useMemo, useEffect, useState } from "react"; // Added useEffect, useState
 import { useNavigate, useParams } from "react-router-dom";
 import {
   User,
@@ -13,7 +12,8 @@ import {
   Pill,
   Phone,
 } from "lucide-react";
-import { usePatients, useFetchPatient } from "../context/PatientsContext";
+import { useFetchPatient } from "../context/PatientsContext";
+import DashboardLayout from "../components/DashboardLayout";
 
 function PatientDetailsPage() {
   const { patientId } = useParams();
@@ -55,11 +55,11 @@ function PatientDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-4">
-      <div className="max-w-7xl mx-auto">
+    <DashboardLayout>
+      <div className="space-y-6">
         <div className="mb-6">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/search-patient")}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -391,7 +391,7 @@ function PatientDetailsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

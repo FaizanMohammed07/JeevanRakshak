@@ -94,6 +94,10 @@ export function DoctorsProvider({ children }) {
     setError("");
   }, []);
 
+  const updateDoctor = useCallback((updates) => {
+    setDoctor((prev) => (prev ? { ...prev, ...updates } : prev));
+  }, []);
+
   // 4. Clear Errors
   const clearError = useCallback(() => setError(""), []);
 
@@ -106,9 +110,11 @@ export function DoctorsProvider({ children }) {
       login,
       register,
       logout,
+      signOut: logout,
+      updateDoctor,
       clearError,
     }),
-    [doctor, loading, error, login, register, logout, clearError]
+    [doctor, loading, error, login, register, logout, updateDoctor, clearError]
   );
 
   return (

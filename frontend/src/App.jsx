@@ -16,6 +16,8 @@ import AddPrescriptionPage from "./pages/AddPrescriptionPage";
 import UploadDocumentPage from "./pages/UploadDocumentPage";
 import UpdatePatientInfoPage from "./pages/UpdatePatientInfoPage";
 import DoctorAuthPage from "./pages/DoctorsAuthPage";
+import Dashboard from "./pages/Dashboard";
+import Settings from "./pages/Settings";
 
 // --- THE ARCHITECTURE HELPER ---
 // This corresponds to: Protected Route -> Patient Context -> Page
@@ -41,7 +43,10 @@ function App() {
           {/* 3. Protected Routes (Wrapped in Layout) */}
           {/* Anything inside this Route automatically gets Protected + Patient Context */}
           <Route element={<ProtectedLayout />}>
-            <Route path="/" element={<SearchPage />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/search-patient" element={<SearchPage />} />
+            <Route path="/settings" element={<Settings />} />
 
             <Route
               path="/patients/:patientId"
@@ -65,7 +70,7 @@ function App() {
           </Route>
 
           {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </DoctorsProvider>
     </BrowserRouter>

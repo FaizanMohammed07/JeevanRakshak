@@ -33,7 +33,7 @@ function DoctorAuthPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/"); // Redirect to dashboard/search page
+      navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
