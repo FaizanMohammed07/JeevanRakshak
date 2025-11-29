@@ -7,6 +7,7 @@ import cors from "cors";
 import patientRoutes from "./routes/patientRoutes.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
 import prescriptionRoutes from "./routes/prescriptionRoutes.js";
+import govtRoutes from "./routes/govtRoutes.js";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
@@ -60,6 +61,8 @@ app.get("/", (req, res) => {
 app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/govt", govtRoutes);
+
 
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
