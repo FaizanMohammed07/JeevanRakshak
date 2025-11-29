@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import Doctor from "../models/doctorModel.js";
 import Patient from "../models/patientModel.js";
+import Govt from "../models/govtModel.js";
 
 export const protect = async (req, res, next) => {
   try {
@@ -69,6 +70,31 @@ export const allowPatientsOnly = (req, res, next) => {
 
   next();
 };
+
+export const govtProtect = async (req, res, next) => {
+  try {
+    // 1) Read cookie token
+    const token = req.cookies.govt_jwt;
+    if (!token) return res.status(401).json({ msg: "Government access denied" });
+
+    // 2) Verify JWT
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // 3) Check if the govt user still exists
+    const govtUser = await Govt.findById(decoded.id);
+    if (!govtUser)
+      return res.status(401).json({ msg: "Government user no longer exists" });
+
+    // 4) Add user to req for next middleware
+    req.govt = govtUser;
+
+    next();
+  } catch (err) {
+    console.log("GOVT PROTECT ERROR:", err);
+    res.status(401).json({ msg: "Invalid or expired govt session" });
+  }
+};
+
 
 // export const protectDoctor = async (req, res, next) => {
 //   try {

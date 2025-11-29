@@ -11,9 +11,7 @@ import { scaleLinear } from "d3-scale";
 import { slugify } from "../utils/slugify";
 import { fetchKeralaRiskMap } from "../api/disease";
 
-const geoUrl =
-  "https://raw.githubusercontent.com/deldersveld/topojson/master/countries/india/india-states.json";
-
+const geoUrl = "";
 const FALLBACK_RISK_PROFILE = [
   {
     name: "Thiruvananthapuram",
