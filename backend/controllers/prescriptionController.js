@@ -1,5 +1,7 @@
+import mongoose from "mongoose";
 import Prescription from "../models/prescriptionModel.js";
 import Patient from "../models/patientModel.js";
+import { uploadCompressedImages } from "../utils/uploadS3.js";
 
 export const addPrescription = async (req, res) => {
   try {
@@ -130,6 +132,155 @@ export const getPrescriptionsForPatient = async (req, res) => {
       prescriptions,
     });
   } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const diseasesByArea = async (req, res) => {
+  try {
+    // Accept location and duration in query params
+    const { district, taluk, village, duration } = req.query;
+
+    // validation
+    if (!district && !taluk && !village) {
+      return res
+        .status(400)
+        .json({ msg: "Provide at least one of district, taluk or village" });
+    }
+    if (!duration) {
+      return res.status(400).json({ msg: "Please provide duration" });
+    }
+    const days = parseInt(duration, 10);
+    if (Number.isNaN(days) || days <= 0) {
+      return res
+        .status(400)
+        .json({ msg: "duration must be a positive integer (number of days)" });
+    }
+
+    // Build patient filter (case-insensitive)
+    const patientFilter = {};
+    if (district)
+      patientFilter.district = { $regex: `^${district}$`, $options: "i" };
+    if (taluk) patientFilter.taluk = { $regex: `^${taluk}$`, $options: "i" };
+    if (village)
+      patientFilter.village = { $regex: `^${village}$`, $options: "i" };
+
+    // 1) Find patient ids for that area
+    const patients = await Patient.find(patientFilter).select("_id").lean();
+
+    if (!patients.length) {
+      return res.status(200).json({ totalPatients: 0, diseases: [] });
+    }
+
+    const patientIds = patients.map((p) => p._id);
+
+    // 2) Calculate start date
+    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    // 3) Aggregate prescriptions for those patients in the duration window
+    // Use confirmedDisease if present and non-empty otherwise suspectedDisease
+    const pipeline = [
+      {
+        $match: {
+          patient: {
+            $in: patientIds.map((id) => new mongoose.Types.ObjectId(id)),
+          },
+          dateOfIssue: { $gte: startDate },
+        },
+      },
+      {
+        $project: {
+          // Normalize disease: prefer confirmedDisease if non-empty else suspectedDisease
+          disease: {
+            $cond: [
+              {
+                $and: [
+                  { $ifNull: ["$confirmedDisease", false] },
+                  { $ne: ["$confirmedDisease", ""] },
+                ],
+              },
+              "$confirmedDisease",
+              "$suspectedDisease",
+            ],
+          },
+        },
+      },
+      // remove documents where disease is null/empty
+      { $match: { disease: { $exists: true, $ne: null, $ne: "" } } },
+      { $group: { _id: "$disease", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $project: { _id: 0, disease: "$_id", count: 1 } },
+    ];
+
+    const diseases = await Prescription.aggregate(pipeline);
+
+    // 4) Return counts + meta
+    return res.status(200).json({
+      totalPatients: patients.length,
+      durationDays: days,
+      since: startDate.toISOString(),
+      diseases, // [{ disease: "Malaria", count: 4 }, ...]
+    });
+  } catch (err) {
+    console.error("diseasesByArea error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const addPrescriptionImagesOnly = async (req, res) => {
+  try {
+    const { patientId, contagious, confirmedDisease } = req.body;
+
+    // Basic validation
+    if (!patientId) {
+      return res.status(400).json({ msg: "patientId is required" });
+    }
+
+    // Check patient existence
+    const patient = await Patient.findById(patientId);
+    if (!patient) {
+      return res.status(404).json({ msg: "Patient not found" });
+    }
+
+    // Must have files
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ msg: "No images uploaded" });
+    }
+
+    // console.log(req.files);
+
+    // Upload images to S3
+    // const imageUrls = [];
+
+    // for (const file of req.files) {
+    //   const url = await uploadCompressedImages(
+    //     file,
+    //     patient.name,
+    //     req.user.name
+    //   );
+    //   imageUrls.push(url);
+    // }
+    const imageUrls = await uploadCompressedImages(
+      req.files,
+      patient.name,
+      req.user.name
+    );
+
+    // Create new prescription
+    const prescription = await Prescription.create({
+      patient: patientId,
+      doctor: req.user._id,
+      contagious: contagious || false,
+      confirmedDisease: confirmedDisease || "",
+      images: imageUrls,
+    });
+
+    return res.status(201).json({
+      msg: "Prescription images added successfully",
+      prescription,
+    });
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({ error: err.message });
   }
 };

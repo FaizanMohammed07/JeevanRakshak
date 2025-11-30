@@ -43,7 +43,6 @@ export const login = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, doctor.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
-
     const token = jwt.sign({ id: doctor._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
@@ -54,6 +53,8 @@ export const login = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+let ans=bcrypt.hash("keralagovt", 12);
+console.log(ans);
 
 export const signup = async (req, res) => {
   try {

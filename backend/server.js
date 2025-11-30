@@ -11,7 +11,9 @@ import diseaseRoutes from "./routes/diseaseRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
 import campRoutes from "./routes/campRoutes.js";
+import govtRoutes from "./routes/govtRoutes.js";
 import cookieParser from "cookie-parser";
+import morgan from "morgan";
 
 dotenv.config();
 
@@ -46,6 +48,10 @@ app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 // app.set("views", path.join(__dirname, "views"));
 
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
 const connectDb = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
@@ -66,6 +72,7 @@ app.use("/api/disease", diseaseRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/camps", campRoutes);
+app.use("/api/govt", govtRoutes);
 
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);

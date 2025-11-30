@@ -261,12 +261,60 @@ export function PatientsProvider({ children }) {
     [updatePatientRecord]
   );
 
+  // --- UPDATED ADD DOCUMENT FUNCTION ---
+  // --- UPDATED ADD DOCUMENT FUNCTION ---
   const addDocument = useCallback(
-    (patientId, newDocument) => {
-      updatePatientRecord(patientId, (patient) => ({
-        ...patient,
-        documents: [newDocument, ...(patient.documents || [])],
-      }));
+    async (patientId, docData) => {
+      try {
+        // The controller requires files, so we MUST use FormData
+        if (!docData.file) {
+          throw new Error("No file provided for upload");
+        }
+
+        const formData = new FormData();
+
+        // 1. Append Metadata Fields (Matching req.body destructuring in controller)
+        formData.append("patientId", patientId);
+        formData.append("confirmedDisease", docData.confirmedDisease || "");
+        formData.append("contagious", docData.contagious || false);
+
+        // 2. Append the File
+        // We use "images" as the key because your backend uses req.files (plural)
+        // and returns 'imageUrls'.
+        formData.append("images", docData.file);
+
+        // 3. Call API: /prescriptions/images
+        const response = await api.post("/prescriptions/images", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        // 4. Extract the returned prescription object
+        // Controller returns: { msg: "...", prescription: { ... } }
+        const savedDocument =
+          response.data?.prescription || response.data?.data;
+
+        if (!savedDocument) {
+          throw new Error("Server did not return the new document data");
+        }
+
+        // 5. Update Local State
+        // We add this to the 'documents' list so it shows up in the UI immediately.
+        // Note: Ensure your UI can render the fields returned by 'savedDocument' (which is a Prescription object).
+        updatePatientRecord(patientId, (patient) => ({
+          ...patient,
+          // We assume this 'prescription' counts as a document in your UI logic
+          documents: [savedDocument, ...(patient.documents || [])],
+        }));
+
+        return savedDocument;
+      } catch (err) {
+        console.error("Add Document Error:", err);
+        const message =
+          err.response?.data?.msg ||
+          err.response?.data?.error ||
+          "Failed to upload document";
+        throw new Error(message);
+      }
     },
     [updatePatientRecord]
   );
