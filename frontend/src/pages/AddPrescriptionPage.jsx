@@ -14,7 +14,7 @@ import { usePatients, useFetchPatient } from "../context/PatientsContext";
 function AddPrescriptionPage() {
   const navigate = useNavigate();
   const { patientId } = useParams();
-  const { addPrescription, addDocument } = usePatients(); // Assuming addDocument exists in context for file uploads
+  const { addPrescription, addDocument } = usePatients();
 
   const { patient, loading: fetchLoading } = useFetchPatient(patientId);
 
@@ -84,19 +84,22 @@ function AddPrescriptionPage() {
       return;
     }
 
+    if (!formData.confirmedDisease.trim()) {
+      setError("Please enter the confirmed disease.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      // Construct Document Payload (Adjust based on your addDocument API)
-      // In a real app, you would upload the file to storage (AWS S3/Cloudinary) first
-      // and get a URL back. For now, we simulate the metadata structure.
-
       const docPayload = {
-        document_name: "Prescription Upload",
+        document_name: selectedFile.name || "Prescription Upload",
         document_type: "Prescription",
         uploaded_at: new Date().toISOString(),
-        // file: selectedFile // You would handle the FormData upload in your context/api
-        file_url: URL.createObjectURL(selectedFile), // Temporary local preview URL
+        file: selectedFile,
+        confirmedDisease: formData.confirmedDisease.trim(),
+        contagious: formData.contagious,
+        notes: "Uploaded via File",
       };
 
       await addDocument(patient.id, docPayload);
@@ -190,15 +193,15 @@ function AddPrescriptionPage() {
             </p>
           </div>
 
-          {/* --- MODE SELECTION --- */}
+          {/* --- MODE TOGGLE --- */}
           <div className="mb-8 grid grid-cols-2 gap-4">
             <button
               type="button"
               onClick={() => setUploadMode(false)}
               className={`py-3 px-4 rounded-xl border-2 font-medium transition-all flex items-center justify-center gap-2 ${
                 !uploadMode
-                  ? "border-blue-600 bg-blue-50 text-blue-700"
-                  : "border-gray-200 text-gray-600 hover:border-blue-300"
+                  ? "border-blue-600 bg-blue-50 text-blue-700 shadow-sm"
+                  : "border-gray-200 text-gray-500 hover:border-gray-300 bg-gray-50"
               }`}
             >
               <Plus className="w-5 h-5" /> Write Prescription
@@ -208,38 +211,42 @@ function AddPrescriptionPage() {
               onClick={() => setUploadMode(true)}
               className={`py-3 px-4 rounded-xl border-2 font-medium transition-all flex items-center justify-center gap-2 ${
                 uploadMode
-                  ? "border-blue-600 bg-blue-50 text-blue-700"
-                  : "border-gray-200 text-gray-600 hover:border-blue-300"
+                  ? "border-blue-600 bg-blue-50 text-blue-700 shadow-sm"
+                  : "border-gray-200 text-gray-500 hover:border-gray-300 bg-gray-50"
               }`}
             >
               <Upload className="w-5 h-5" /> Upload File
             </button>
           </div>
 
-          {/* --- FILE UPLOAD FORM --- */}
+          {/* --- RENDER BASED ON MODE --- */}
           {uploadMode ? (
-            <form onSubmit={handleFileUploadSubmit} className="space-y-6">
-              <div className="border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center bg-blue-50/50 hover:bg-blue-50 transition cursor-pointer relative">
+            // --- UPLOAD FORM ---
+            <form
+              onSubmit={handleFileUploadSubmit}
+              className="space-y-6 animate-in fade-in duration-300"
+            >
+              <div className="border-2 border-dashed border-blue-300 rounded-2xl p-12 text-center bg-blue-50/50 hover:bg-blue-50 transition cursor-pointer relative group">
                 <input
                   type="file"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   onChange={handleFileChange}
                   accept="image/*,.pdf"
                 />
-                <div className="flex flex-col items-center justify-center space-y-3">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Upload className="w-8 h-8 text-blue-600" />
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Upload className="w-10 h-10 text-blue-600" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-lg font-semibold text-gray-700">
+                    <p className="text-xl font-semibold text-gray-700">
                       {selectedFile
                         ? selectedFile.name
-                        : "Click to Upload Prescription"}
+                        : "Drop prescription here"}
                     </p>
                     <p className="text-sm text-gray-500">
                       {selectedFile
                         ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`
-                        : "SVG, PNG, JPG or PDF (max. 10MB)"}
+                        : "Click to browse (PDF, JPG, PNG)"}
                     </p>
                   </div>
                 </div>
@@ -250,11 +257,60 @@ function AddPrescriptionPage() {
                       e.preventDefault();
                       setSelectedFile(null);
                     }}
-                    className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm hover:bg-red-50 text-gray-500 hover:text-red-500 transition"
+                    className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition z-20"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 )}
+              </div>
+
+              {/* --- New Fields for Upload Mode --- */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100">
+                {/* Confirmed Disease */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirmed Disease <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="confirmedDisease"
+                    value={formData.confirmedDisease}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white"
+                    placeholder="Diagnosis"
+                    required
+                  />
+                </div>
+
+                {/* Contagious Toggle */}
+                <div className="flex items-center h-full pt-6">
+                  <label className="flex items-center cursor-pointer space-x-3 select-none">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        name="contagious"
+                        checked={formData.contagious}
+                        onChange={handleInputChange}
+                        className="sr-only peer"
+                      />
+                      <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-500"></div>
+                    </div>
+                    <div className="flex flex-col">
+                      <span
+                        className={`font-semibold ${
+                          formData.contagious ? "text-red-600" : "text-gray-600"
+                        }`}
+                      >
+                        {formData.contagious
+                          ? "Contagious / High Risk"
+                          : "Not Contagious"}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        Toggle if this requires isolation
+                      </span>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               {error && (
@@ -272,15 +328,18 @@ function AddPrescriptionPage() {
               <button
                 type="submit"
                 disabled={submitting || !selectedFile}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-blue-300 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-blue-300 disabled:cursor-not-allowed shadow-lg shadow-blue-200"
               >
-                {submitting ? "Uploading..." : "Submit File"}
+                {submitting ? "Uploading..." : "Submit Prescription File"}
               </button>
             </form>
           ) : (
-            /* --- MANUAL FORM (Existing) --- */
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* --- Section 1: Symptoms & Nature --- */}
+            // --- MANUAL FORM (Your Existing Form) ---
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-6 animate-in fade-in duration-300"
+            >
+              {/* Section 1: Symptoms & Nature */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -335,8 +394,8 @@ function AddPrescriptionPage() {
                 </div>
               </div>
 
-              {/* --- Section 2: Diagnosis --- */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-xl">
+              {/* Section 2: Diagnosis */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Suspected Disease
@@ -365,7 +424,7 @@ function AddPrescriptionPage() {
                 </div>
               </div>
 
-              {/* --- Section 3: Medicines Issued --- */}
+              {/* Section 3: Medicines Issued */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -406,7 +465,7 @@ function AddPrescriptionPage() {
                 </div>
               </div>
 
-              {/* --- Section 4: Follow Up & Notes --- */}
+              {/* Section 4: Follow Up & Notes */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -460,7 +519,7 @@ function AddPrescriptionPage() {
                 <button
                   type="submit"
                   disabled={submitting || success}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-blue-300 disabled:cursor-not-allowed"
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-blue-300 disabled:cursor-not-allowed shadow-lg shadow-blue-200"
                 >
                   {submitting
                     ? "Saving..."
