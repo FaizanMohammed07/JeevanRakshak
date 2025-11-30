@@ -23,6 +23,7 @@ export default function DashboardLayout({ children }) {
   const { doctor, signOut } = useDoctors();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   const navigation = [
     { name: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
@@ -35,7 +36,12 @@ export default function DashboardLayout({ children }) {
     { name: "Analytics", to: "/analytics", icon: BarChart3 },
   ];
 
-  const handleSignOut = async () => {
+  const requestSignOut = () => setConfirmSignOut(true);
+
+  const cancelSignOut = () => setConfirmSignOut(false);
+
+  const handleConfirmSignOut = async () => {
+    setConfirmSignOut(false);
     await signOut();
     navigate("/doctors/login", { replace: true });
   };
@@ -125,7 +131,7 @@ export default function DashboardLayout({ children }) {
               <span className="font-medium">Settings</span>
             </NavLink>
             <button
-              onClick={handleSignOut}
+              onClick={requestSignOut}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-700 hover:bg-red-50 transition-colors"
             >
               <LogOut className="h-5 w-5" />
@@ -145,6 +151,46 @@ export default function DashboardLayout({ children }) {
       <div className="lg:pl-64 pt-16 lg:pt-0">
         <main className="p-6">{children ?? <Outlet />}</main>
       </div>
+
+      {confirmSignOut && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-blue-100 bg-white p-6 shadow-2xl">
+            <div className="flex flex-col gap-4 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                <LogOut className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.4em] text-blue-500">
+                  Confirm Sign Out
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+                  Exit the Doctor Console?
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  You will return to the login screen and any unsaved
+                  prescription or record changes will be discarded.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleConfirmSignOut}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+                >
+                  Yes, sign me out
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelSignOut}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  Stay in console
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

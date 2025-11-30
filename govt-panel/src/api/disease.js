@@ -1,7 +1,7 @@
 import { apiClient, buildQuery } from "./client";
 
-export function fetchDiseaseDistricts() {
-  return apiClient("/disease/districts");
+export function fetchDiseaseDistricts(params) {
+  return apiClient(`/disease/districts${buildQuery(params)}`);
 }
 
 export function fetchDiseaseSummary(params) {

@@ -43,7 +43,8 @@ const fallbackSearchProfiles = mockPatients.map((patient) =>
 function mapPatientToSearchSummary(patient) {
   if (!patient) return null;
 
-  const chronicList = patient.chronic_diseases || patient.chronicConditions || [];
+  const chronicList =
+    patient.chronic_diseases || patient.chronicConditions || [];
 
   return {
     id: patient.id || patient._id || patient.migrant_health_id,
@@ -90,10 +91,13 @@ function filterLocalPatients(query, searchType) {
 export async function fetchDashboardSnapshot(doctorId) {
   try {
     const token = localStorage.getItem("doctorToken");
-    const response = await fetch(`${API_BASE_URL}/api/doctors/${doctorId}/dashboard`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      credentials: "include",
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/api/doctors/${doctorId}/dashboard`,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: "include",
+      }
+    );
 
     if (!response.ok) {
       throw new Error("Failed to fetch dashboard snapshot");
@@ -116,18 +120,46 @@ export async function fetchDashboardSnapshot(doctorId) {
   }
 }
 
+export async function fetchDoctorAnnouncements(audience = "Doctors") {
+  try {
+    const params = new URLSearchParams({ audience });
+    const response = await fetch(
+      `${API_BASE_URL}/api/camps/announcements?${params.toString()}`,
+      {
+        credentials: "include",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch announcements");
+    }
+
+    const payload = await response.json();
+    const announcements = Array.isArray(payload?.announcements)
+      ? payload.announcements
+      : [];
+    return announcements;
+  } catch (error) {
+    console.warn("Falling back to empty announcements", error);
+    return [];
+  }
+}
+
 export async function searchPatients({ query, searchType }) {
   try {
     const token = localStorage.getItem("doctorToken");
-    const response = await fetch(`${API_BASE_URL}/api/doctors/patients/search`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      credentials: "include",
-      body: JSON.stringify({ query, searchType }),
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/api/doctors/patients/search`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ query, searchType }),
+      }
+    );
 
     if (!response.ok) {
       if (response.status === 401) {

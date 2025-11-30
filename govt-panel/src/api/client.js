@@ -1,36 +1,36 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+import axios from "axios";
 
-/**
- * Lightweight wrapper around fetch so components can call backend endpoints
- * without repeating boilerplate. Update VITE_API_BASE_URL in .env.local to
- * point to your API gateway (ex: https://api.example.com/v1).
- */
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.trim() || "http://localhost:3030/api";
+
+// Single axios instance keeps headers/baseURL aligned across the app.
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  withCredentials: false,
+  timeout: 20_000,
+});
+
 export async function apiClient(path, options = {}) {
-  const { method = "GET", headers, body, ...rest } = options;
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    ...rest,
-  });
+  const { method = "GET", headers, body, data, params, ...rest } = options;
 
-  if (!response.ok) {
-    const errorPayload = await safeParseJson(response);
-    const message = errorPayload?.message || response.statusText;
-    throw new Error(`API ${response.status} ${response.url}: ${message}`);
-  }
-
-  return safeParseJson(response);
-}
-
-async function safeParseJson(response) {
   try {
-    return await response.json();
+    const response = await api.request({
+      url: path,
+      method,
+      headers,
+      params,
+      data: data ?? body ?? undefined,
+      ...rest,
+    });
+    return response.data;
   } catch (error) {
-    return null;
+    const message =
+      error.response?.data?.message || error.message || "Request failed";
+    const status = error.response?.status;
+    throw new Error(`API ${status ?? "ERR"} ${path}: ${message}`);
   }
 }
 
