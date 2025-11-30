@@ -5,12 +5,18 @@ import {
   getDoctorPrescriptions,
   getPrescriptionsForPatient,
   diseasesByArea,
+  addPrescriptionImagesOnly,
 } from "../controllers/prescriptionController.js";
 import {
   allowDoctorsOnly,
   allowPatientsOnly,
   protect,
 } from "../middleware/protect.js";
+import multer from "multer";
+
+export const upload = multer({
+  storage: multer.memoryStorage(), // IMPORTANT: no disk usage
+});
 
 const router = express.Router();
 
@@ -32,5 +38,13 @@ router.get(
 );
 
 router.get("/diseases", diseasesByArea);
+
+router.post(
+  "/images",
+  protect,
+  allowDoctorsOnly,
+  upload.array("images", 10), // allow up to 10 images
+  addPrescriptionImagesOnly
+);
 
 export default router;

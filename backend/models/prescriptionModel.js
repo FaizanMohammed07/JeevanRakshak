@@ -1,61 +1,67 @@
 import mongoose from "mongoose";
 
-const prescriptionSchema = new mongoose.Schema({
-  patient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Patient",
-    required: true,
-  },
-  doctor: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Doctor",
-    required: true,
-  },
+const prescriptionSchema = new mongoose.Schema(
+  {
+    patient: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Patient",
+      required: true,
+    },
+    doctor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Doctor",
+      required: true,
+    },
 
-  symptoms: {
-    type: String,
-    required: [true, "Please enter symptoms"],
-  },
+    symptoms: {
+      type: String,
+      // required: [true, "Please enter symptoms"],
+    },
 
-  durationOfSymptoms: {
-    type: String, // example: "3 days", "1 week", etc.
-    required: [true, "Please provide symptom duration"],
-  },
+    durationOfSymptoms: {
+      type: String, // example: "3 days", "1 week", etc.
+      // required: [true, "Please provide symptom duration"],
+    },
 
-  contagious: {
-    type: Boolean,
-    required: true,
-    default: false,
-    required: true,
-  },
+    contagious: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
 
-  medicinesIssued: {
-    type: [String],
-    required: [true, "Please list the medicines issued"],
-  },
+    medicinesIssued: {
+      type: [String],
+      // required: [true, "Please list the medicines issued"],
+    },
 
-  suspectedDisease: {
-    type: String,
-  },
+    suspectedDisease: {
+      type: String,
+    },
 
-  confirmedDisease: {
-    type: String,
-    required: [true, "Please mention the disease"],
-  },
+    confirmedDisease: {
+      type: String,
+      required: [true, "Please mention the disease"],
+    },
 
-  dateOfIssue: {
-    type: Date,
-    default: Date.now,
-  },
+    dateOfIssue: {
+      type: Date,
+      default: Date.now,
+    },
 
-  followUpDate: {
-    type: Date,
-  },
+    followUpDate: {
+      type: Date,
+    },
 
-  notes: {
-    type: String, // optional doctor's remarks
+    notes: {
+      type: String, // optional doctor's remarks
+    },
+    images: {
+      type: [String], // array of S3 URLs
+      default: [],
+    },
   },
-});
+  { timestamps: true }
+);
 
 // Index for faster patient-wise prescription search
 prescriptionSchema.index({ patient: 1 });

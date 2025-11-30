@@ -9,6 +9,7 @@ import doctorRoutes from "./routes/doctorRoutes.js";
 import prescriptionRoutes from "./routes/prescriptionRoutes.js";
 import govtRoutes from "./routes/govtRoutes.js";
 import cookieParser from "cookie-parser";
+import morgan from "morgan";
 
 dotenv.config();
 
@@ -45,6 +46,10 @@ app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 // app.set("views", path.join(__dirname, "views"));
 
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
 const connectDb = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
@@ -62,7 +67,6 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/govt", govtRoutes);
-
 
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);

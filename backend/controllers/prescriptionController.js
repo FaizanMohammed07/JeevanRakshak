@@ -1,18 +1,7 @@
 import mongoose from "mongoose";
 import Prescription from "../models/prescriptionModel.js";
 import Patient from "../models/patientModel.js";
-
-// const generateFileName = (patientName, doctorName) => {
-//   const sanitizedPatientName = patientName
-//     ? String(patientName).toLowerCase().replace(/\s+/g, "-")
-//     : "unknown-patient-name";
-//   const sanitizedDoctorName = doctorName
-//     ? String(doctorName).toLowerCase().replace(/\s+/g, "-")
-//     : "unknown-doctor-name";
-
-//   const uniqueId = crypto.randomBytes(16).toString("hex");
-//   return `${sanitizedPatientName}-${sanitizedDoctorName}-${uniqueId}`;
-// };
+import { uploadCompressedImages } from "../utils/uploadS3.js";
 
 export const addPrescription = async (req, res) => {
   try {
@@ -41,63 +30,6 @@ export const addPrescription = async (req, res) => {
 
     // req.user is the logged-in doctor (from doctor auth middleware)
     const doctorId = req.user._id;
-
-    // const files = req.files; // Handling multiple files
-
-    // // Check if there are files to upload
-    // if (!files || files.length === 0) {
-    //   return res.status(422).json({
-    //     msg: "No images provided",
-    //   });
-    // }
-
-    // const imageUrls = [];
-    // const uploadedS3Keys = [];
-
-    // for (const file of files) {
-    //   try {
-    //     const fileName = generateFileName(patient.name, req.user.name);
-
-    //     const transformer = sharp(file.path)
-    //       .rotate()
-    //       .resize({ width: 1200 })
-    //       .jpeg({ quality: 80 });
-
-    //     const upload = new Upload({
-    //       client: s3Client,
-    //       params: {
-    //         Bucket: bucketName,
-    //         Key: fileName,
-    //         Body: transformer, // stream directly
-    //         ContentType: "image/jpeg",
-    //       },
-    //     });
-
-    //     await upload.done();
-    //     uploadedS3Keys.push(fileName);
-    //     imageUrls.push(
-    //       `https://images-cool-motors.s3.eu-north-1.amazonaws.com/${fileName}`
-    //     );
-
-    //     fs.unlink(file.path, () => {}); // delete local temp file
-    //   } catch (fileUploadError) {
-    //     console.error(
-    //       `Error processing or uploading file ${file.originalname}:`,
-    //       fileUploadError
-    //     );
-    //     if (
-    //       fileUploadError.message.includes("heif: Error while loading plugin")
-    //     ) {
-    //       return res.status(400).json({
-    //         msg: `Failed to process image ${file.originalname}. This image format (HEIF/HEIC) is not supported. Please convert it to JPEG or PNG and try again.`,
-    //       });
-    //     } else {
-    //       return res.status(500).json({
-    //         msg: `Failed to process and upload image ${file.originalname}. Please try again.`,
-    //       });
-    //     }
-    //   }
-    // }
 
     const prescription = await Prescription.create({
       patient: patientId,
@@ -291,6 +223,64 @@ export const diseasesByArea = async (req, res) => {
     });
   } catch (err) {
     console.error("diseasesByArea error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const addPrescriptionImagesOnly = async (req, res) => {
+  try {
+    const { patientId, contagious, confirmedDisease } = req.body;
+
+    // Basic validation
+    if (!patientId) {
+      return res.status(400).json({ msg: "patientId is required" });
+    }
+
+    // Check patient existence
+    const patient = await Patient.findById(patientId);
+    if (!patient) {
+      return res.status(404).json({ msg: "Patient not found" });
+    }
+
+    // Must have files
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ msg: "No images uploaded" });
+    }
+
+    // console.log(req.files);
+
+    // Upload images to S3
+    // const imageUrls = [];
+
+    // for (const file of req.files) {
+    //   const url = await uploadCompressedImages(
+    //     file,
+    //     patient.name,
+    //     req.user.name
+    //   );
+    //   imageUrls.push(url);
+    // }
+    const imageUrls = await uploadCompressedImages(
+      req.files,
+      patient.name,
+      req.user.name
+    );
+
+    // Create new prescription
+    const prescription = await Prescription.create({
+      patient: patientId,
+      doctor: req.user._id,
+      contagious: contagious || false,
+      confirmedDisease: confirmedDisease || "",
+      images: imageUrls,
+    });
+
+    return res.status(201).json({
+      msg: "Prescription images added successfully",
+      prescription,
+    });
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({ error: err.message });
   }
 };
