@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { fetchDashboardSnapshot } from "../lib/dataClient";
+import {
+  fetchDashboardSnapshot,
+  fetchDoctorAnnouncements,
+} from "../lib/dataClient";
 import DashboardLayout from "../components/DashboardLayout";
 import {
   Users,
@@ -25,10 +28,13 @@ export default function Dashboard() {
   const [recentActivity, setRecentActivity] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [heroAnnouncements, setHeroAnnouncements] = useState([]);
+  const [activeAnnouncementIndex, setActiveAnnouncementIndex] = useState(0);
 
   useEffect(() => {
     if (doctor) {
       loadDashboardData();
+      loadHeroAnnouncements();
     }
   }, [doctor]);
 
@@ -44,6 +50,17 @@ export default function Dashboard() {
       console.error("Error loading dashboard data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadHeroAnnouncements = async () => {
+    try {
+      const payload = await fetchDoctorAnnouncements("Doctors");
+      setHeroAnnouncements(Array.isArray(payload) ? payload : []);
+      setActiveAnnouncementIndex(0);
+    } catch (error) {
+      console.error("Error loading announcements:", error);
+      setHeroAnnouncements([]);
     }
   };
 
@@ -91,6 +108,57 @@ export default function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    if (heroAnnouncements.length <= 1) return undefined;
+    const intervalId = setInterval(() => {
+      setActiveAnnouncementIndex(
+        (prev) => (prev + 1) % heroAnnouncements.length
+      );
+    }, 8000);
+    return () => clearInterval(intervalId);
+  }, [heroAnnouncements]);
+
+  const formatAnnouncementTime = (timestamp) => {
+    if (!timestamp) return "--";
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return "--";
+    return date.toLocaleString("en-IN", {
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "short",
+    });
+  };
+
+  const handleAnnouncementNav = (direction) => {
+    if (heroAnnouncements.length <= 1) return;
+    setActiveAnnouncementIndex((prev) => {
+      const total = heroAnnouncements.length;
+      return (prev + direction + total) % total;
+    });
+  };
+
+  const activeAnnouncement = heroAnnouncements[activeAnnouncementIndex];
+  const hasHeroAnnouncement = Boolean(
+    heroAnnouncements.length && activeAnnouncement
+  );
+
+  const diseaseInsights = useMemo(() => {
+    if (!alerts.length) return [];
+    const counts = alerts.reduce((map, alert) => {
+      const key = alert.title || alert.message || "Unknown Alert";
+      const normalized = key.trim();
+      const entry = map.get(normalized) || { title: normalized, count: 0 };
+      entry.count += 1;
+      map.set(normalized, entry);
+      return map;
+    }, new Map());
+    return Array.from(counts.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  }, [alerts]);
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -108,6 +176,116 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-1">Welcome back, Dr. {doctor?.name}</p>
         </div>
+
+        {hasHeroAnnouncement ? (
+          <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-sky-500 text-white rounded-2xl shadow-xl p-6 flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/70">
+                  Government Broadcast
+                </p>
+                <h2 className="text-2xl font-semibold mt-1">
+                  {activeAnnouncement.title}
+                </h2>
+              </div>
+              <span className="text-sm font-semibold bg-white/15 px-3 py-1 rounded-full">
+                {activeAnnouncement.audience} Hero
+              </span>
+            </div>
+            <p className="text-sm text-white/90 leading-relaxed">
+              {activeAnnouncement.message}
+            </p>
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-white/80">
+              <span>Priority: {activeAnnouncement.priority || "--"}</span>
+              <span>
+                {formatAnnouncementTime(activeAnnouncement.timestamp)}
+              </span>
+              <span>
+                {activeAnnouncementIndex + 1} / {heroAnnouncements.length}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                {heroAnnouncements.map((item, index) => (
+                  <span
+                    key={item.id || index}
+                    className={`h-2 w-2 rounded-full transition-colors ${
+                      index === activeAnnouncementIndex
+                        ? "bg-white"
+                        : "bg-white/40"
+                    }`}
+                  ></span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleAnnouncementNav(-1)}
+                  className="px-3 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-semibold"
+                  disabled={heroAnnouncements.length <= 1}
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAnnouncementNav(1)}
+                  className="px-3 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-semibold"
+                  disabled={heroAnnouncements.length <= 1}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-blue-700 text-white rounded-2xl shadow-xl p-6 flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/60">
+                  Disease Watch
+                </p>
+                <h2 className="text-2xl font-semibold mt-1">
+                  Live spread insights
+                </h2>
+                <p className="text-sm text-white/80 mt-1">
+                  No hero broadcasts right now. We surfaced the hottest field
+                  alerts so you can prioritize rounds.
+                </p>
+              </div>
+              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/10">
+                Auto-generated
+              </span>
+            </div>
+            {diseaseInsights.length === 0 ? (
+              <p className="text-sm text-white/70">
+                Field alerts are quiet. Keep logging cases to power this view.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {diseaseInsights.map((insight) => (
+                  <div
+                    key={insight.title}
+                    className="bg-white/10 rounded-xl p-4"
+                  >
+                    <p className="text-sm font-semibold">{insight.title}</p>
+                    <p className="text-3xl font-bold mt-2">{insight.count}</p>
+                    <p className="text-xs text-white/70">alerts logged today</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center justify-between text-xs text-white/70">
+              <span>View outbreak log in Alerts</span>
+              <button
+                type="button"
+                onClick={loadHeroAnnouncements}
+                className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 font-semibold"
+              >
+                Refresh Broadcasts
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statCards.map((card) => {

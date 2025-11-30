@@ -1,11 +1,106 @@
+### Create doctor (one-time)
+POST http://localhost:3030/api/doctors/signup
+Content-Type: application/json
+
+{
+    "name": "Dr. Priya Menon",
+    "age": 34,
+    "phoneNumber": "9000000001",
+    "password": "Doctor@123",
+    "passwordConfirm": "Doctor@123"
+}
+
+### Doctor login (grab jwt cookie from response)
+POST http://localhost:3030/api/doctors/login
+Content-Type: application/json
+
+{
+    "phoneNumber": "9000000001",
+    "password": "Doctor@123"
+}
+
+### Register a patient with district/taluk/village metadata
 POST http://localhost:3030/api/patients/signup
 Content-Type: application/json
 
 {
-    "name": "Faizan Sk",
-    "age": 20,
-    "phoneNumber": 1234567890,
-    "password": "securepassword",
-    "passwordConfirm": "securepassword"
+    "name": "Rahul Kumar2",
+    "age": 28,
+    "phoneNumber": "8000000002",
+    "password": "Patient@123",
+    "passwordConfirm": "Patient@123",
+    "district": "Ernakulam",
+    "taluk": "Kochi",
+    "village": "Kumbalangi",
+    "address": "Kochi Construction Camp 3"
 }
+
+### Register another patient in a different district
+POST http://localhost:3030/api/patients/signup
+Content-Type: application/json
+
+{
+    "name": "faizan ali",
+    "age": 20,
+    "phoneNumber": "9392756435",
+    "password": "Patient@123",
+    "passwordConfirm": "Patient@123",
+    "district": "hyderabad",
+    "taluk": "nampally",
+    "village": "asifnagar",
+    "address": "near asifnagar bus stop"
+}
+
+### Register a third patient in yet another district
+POST http://localhost:3030/api/patients/signup
+Content-Type: application/json
+
+{
+    "name": "Nashra",
+    "age": 21,
+    "phoneNumber": "7416205191",
+    "password": "Patient@123",
+    "passwordConfirm": "Patient@123",
+    "district": "Thriuvananthapuram",
+    "taluk": "Thiruvananthapuram",
+    "village": "Andoorkonam",
+    "address": "Near Andoorkonam Junction"
+}
+
+### Doctor issues a prescription (set Authorization header with doctor JWT if not using cookie)
+POST http://localhost:3030/api/prescriptions
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjgwZWI5N2JhYjNmMTAxMDIxMzkwNCIsImlhdCI6MTc2NDIzMjkyNCwiZXhwIjoxNzcyMDA4OTI0fQ.OK4nyYIPB69fBWaDM36bNf3yzFkWjWVMPjn8YozkqjQ
+Content-Type: application/json
+
+{
+    "patientId": "69281f7c19560f00929c7da5",
+    "symptoms": "High fever, headache, rash",
+    "durationOfSymptoms": "4 days",
+    "contagious": true,
+    "medicinesIssued": ["Paracetamol", "ORS"],
+    "suspectedDisease": "Waterborne illness",
+    "confirmedDisease": "Waterborne illness",
+    "followUpDate": "2025-12-01T10:00:00.000Z",
+    "notes": "Admit if platelet count drops"
+}
+
+### Repeat prescription in another district for comparison
+POST http://localhost:3030/api/prescriptions
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjgwZWI5N2JhYjNmMTAxMDIxMzkwNCIsImlhdCI6MTc2NDIzMjkyNCwiZXhwIjoxNzcyMDA4OTI0fQ.OK4nyYIPB69fBWaDM36bNf3yzFkWjWVMPjn8YozkqjQ
+Content-Type: application/json
+
+{
+    "patientId": "69280f127bab3f101021390c",
+    "symptoms": "Chills, fatigue",
+    "durationOfSymptoms": "3 days",
+    "contagious": false,
+    "medicinesIssued": ["Chloroquine"],
+    "suspectedDisease": "malaria",
+    "confirmedDisease": "malaria",
+    "notes": "Monitor temperature twice daily"
+}
+
+### Fetch patient profile (id or phone) - requires doctor auth
+GET http://localhost:3030/api/patients/69280f127bab3f101021390c
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjgwZWI5N2JhYjNmMTAxMDIxMzkwNCIsImlhdCI6MTc2NDIzMjkyNCwiZXhwIjoxNzcyMDA4OTI0fQ.OK4nyYIPB69fBWaDM36bNf3yzFkWjWVMPjn8YozkqjQ
 

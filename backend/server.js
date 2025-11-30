@@ -7,6 +7,10 @@ import cors from "cors";
 import patientRoutes from "./routes/patientRoutes.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
 import prescriptionRoutes from "./routes/prescriptionRoutes.js";
+import diseaseRoutes from "./routes/diseaseRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import alertRoutes from "./routes/alertRoutes.js";
+import campRoutes from "./routes/campRoutes.js";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
@@ -15,11 +19,9 @@ const app = express();
 const port = 3030;
 
 const allowedOrigins = [
-  // "https://newmetro.online",
-  // "https://www.newmetro.online",
   "http://localhost:5174",
   "http://localhost:5173",
-  // "https://admin-newmetro.onrender.com"
+  "http://localhost:5175",
 ];
 
 app.use(
@@ -60,6 +62,10 @@ app.get("/", (req, res) => {
 app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/disease", diseaseRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/alerts", alertRoutes);
+app.use("/api/camps", campRoutes);
 
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
