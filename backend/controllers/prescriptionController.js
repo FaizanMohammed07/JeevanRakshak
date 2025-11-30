@@ -49,7 +49,7 @@ export const addPrescription = async (req, res) => {
       prescription,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -124,8 +124,8 @@ export const getPrescriptionsForPatient = async (req, res) => {
       // doctor: req.user._id, // doctor sees ONLY their own prescriptions
     })
       // .populate("patient", "name age phoneNumber district taluk village")
-      .sort({ dateOfIssue: -1 })
-      .limit(2);
+      .sort({ dateOfIssue: -1 });
+    // .limit(2);
 
     return res.status(200).json({
       count: prescriptions.length,
@@ -247,19 +247,6 @@ export const addPrescriptionImagesOnly = async (req, res) => {
       return res.status(400).json({ msg: "No images uploaded" });
     }
 
-    // console.log(req.files);
-
-    // Upload images to S3
-    // const imageUrls = [];
-
-    // for (const file of req.files) {
-    //   const url = await uploadCompressedImages(
-    //     file,
-    //     patient.name,
-    //     req.user.name
-    //   );
-    //   imageUrls.push(url);
-    // }
     const imageUrls = await uploadCompressedImages(
       req.files,
       patient.name,

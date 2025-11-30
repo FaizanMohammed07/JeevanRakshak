@@ -57,15 +57,6 @@ export const uploadCompressedImages = async (
 ) => {
   const imageUrls = [];
 
-  //   console.log("AWS CONFIG CHECK:", {
-  //     bucketName: process.env.AWS_BUCKET_NAME,
-  //     region: process.env.AWS_BUCKET_REGION,
-  //     accessKeyId: process.env.AWS_ACCESS_KEY,
-  //     secretAccessKeyIsMissing: process.env.AWS_SECRET_ACCESS_KEY,
-  //   });
-
-  //   console.log(files);
-
   for (const file of files) {
     try {
       const fileName = generateFileName(patientName, doctorName);
@@ -101,4 +92,31 @@ export const uploadCompressedImages = async (
   }
 
   return imageUrls;
+};
+
+export const uploadPdfToS3 = async (file, patientName, doctorName) => {
+  try {
+    const fileName = generateFileName(patientName, doctorName);
+
+    // console.log(file);
+
+    const upload = new Upload({
+      client: s3,
+      params: {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: fileName,
+        Body: file.buffer, // PDF is uploaded directly
+        ContentType: "application/pdf",
+      },
+    });
+
+    await upload.done();
+
+    const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_BUCKET_REGION}.amazonaws.com/${fileName}`;
+
+    return fileUrl;
+  } catch (err) {
+    console.error("Error uploading PDF:", err);
+    throw err;
+  }
 };

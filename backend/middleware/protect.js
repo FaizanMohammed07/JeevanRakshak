@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import Doctor from "../models/doctorModel.js";
 import Patient from "../models/patientModel.js";
+import ReportAssistant from "../models/reportAssistantModel.js";
 import Govt from "../models/govtModel.js";
 
 export const protect = async (req, res, next) => {
@@ -36,6 +37,7 @@ export const protect = async (req, res, next) => {
       req.user = user;
       req.isDoctor = true;
       req.isPatient = false;
+      req.isReportAssistant = false;
       return next();
     }
 
@@ -46,6 +48,17 @@ export const protect = async (req, res, next) => {
       req.user = user;
       req.isDoctor = false;
       req.isPatient = true;
+      req.isReportAssistant = false;
+      return next();
+    }
+
+    user = await ReportAssistant.findById(userId);
+
+    if (user) {
+      req.user = user;
+      req.isDoctor = false;
+      req.isPatient = false;
+      req.isReportAssistant = true;
       return next();
     }
 
@@ -71,11 +84,21 @@ export const allowPatientsOnly = (req, res, next) => {
   next();
 };
 
+export const allowReportAssistantsOnly = (req, res, next) => {
+  if (!req.isReportAssistant)
+    return res
+      .status(403)
+      .json({ msg: "Only report assistants can access this route" });
+
+  next();
+};
+
 export const govtProtect = async (req, res, next) => {
   try {
     // 1) Read cookie token
     const token = req.cookies.govt_jwt;
-    if (!token) return res.status(401).json({ msg: "Government access denied" });
+    if (!token)
+      return res.status(401).json({ msg: "Government access denied" });
 
     // 2) Verify JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -94,7 +117,6 @@ export const govtProtect = async (req, res, next) => {
     res.status(401).json({ msg: "Invalid or expired govt session" });
   }
 };
-
 
 // export const protectDoctor = async (req, res, next) => {
 //   try {

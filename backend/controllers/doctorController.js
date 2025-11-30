@@ -53,8 +53,8 @@ export const login = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-let ans=bcrypt.hash("keralagovt", 12);
-console.log(ans);
+// let ans=bcrypt.hash("keralagovt", 12);
+// console.log(ans);
 
 export const signup = async (req, res) => {
   try {
