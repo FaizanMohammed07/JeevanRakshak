@@ -109,6 +109,7 @@ export function PatientsProvider({ children }) {
       vaccinations: patient.vaccinations || [],
       visits: patient.visits || [],
       prescriptions: patient.prescriptions || [],
+      reports: patient.reports || [],
       documents: patient.documents || [],
       district: patient.district || "",
       taluk: patient.taluk || "",
