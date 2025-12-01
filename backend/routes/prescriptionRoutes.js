@@ -14,7 +14,7 @@ import {
 } from "../middleware/protect.js";
 import multer from "multer";
 
-export const upload = multer({
+const upload = multer({
   storage: multer.memoryStorage(), // IMPORTANT: no disk usage
 });
 
@@ -33,7 +33,7 @@ router.get("/doctor/my", protect, allowDoctorsOnly, getDoctorPrescriptions);
 router.get(
   "/patient/:patientId",
   protect,
-  allowDoctorsOnly,
+  // allowDoctorsOnly,
   getPrescriptionsForPatient
 );
 

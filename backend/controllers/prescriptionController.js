@@ -31,6 +31,21 @@ export const addPrescription = async (req, res) => {
     // req.user is the logged-in doctor (from doctor auth middleware)
     const doctorId = req.user._id;
 
+    // Check if the doctor already wrote a prescription for this patient within 30 mins
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+
+    const recentPrescription = await Prescription.findOne({
+      patient: patientId,
+      doctor: doctorId,
+      dateOfIssue: { $gte: thirtyMinutesAgo },
+    });
+
+    if (recentPrescription) {
+      return res.status(429).json({
+        msg: "You already added a prescription for this patient within the last 30 minutes.",
+      });
+    }
+
     const prescription = await Prescription.create({
       patient: patientId,
       doctor: doctorId,
@@ -49,7 +64,7 @@ export const addPrescription = async (req, res) => {
       prescription,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -124,8 +139,9 @@ export const getPrescriptionsForPatient = async (req, res) => {
       // doctor: req.user._id, // doctor sees ONLY their own prescriptions
     })
       // .populate("patient", "name age phoneNumber district taluk village")
-      .sort({ dateOfIssue: -1 })
-      .limit(2);
+      .populate("doctor", "name")
+      .sort({ dateOfIssue: -1 });
+    // .limit(2);
 
     return res.status(200).json({
       count: prescriptions.length,
@@ -247,19 +263,23 @@ export const addPrescriptionImagesOnly = async (req, res) => {
       return res.status(400).json({ msg: "No images uploaded" });
     }
 
-    // console.log(req.files);
+    const doctorId = req.user._id;
 
-    // Upload images to S3
-    // const imageUrls = [];
+    // Check if the doctor already wrote a prescription for this patient within 30 mins
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
-    // for (const file of req.files) {
-    //   const url = await uploadCompressedImages(
-    //     file,
-    //     patient.name,
-    //     req.user.name
-    //   );
-    //   imageUrls.push(url);
-    // }
+    const recentPrescription = await Prescription.findOne({
+      patient: patientId,
+      doctor: doctorId,
+      dateOfIssue: { $gte: thirtyMinutesAgo },
+    });
+
+    if (recentPrescription) {
+      return res.status(429).json({
+        msg: "You already added a prescription for this patient within the last 30 minutes.",
+      });
+    }
+
     const imageUrls = await uploadCompressedImages(
       req.files,
       patient.name,
@@ -269,7 +289,7 @@ export const addPrescriptionImagesOnly = async (req, res) => {
     // Create new prescription
     const prescription = await Prescription.create({
       patient: patientId,
-      doctor: req.user._id,
+      doctor: doctorId,
       contagious: contagious || false,
       confirmedDisease: confirmedDisease || "",
       images: imageUrls,

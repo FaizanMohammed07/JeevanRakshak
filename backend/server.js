@@ -6,7 +6,9 @@ import dotenv from "dotenv";
 import cors from "cors";
 import patientRoutes from "./routes/patientRoutes.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
+import reportAssistantRoutes from "./routes/reportAssistantRoutes.js";
 import prescriptionRoutes from "./routes/prescriptionRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
 import diseaseRoutes from "./routes/diseaseRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
@@ -67,7 +69,9 @@ app.get("/", (req, res) => {
 
 app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
+app.use("/api/report-assistant", reportAssistantRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/reports", reportRoutes);
 app.use("/api/disease", diseaseRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/alerts", alertRoutes);
