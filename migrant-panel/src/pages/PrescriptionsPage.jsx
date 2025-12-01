@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ClipboardList } from "lucide-react";
 import { usePatientData } from "../context/PatientsContext";
 
 const PrescriptionDetailPanel = ({ rx }) => {
+  const { t } = useTranslation();
   if (!rx) {
     return (
       <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 text-center text-sm text-slate-500">
-        Select a prescription to view complete details.
+        {
+          t(
+            "common.selectPrescription"
+          ) /* Select a prescription to view complete details. */
+        }
       </div>
     );
   }
@@ -16,32 +22,38 @@ const PrescriptionDetailPanel = ({ rx }) => {
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-sky-100 bg-sky-50/40 p-5">
       <div>
+        {/* <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Condition</p> */}
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">
-          Condition
+          {t("prescriptions.detail.condition")}
         </p>
         <p className="text-xl font-semibold text-slate-900">
-          {rx.confirmedDisease || rx.suspectedDisease || "Diagnosis pending"}
+          {
+            rx.confirmedDisease ||
+              rx.suspectedDisease ||
+              t("common.diagnosisPending") /* Diagnosis pending */
+          }
         </p>
         <p className="text-sm text-slate-500">
-          Issued {formatDate(rx.dateOfIssue)}
+          {t("common.issued") /* Issued */} {formatDate(rx.dateOfIssue)}
         </p>
       </div>
 
       <div className="rounded-xl bg-white/80 p-4 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Symptoms
+          {t("prescriptions.detail.symptoms") /* Symptoms */}
         </p>
         <p className="text-sm text-slate-800">{rx.symptoms || "—"}</p>
         {rx.durationOfSymptoms && (
           <p className="text-xs text-slate-500">
-            Duration: {rx.durationOfSymptoms}
+            {t("prescriptions.detail.duration") /* Duration */}:{" "}
+            {rx.durationOfSymptoms}
           </p>
         )}
       </div>
 
       <div className="rounded-xl bg-white/80 p-4 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Medicines
+          {t("prescriptions.detail.medicines") /* Medicines */}
         </p>
         {medicines ? (
           <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-slate-800">
@@ -50,22 +62,34 @@ const PrescriptionDetailPanel = ({ rx }) => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-slate-500">No medicines recorded</p>
+          <p className="text-sm text-slate-500">
+            {t("common.noMedicines") /* No medicines recorded */}
+          </p>
         )}
       </div>
 
       <div className="grid gap-3 text-sm text-slate-600">
         <p>
-          <span className="font-semibold text-slate-800">Follow-up: </span>
-          {rx.followUpDate ? formatDate(rx.followUpDate) : "Not scheduled"}
+          <span className="font-semibold text-slate-800">
+            {t("common.followUp") /* Follow-up */}:
+          </span>
+          {
+            rx.followUpDate
+              ? formatDate(rx.followUpDate)
+              : t("common.notScheduled") /* Not scheduled */
+          }
         </p>
         <p>
-          <span className="font-semibold text-slate-800">Contagious: </span>
-          {rx.contagious ? "Yes" : "No"}
+          <span className="font-semibold text-slate-800">
+            {t("common.contagious") /* Contagious */}:
+          </span>
+          {rx.contagious ? t("common.yes") : t("common.no")}
         </p>
         {rx.notes && (
           <p>
-            <span className="font-semibold text-slate-800">Doctor notes: </span>
+            <span className="font-semibold text-slate-800">
+              {t("common.doctorNotes") /* Doctor notes */}:
+            </span>
             {rx.notes}
           </p>
         )}
@@ -76,6 +100,7 @@ const PrescriptionDetailPanel = ({ rx }) => {
 
 export default function PrescriptionsPage() {
   const { prescriptions, loadPrescriptions, status, errors } = usePatientData();
+  const { t } = useTranslation();
   const [activeRxId, setActiveRxId] = useState(null);
 
   useEffect(() => {
@@ -103,20 +128,29 @@ export default function PrescriptionsPage() {
   return (
     <section className="w-full space-y-8">
       <header className="rounded-3xl border border-sky-100 bg-white/95 px-6 py-5 shadow-sm">
+        {/* <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">Treatment history</p> */}
         <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
-          Treatment history
+          {t("prescriptions.headerLabel")}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
+          {/* <h2 className="text-3xl font-semibold text-slate-900">Prescriptions</h2> */}
           <h2 className="text-3xl font-semibold text-slate-900">
-            Prescriptions
+            {t("prescriptions.title")}
           </h2>
           <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-sky-600">
-            {prescriptions.length} records
+            {
+              t("common.records", {
+                count: prescriptions.length,
+              }) /* {count} records */
+            }
           </span>
         </div>
         <p className="text-sm text-slate-500">
-          All prescriptions issued by your doctor appear instantly. No more
-          paper copies.
+          {
+            t(
+              "prescriptions.subtitle"
+            ) /* All prescriptions issued by your doctor appear instantly. No more paper copies. */
+          }
         </p>
       </header>
 
@@ -126,7 +160,9 @@ export default function PrescriptionsPage() {
             <ClipboardList className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-sm text-slate-500">Total prescriptions</p>
+            <p className="text-sm text-slate-500">
+              {t("prescriptions.total") /* Total prescriptions */}
+            </p>
             <p className="text-2xl font-semibold text-slate-900">
               {prescriptions.length}
             </p>
@@ -135,7 +171,7 @@ export default function PrescriptionsPage() {
 
         {isLoading && (
           <p className="px-6 py-5 text-sm text-slate-500">
-            Loading prescriptions...
+            {t("prescriptions.loading") /* Loading prescriptions... */}
           </p>
         )}
 
@@ -148,8 +184,12 @@ export default function PrescriptionsPage() {
         {!isLoading && !errors.prescriptions && !hasData && (
           <div className="px-6 py-10">
             <EmptyState
-              title="No prescriptions yet"
-              message="Your prescriptions will show up here the moment a doctor uploads them."
+              title={t("prescriptions.emptyTitle") /* No prescriptions yet */}
+              message={
+                t(
+                  "prescriptions.emptyMessage"
+                ) /* Your prescriptions will show up here the moment a doctor uploads them. */
+              }
             />
           </div>
         )}
@@ -187,16 +227,27 @@ export default function PrescriptionsPage() {
 }
 
 function PrescriptionTable({ rows, onSelect, activeId }) {
+  const { t } = useTranslation();
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full border-separate border-spacing-y-2 text-left">
         <thead>
           <tr className="text-xs uppercase tracking-widest text-slate-500">
-            <th className="px-4 py-2 font-semibold">Condition</th>
-            <th className="px-4 py-2 font-semibold">Symptoms</th>
-            <th className="px-4 py-2 font-semibold">Medicines</th>
-            <th className="px-4 py-2 font-semibold">Issued</th>
-            <th className="px-4 py-2 font-semibold">Follow-up</th>
+            <th className="px-4 py-2 font-semibold">
+              {t("prescriptions.table.condition") /* Condition */}
+            </th>
+            <th className="px-4 py-2 font-semibold">
+              {t("prescriptions.table.symptoms") /* Symptoms */}
+            </th>
+            <th className="px-4 py-2 font-semibold">
+              {t("prescriptions.table.medicines") /* Medicines */}
+            </th>
+            <th className="px-4 py-2 font-semibold">
+              {t("prescriptions.table.issued") /* Issued */}
+            </th>
+            <th className="px-4 py-2 font-semibold">
+              {t("prescriptions.table.followUp") /* Follow-up */}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -211,9 +262,11 @@ function PrescriptionTable({ rows, onSelect, activeId }) {
                 }`}
               >
                 <td className="rounded-l-2xl px-4 py-3 text-slate-900">
-                  {rx.confirmedDisease ||
-                    rx.suspectedDisease ||
-                    "Diagnosis pending"}
+                  {
+                    rx.confirmedDisease ||
+                      rx.suspectedDisease ||
+                      t("common.diagnosisPending") /* Diagnosis pending */
+                  }
                 </td>
                 <td className="px-4 py-3">{rx.symptoms || "—"}</td>
                 <td className="px-4 py-3">
@@ -235,6 +288,7 @@ function PrescriptionTable({ rows, onSelect, activeId }) {
 }
 
 function PrescriptionCard({ rx, onSelect, isActive }) {
+  const { t } = useTranslation();
   return (
     <button
       type="button"
@@ -245,25 +299,32 @@ function PrescriptionCard({ rx, onSelect, isActive }) {
     >
       <div className="flex-1">
         <p className="text-lg font-semibold text-slate-900">
-          {rx.confirmedDisease || rx.suspectedDisease || "Diagnosis pending"}
+          {
+            rx.confirmedDisease ||
+              rx.suspectedDisease ||
+              t("common.diagnosisPending") /* Diagnosis pending */
+          }
         </p>
-        <p className="text-sm text-slate-500">Symptoms: {rx.symptoms || "—"}</p>
         <p className="text-sm text-slate-500">
-          Medicines: {(rx.medicinesIssued || []).join(", ") || "—"}
+          {t("common.symptoms") /* Symptoms */}: {rx.symptoms || "—"}
+        </p>
+        <p className="text-sm text-slate-500">
+          {t("common.medicines") /* Medicines */}:{" "}
+          {(rx.medicinesIssued || []).join(", ") || "—"}
         </p>
       </div>
       <div className="text-sm text-slate-500">
         <p className="font-semibold text-slate-600">
-          Issued {formatDate(rx.dateOfIssue)}
+          {t("common.issued") /* Issued */} {formatDate(rx.dateOfIssue)}
         </p>
         {rx.followUpDate && (
           <p className="text-amber-600">
-            Follow-up {formatDate(rx.followUpDate)}
+            {t("common.followUp") /* Follow-up */} {formatDate(rx.followUpDate)}
           </p>
         )}
       </div>
       <span className="text-xs font-semibold uppercase tracking-widest text-sky-600">
-        Tap for details
+        {t("prescriptions.detail.tapHint") /* Tap for details */}
       </span>
     </button>
   );

@@ -7,6 +7,7 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
   UserRound,
@@ -23,12 +24,34 @@ import ProfilePage from "./pages/ProfilePage";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
 import LabReportsPage from "./pages/LabReportsPage";
 import LoginPage from "./pages/Login";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 
 const navItems = [
-  { label: "Dashboard", to: "/", icon: LayoutDashboard, end: true },
-  { label: "Profile", to: "/profile", icon: UserRound },
-  { label: "Prescriptions", to: "/prescriptions", icon: FileText },
-  { label: "Lab Reports", to: "/lab-reports", icon: FlaskConical },
+  {
+    // label: "Dashboard",
+    labelKey: "nav.dashboard",
+    to: "/",
+    icon: LayoutDashboard,
+    end: true,
+  },
+  {
+    // label: "Profile",
+    labelKey: "nav.profile",
+    to: "/profile",
+    icon: UserRound,
+  },
+  {
+    // label: "Prescriptions",
+    labelKey: "nav.prescriptions",
+    to: "/prescriptions",
+    icon: FileText,
+  },
+  {
+    // label: "Lab Reports",
+    labelKey: "nav.labReports",
+    to: "/lab-reports",
+    icon: FlaskConical,
+  },
 ];
 
 function App() {
@@ -63,6 +86,7 @@ export default App;
 
 function ShellLayout() {
   const { patient, logout } = useAuth();
+  const { t } = useTranslation();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogoutClick = () => setShowLogoutConfirm(true);
@@ -83,8 +107,9 @@ function ShellLayout() {
                 JeevanRakshak
               </h1>
             </div>
+            {/* <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">Migrant Health Panel</p> */}
             <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
-              Migrant Health Panel
+              {t("app.tagline")}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-right">
@@ -94,12 +119,21 @@ function ShellLayout() {
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-600">
               <MapPin className="h-3.5 w-3.5 text-sky-500" />
-              {[patient?.district, patient?.taluk]
-                .filter(Boolean)
-                .join(" · ") || "Citizen"}
+              {
+                [patient?.district, patient?.taluk]
+                  .filter(Boolean)
+                  .join(" · ") || t("app.locationFallback") /* Citizen */
+              }
             </span>
             <div className="rounded-2xl border border-sky-100 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-600">
-              ID: {patient?._id ? patient._id.slice(-6).toUpperCase() : "—"}
+              {t("app.idLabel") /* ID */}:{" "}
+              {patient?._id ? patient._id.slice(-6).toUpperCase() : "—"}
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <span className="text-[0.6rem] font-semibold uppercase tracking-[0.4em] text-slate-400">
+                {t("language.navbarLabel") /* Language */}
+              </span>
+              <LanguageSwitcher className="bg-white text-slate-900" />
             </div>
             <button
               type="button"
@@ -107,7 +141,7 @@ function ShellLayout() {
               className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500"
             >
               <LogOut className="h-4 w-4" />
-              Logout
+              {t("logout.button") /* Logout */}
             </button>
           </div>
         </div>
@@ -136,7 +170,7 @@ function ShellLayout() {
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-100 bg-sky-50 text-sky-600">
                         <Icon className="h-4 w-4" />
                       </span>
-                      {item.label}
+                      {t(item.labelKey)}
                     </span>
                     <span className="text-xs text-slate-400">→</span>
                   </NavLink>
@@ -161,15 +195,19 @@ function ShellLayout() {
                 <LogOut className="h-6 w-6" />
               </div>
               <div>
+                {/* <p className="text-sm font-semibold uppercase tracking-[0.4em] text-sky-500">Confirm Logout</p> */}
                 <p className="text-sm font-semibold uppercase tracking-[0.4em] text-sky-500">
-                  Confirm Logout
+                  {t("logout.confirmLabel")}
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-                  Ready to exit the Migrant Panel?
+                  {
+                    t(
+                      "logout.confirmHeading"
+                    ) /* Ready to exit the Migrant Panel? */
+                  }
                 </h2>
                 <p className="mt-2 text-sm text-slate-600">
-                  Your current session will close and you will be redirected to
-                  the login screen. Any unsaved progress will be lost.
+                  {t("logout.confirmMessage")}
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -178,14 +216,14 @@ function ShellLayout() {
                   onClick={handleConfirmLogout}
                   className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500"
                 >
-                  Yes, log me out
+                  {t("logout.confirmAccept") /* Yes, log me out */}
                 </button>
                 <button
                   type="button"
                   onClick={handleCancelLogout}
                   className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
                 >
-                  Stay signed in
+                  {t("logout.confirmCancel") /* Stay signed in */}
                 </button>
               </div>
             </div>

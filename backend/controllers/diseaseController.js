@@ -3,9 +3,9 @@ import Prescription from "../models/prescriptionModel.js";
 import Patient from "../models/patientModel.js";
 
 // Central controller for disease analytics powering the government dashboards.
-// All business logic remains here so other routes can stay thin.
+// All business logic remains here so other routes can stay thin.....
+// ----- Tuning constants (adjust without touching business logic)
 
-// ----- Tuning constants (adjust without touching business logic) -----
 const DEFAULT_LOOKBACK_DAYS = 30;
 const DEFAULT_TREND_DAYS = 30;
 const CAMP_NEW_CASE_WINDOW = 7; // days

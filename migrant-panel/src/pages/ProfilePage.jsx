@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   UserRound,
   Phone,
@@ -13,6 +14,7 @@ import { usePatientData } from "../context/PatientsContext";
 export default function ProfilePage() {
   const { patient } = useAuth();
   const { loadProfile, status, errors } = usePatientData();
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadProfile();
@@ -21,30 +23,66 @@ export default function ProfilePage() {
   const quickFacts = useMemo(() => {
     if (!patient) return [];
     return [
-      { label: "Gender", value: patient.gender, icon: UserRound },
       {
-        label: "Age",
-        value: patient.age ? `${patient.age} yrs` : "—",
+        // label: "Gender",
+        label: t("profile.quickFacts.gender"),
+        value: patient.gender,
+        icon: UserRound,
+      },
+      {
+        // label: "Age",
+        label: t("profile.quickFacts.age"),
+        value: patient.age
+          ? t("profile.quickFacts.ageValue", {
+              value: patient.age,
+            }) /* {{value}} yrs */
+          : "—",
         icon: ShieldCheck,
       },
-      { label: "Blood group", value: patient.bloodGroup || "—", icon: Droplet },
-      { label: "Phone", value: patient.phoneNumber || "—", icon: Phone },
+      {
+        // label: "Blood group",
+        label: t("profile.quickFacts.bloodGroup"),
+        value: patient.bloodGroup || "—",
+        icon: Droplet,
+      },
+      {
+        // label: "Phone",
+        label: t("profile.quickFacts.phone"),
+        value: patient.phoneNumber || "—",
+        icon: Phone,
+      },
     ];
-  }, [patient]);
+  }, [patient, t]);
 
   const locationDetails = patient
     ? [
-        { label: "District", value: patient.district },
-        { label: "Taluk", value: patient.taluk },
-        { label: "Village", value: patient.village },
-        { label: "Address", value: patient.address || "Not provided" },
+        {
+          // label: "District",
+          label: t("profile.location.district"),
+          value: patient.district,
+        },
+        {
+          // label: "Taluk",
+          label: t("profile.location.taluk"),
+          value: patient.taluk,
+        },
+        {
+          // label: "Village",
+          label: t("profile.location.village"),
+          value: patient.village,
+        },
+        {
+          // label: "Address",
+          label: t("profile.location.address"),
+          value: patient.address || t("common.notProvided") /* Not provided */,
+        },
       ]
     : [];
 
   if (status.profile === "loading" && !patient) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 text-slate-500">
-        Fetching your profile...
+        {t("profile.loading") /* Fetching your profile... */}
       </div>
     );
   }
@@ -56,8 +94,12 @@ export default function ProfilePage() {
   if (!patient) {
     return (
       <EmptyState
-        title="Profile unavailable"
-        message="We could not find your profile details right now. Please try signing in again."
+        title={t("profile.emptyTitle") /* Profile unavailable */}
+        message={
+          t(
+            "profile.emptyMessage"
+          ) /* We could not find your profile details right now. Please try signing in again. */
+        }
       />
     );
   }
@@ -65,14 +107,20 @@ export default function ProfilePage() {
   return (
     <section className="w-full space-y-8">
       <header className="rounded-3xl border border-sky-100 bg-white/95 px-6 py-5 shadow-sm">
+        {/* <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">Your information</p> */}
         <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
-          Your information
+          {t("profile.headerLabel")}
         </p>
+        {/* <h2 className="mt-1 text-3xl font-semibold text-slate-900">Patient profile</h2> */}
         <h2 className="mt-1 text-3xl font-semibold text-slate-900">
-          Patient profile
+          {t("profile.title")}
         </h2>
         <p className="text-sm text-slate-500">
-          Keep your details current so hospital teams can reach you instantly.
+          {
+            t(
+              "profile.subtitle"
+            ) /* Keep your details current so hospital teams can reach you instantly. */
+          }
         </p>
       </header>
 
@@ -86,7 +134,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <p className="text-sm uppercase tracking-widest text-slate-400">
-                Full name
+                {t("profile.fullName") /* Full name */}
               </p>
               <h3 className="text-3xl font-semibold text-slate-900">
                 {patient.name}
@@ -123,15 +171,16 @@ export default function ProfilePage() {
           <div className="flex items-center gap-3">
             <IdCard className="h-10 w-10 rounded-2xl bg-sky-50 p-2 text-sky-600" />
             <div>
-              <p className="text-sm text-slate-500">Emergency contact</p>
+              <p className="text-sm text-slate-500">
+                {t("profile.emergencyContact") /* Emergency contact */}
+              </p>
               <p className="text-xl font-semibold text-slate-900">
-                {patient.emergencyContact || "Not provided"}
+                {patient.emergencyContact || t("common.notProvided")}
               </p>
             </div>
           </div>
           <p className="mt-4 text-sm text-slate-500">
-            Reach out to your health coordinator if this number changes so we
-            can contact your family quickly during emergencies.
+            {t("profile.emergencyMessage") /* Reach out... */}
           </p>
           <dl className="mt-6 space-y-3 text-sm text-slate-600">
             {locationDetails.map((row) => (
@@ -143,7 +192,7 @@ export default function ProfilePage() {
                   {row.label}
                 </dt>
                 <dd className="text-base font-medium text-slate-900">
-                  {row.value || "Not provided"}
+                  {row.value || t("common.notProvided")}
                 </dd>
               </div>
             ))}
@@ -153,29 +202,44 @@ export default function ProfilePage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <InfoList
-          title="Allergies"
+          // title="Allergies"
+          title={t("profile.lists.allergies.title")}
           items={patient.allergies}
-          empty="No allergies recorded."
+          empty={
+            t("profile.lists.allergies.empty") /* No allergies recorded. */
+          }
         />
         <InfoList
-          title="Chronic Conditions"
+          // title="Chronic Conditions"
+          title={t("profile.lists.chronic.title")}
           items={patient.chronicDiseases}
-          empty="No chronic conditions reported."
+          empty={
+            t(
+              "profile.lists.chronic.empty"
+            ) /* No chronic conditions reported. */
+          }
         />
         <InfoList
-          title="Current Medication"
+          // title="Current Medication"
+          title={t("profile.lists.medication.title")}
           items={patient.currentMedication}
-          empty="No active medication."
+          empty={
+            t("profile.lists.medication.empty") /* No active medication. */
+          }
         />
         <InfoList
-          title="Vaccinations"
+          // title="Vaccinations"
+          title={t("profile.lists.vaccinations.title")}
           items={(patient.vaccinations || []).map(
             (item) =>
-              `${item.vaccine_name || "Vaccine"} • ${formatDate(
-                item.date_administered
-              )}`
+              `${
+                item.vaccine_name ||
+                t("profile.lists.vaccinations.fallback") /* Vaccine */
+              } • ${formatDate(item.date_administered)}`
           )}
-          empty="No vaccination records."
+          empty={
+            t("profile.lists.vaccinations.empty") /* No vaccination records. */
+          }
         />
       </div>
     </section>
@@ -183,6 +247,7 @@ export default function ProfilePage() {
 }
 
 function InfoList({ title, items = [], empty }) {
+  const { t } = useTranslation();
   const hasItems = Array.isArray(items) && items.length > 0;
   return (
     <div className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
@@ -190,7 +255,7 @@ function InfoList({ title, items = [], empty }) {
         <h3 className="text-xl font-semibold text-slate-900">{title}</h3>
         {hasItems && (
           <span className="text-xs uppercase tracking-widest text-slate-400">
-            {items.length} entries
+            {t("common.entries", { count: items.length })}
           </span>
         )}
       </div>

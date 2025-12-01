@@ -1,9 +1,11 @@
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { FlaskConical, FileDown, Link2, TimerReset } from "lucide-react";
 import { usePatientData } from "../context/PatientsContext";
 
 export default function LabReportsPage() {
   const { labReports, loadLabReports, status, errors } = usePatientData();
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadLabReports();
@@ -12,25 +14,28 @@ export default function LabReportsPage() {
   const summaryCards = useMemo(
     () => [
       {
-        label: "Total reports",
+        // label: "Total reports",
+        label: t("labReports.summary.total"),
         value: labReports.length,
         icon: FlaskConical,
         accent: "bg-sky-50 text-sky-600",
       },
       {
-        label: "Downloads ready",
+        // label: "Downloads ready",
+        label: t("labReports.summary.downloads"),
         value: labReports.filter((report) => Boolean(report.file_url)).length,
         icon: FileDown,
         accent: "bg-emerald-50 text-emerald-600",
       },
       {
-        label: "Pending uploads",
+        // label: "Pending uploads",
+        label: t("labReports.summary.pending"),
         value: labReports.filter((report) => !report.file_url).length,
         icon: TimerReset,
         accent: "bg-amber-50 text-amber-600",
       },
     ],
-    [labReports]
+    [labReports, t]
   );
 
   const isLoading = status.labs === "loading";
@@ -43,14 +48,20 @@ export default function LabReportsPage() {
   return (
     <section className="w-full space-y-8">
       <header className="rounded-3xl border border-sky-100 bg-white/95 px-6 py-5 shadow-sm">
+        {/* <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">Diagnostics</p> */}
         <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
-          Diagnostics
+          {t("labReports.headerLabel")}
         </p>
+        {/* <h2 className="mt-1 text-3xl font-semibold text-slate-900">Lab Reports</h2> */}
         <h2 className="mt-1 text-3xl font-semibold text-slate-900">
-          Lab Reports
+          {t("labReports.title")}
         </h2>
         <p className="text-sm text-slate-500">
-          Digital lab reports stay safe here, so you can access them anytime.
+          {
+            t(
+              "labReports.subtitle"
+            ) /* Digital lab reports stay safe here, so you can access them anytime. */
+          }
         </p>
       </header>
 
@@ -79,21 +90,33 @@ export default function LabReportsPage() {
       <article className="rounded-3xl border border-sky-100 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-6 py-5">
           {isLoading ? (
-            <p className="text-sm text-slate-500">Fetching lab reports...</p>
+            <p className="text-sm text-slate-500">
+              {t("labReports.status.fetching") /* Fetching lab reports... */}
+            </p>
           ) : hasData ? (
             <p className="text-sm text-slate-500">
-              {labReports.length} report(s) available
+              {
+                t("labReports.status.available", {
+                  count: labReports.length,
+                }) /* {{count}} report(s) available */
+              }
             </p>
           ) : (
-            <p className="text-sm text-slate-500">No reports yet</p>
+            <p className="text-sm text-slate-500">
+              {t("labReports.status.none") /* No reports yet */}
+            </p>
           )}
         </div>
 
         {!hasData && !isLoading ? (
           <div className="px-6 py-10">
             <EmptyState
-              title="No lab reports yet"
-              message="When a hospital uploads documents, they will appear in this list automatically."
+              title={t("labReports.empty.title") /* No lab reports yet */}
+              message={
+                t(
+                  "labReports.empty.message"
+                ) /* When a hospital uploads documents, they will appear in this list automatically. */
+              }
             />
           </div>
         ) : (
@@ -114,19 +137,24 @@ export default function LabReportsPage() {
 }
 
 function ReportItem({ report }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-sky-50 bg-sky-50/40 p-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
         <p className="text-lg font-semibold text-slate-900">
-          {report.document_name || "Lab Report"}
+          {report.document_name || t("common.labReport") /* Lab Report */}
         </p>
         <p className="text-sm text-slate-500">
-          {report.document_type || "General"}
+          {report.document_type || t("common.general") /* General */}
         </p>
       </div>
       <div className="flex flex-col gap-2 text-sm text-slate-500 lg:text-right">
         <p className="font-semibold text-slate-600">
-          Uploaded {formatDate(report.uploaded_at)}
+          {
+            t("labReports.report.uploaded", {
+              date: formatDate(report.uploaded_at),
+            }) /* Uploaded {{date}} */
+          }
         </p>
         {report.file_url ? (
           <a
@@ -135,10 +163,13 @@ function ReportItem({ report }) {
             rel="noreferrer"
             className="inline-flex items-center gap-2 text-sky-600"
           >
-            <Link2 className="h-4 w-4" /> View document
+            <Link2 className="h-4 w-4" />
+            {t("labReports.report.view") /* View document */}
           </a>
         ) : (
-          <span className="text-slate-400">File not provided</span>
+          <span className="text-slate-400">
+            {t("common.fileNotProvided") /* File not provided */}
+          </span>
         )}
       </div>
     </div>
