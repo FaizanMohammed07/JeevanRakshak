@@ -27,7 +27,7 @@ export const protect = async (req, res, next) => {
 
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+    req.isAdmin = decoded.isAdmin || false; 
     const userId = decoded.id;
 
     // Try to find doctor first
@@ -84,14 +84,25 @@ export const allowPatientsOnly = (req, res, next) => {
   next();
 };
 
-export const allowReportAssistantsOnly = (req, res, next) => {
-  if (!req.isReportAssistant)
-    return res
-      .status(403)
-      .json({ msg: "Only report assistants can access this route" });
+// export const allowReportAssistantsOnly = (req, res, next) => {
+//   if (!req.isReportAssistant)
+//     return res
+//       .status(403)
+//       .json({ msg: "Only report assistants can access this route" });
 
-  next();
+//   next();
+// };
+export const allowReportAssistantsOnly = (req, res, next) => {
+  // Allow if user is admin or report assistant
+  if (req.isAdmin || req.isReportAssistant) {
+    return next();
+  }
+
+  return res.status(403).json({
+    msg: "Only report assistants or admins can access this route",
+  });
 };
+
 
 export const govtProtect = async (req, res, next) => {
   try {

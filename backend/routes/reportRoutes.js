@@ -15,7 +15,7 @@ const router = express.Router();
 router.post(
   "/",
   protect,
-  allowReportAssistantsOnly,
+  // allowReportAssistantsOnly,
   upload.single("pdf"),
   addPatientReport
 );

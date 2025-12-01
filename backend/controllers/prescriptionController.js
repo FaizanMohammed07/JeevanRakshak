@@ -139,6 +139,7 @@ export const getPrescriptionsForPatient = async (req, res) => {
       // doctor: req.user._id, // doctor sees ONLY their own prescriptions
     })
       // .populate("patient", "name age phoneNumber district taluk village")
+      .populate("doctor", "name")
       .sort({ dateOfIssue: -1 });
     // .limit(2);
 

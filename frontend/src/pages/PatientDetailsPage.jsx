@@ -1,4 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+
 import {
   User,
   Calendar,
@@ -27,6 +29,9 @@ function PatientDetailsPage() {
   const { patientId } = useParams();
   const navigate = useNavigate();
   const { doctor } = useDoctors();
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   // --- THE NEW WAY (Simple) ---
   // You do NOT need useState, useEffect, or useContext here anymore.
@@ -351,7 +356,7 @@ function PatientDetailsPage() {
                   Prescriptions Timeline
                 </h3>
               </div>
-              {prescriptions.length > 0 ? (
+              {/* {prescriptions.length > 0 ? (
                 <div className="space-y-3">
                   {prescriptions.map((rx) => (
                     <div
@@ -387,8 +392,135 @@ function PatientDetailsPage() {
                 </div>
               ) : (
                 <p className="text-gray-500 text-sm">No prescriptions yet</p>
+              )} */}
+              {prescriptions.length > 0 ? (
+                <div className="space-y-3">
+                  {prescriptions.map((rx) => (
+                    <div
+                      key={rx._id}
+                      className="border border-gray-200 rounded-lg p-4"
+                    >
+                      {/* Header */}
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold text-gray-600">
+                          <span className="text-gray-500 mr-1">Diagnosis:</span>
+                          {rx.confirmedDisease ||
+                            rx.suspectedDisease ||
+                            "Prescription"}
+                        </h4>
+                        <span className="text-sm text-gray-500">
+                          {formatDate(rx.dateOfIssue)}
+                        </span>
+                      </div>
+
+                      {/* Symptoms */}
+                      {rx.symptoms && (
+                        <p className="text-sm text-gray-700 mb-1">
+                          <b>Symptoms:</b> {rx.symptoms}
+                        </p>
+                      )}
+
+                      {/* Duration */}
+                      {rx.durationOfSymptoms && (
+                        <p className="text-sm text-gray-700 mb-1">
+                          <b>Duration:</b> {rx.durationOfSymptoms}
+                        </p>
+                      )}
+
+                      {/* Contagious */}
+                      <p className="text-sm text-gray-700 mb-1">
+                        <b>Contagious:</b> {rx.contagious ? "Yes" : "No"}
+                      </p>
+
+                      {/* Medicines */}
+                      {rx.medicinesIssued && rx.medicinesIssued.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-gray-200">
+                          <p className="text-xs text-gray-500 mb-1">
+                            Medicines Issued:
+                          </p>
+                          {rx.medicinesIssued.map((med, idx) => (
+                            <p key={idx} className="text-sm text-gray-700">
+                              • {med.name} – {med.dosage}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Follow-up Date */}
+                      {rx.followUpDate && (
+                        <p className="text-sm text-gray-700 mt-2">
+                          <b>Follow-up:</b> {formatDate(rx.followUpDate)}
+                        </p>
+                      )}
+
+                      {/* Notes */}
+                      {rx.notes && (
+                        <p className="text-sm text-gray-700 mt-2">
+                          <b>Notes:</b> {rx.notes}
+                        </p>
+                      )}
+
+                      {/* Doctor Name */}
+                      {rx.doctor && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          <h4 className="font-semibold text-gray-800">
+                            Doctor: {rx.doctor.name}
+                          </h4>
+                        </p>
+                      )}
+
+                      {/* Images (Uploaded prescription files) */}
+                      {rx.images && rx.images.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-sm text-gray-600 mb-1">
+                            <b>Prescription Files:</b>
+                          </p>
+                          <div className="flex gap-3 mt-2">
+                            {rx.images.map((img, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  setSelectedFile(img);
+                                  setShowModal(true);
+                                }}
+                                className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition"
+                              >
+                                View Prescription {idx + 1}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No prescriptions yet</p>
               )}
             </div>
+            {showModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+                <div className="bg-white p-4 rounded-xl shadow-lg max-w-3xl w-[90%] relative">
+                  {/* Close Button */}
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="absolute top-3 right-3 text-gray-600 text-xl font-bold hover:text-black"
+                  >
+                    ✕
+                  </button>
+
+                  {/* Content Wrapper to center image */}
+                  <div className="flex justify-center items-center">
+                    {/* Image */}
+                    <img
+                      src={selectedFile}
+                      alt="Prescription"
+                      className="max-h-[80vh] max-w-full object-contain rounded-md"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex items-center gap-2 mb-4">

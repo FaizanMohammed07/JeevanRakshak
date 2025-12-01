@@ -33,7 +33,7 @@ router.get("/doctor/my", protect, allowDoctorsOnly, getDoctorPrescriptions);
 router.get(
   "/patient/:patientId",
   protect,
-  allowDoctorsOnly,
+  // allowDoctorsOnly,
   getPrescriptionsForPatient
 );
 
