@@ -51,20 +51,32 @@ Content-Type: application/json
     "address": "near asifnagar bus stop"
 }
 
+###
+//pateint login to get id
+POST http://localhost:3030/api/patients/login
+Content-Type: application/json
+
+{
+  "phoneNumber": "9392756435",
+  "password": "Patient@123"
+}
+
 ### Register a third patient in yet another district
+//nash_ID=692a92133e5932a3e7e62d56
+//rayan_id =692adedabaf00141bd56e018
 POST http://localhost:3030/api/patients/signup
 Content-Type: application/json
 
 {
-    "name": "Nashra",
+    "name": "z",
     "age": 21,
-    "phoneNumber": "7416205191",
+    "phoneNumber": "9959728601",
     "password": "Patient@123",
     "passwordConfirm": "Patient@123",
-    "district": "Thriuvananthapuram",
-    "taluk": "Thiruvananthapuram",
+    "district": "Thrissur",
+    "taluk": "Thalapilly",
     "village": "Andoorkonam",
-    "address": "Near Andoorkonam Junction"
+    "address": "near andoorkonam junction"
 }
 
 ### Doctor issues a prescription (set Authorization header with doctor JWT if not using cookie)
@@ -73,15 +85,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjgwZWI5N
 Content-Type: application/json
 
 {
-    "patientId": "69281f7c19560f00929c7da5",
-    "symptoms": "High fever, headache, rash",
+    "patientId": "692815bcaa6551268fb9727b",
+    "symptoms": "Fever, vomiting",
     "durationOfSymptoms": "4 days",
     "contagious": true,
-    "medicinesIssued": ["Paracetamol", "ORS"],
-    "suspectedDisease": "Waterborne illness",
-    "confirmedDisease": "Waterborne illness",
-    "followUpDate": "2025-12-01T10:00:00.000Z",
-    "notes": "Admit if platelet count drops"
+    "medicinesIssued": ["Oral Rehydration Salts", "Paracetamol"],
+    "suspectedDisease": "malaria ",
+    "confirmedDisease": "malaria",
+    "followUpDate": "2025-12-03T10:00:00.000Z",
+    "notes": "Advise rest and hydration"
 }
 
 ### Repeat prescription in another district for comparison

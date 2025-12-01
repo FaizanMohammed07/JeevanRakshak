@@ -1,0 +1,195 @@
+{
+  "app": {
+    "name": "JeevanRakshak",
+    "tagline": "Migrant Health Panel",
+    "locationFallback": "Citizen",
+    "idLabel": "ID"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "prescriptions": "Prescriptions",
+    "labReports": "Lab Reports"
+  },
+  "language": {
+    "prompt": "Choose your language",
+    "navbarLabel": "Language"
+  },
+  "logout": {
+    "button": "Logout",
+    "confirmLabel": "Confirm Logout",
+    "confirmHeading": "Ready to exit the Migrant Panel?",
+    "confirmMessage": "Your current session will close and you will be redirected to the login screen. Any unsaved progress will be lost.",
+    "confirmAccept": "Yes, log me out",
+    "confirmCancel": "Stay signed in"
+  },
+  "common": {
+    "overview": "Overview",
+    "dashboard": "Dashboard",
+    "loading": "Loading",
+    "viewAll": "View all",
+    "notProvided": "Not provided",
+    "records": "{{count}} records",
+    "entries": "{{count}} entries",
+    "selectPrescription": "Select a prescription to view complete details.",
+    "condition": "Condition",
+    "symptoms": "Symptoms",
+    "medicines": "Medicines",
+    "issued": "Issued",
+    "followUp": "Follow-up",
+    "duration": "Duration",
+    "contagious": "Contagious",
+    "doctorNotes": "Doctor notes",
+    "diagnosisPending": "Diagnosis pending",
+    "noMedicines": "No medicines recorded",
+    "notScheduled": "Not scheduled",
+    "yes": "Yes",
+    "no": "No",
+    "tapForDetails": "Tap for details",
+    "fileNotProvided": "File not provided",
+    "labReport": "Lab Report",
+    "general": "General",
+    "refresh": "Refresh",
+    "priority": "Priority",
+    "awaiting": "Awaiting broadcast",
+    "audienceAll": "All",
+    "syncing": "Syncing...",
+    "noBroadcasts": "No broadcasts"
+  },
+  "dashboard": {
+    "subtitle": "Track prescriptions, vaccinations, visits and diagnostics in one place.",
+    "broadcast": "Broadcast",
+    "noBroadcast": "No Broadcast",
+    "upToDate": "You're up to date",
+    "defaultMessage": "We will surface government advisories and healthcare alerts here as soon as they are issued.",
+    "errors": {
+      "announcements": "Unable to load announcements"
+    },
+    "stats": {
+      "totalPrescriptions": "Total Prescriptions",
+      "vaccinations": "Vaccinations Completed",
+      "visits": "Recorded Visits",
+      "labs": "Lab Reports"
+    },
+    "sections": {
+      "recentPrescriptions": {
+        "title": "Recent Prescriptions",
+        "emptyTitle": "No prescriptions yet",
+        "emptyMessage": "Your doctor has not issued a prescription."
+      },
+      "labReports": {
+        "title": "Lab Reports",
+        "emptyTitle": "No lab reports",
+        "emptyMessage": "Uploaded lab reports will appear here."
+      }
+    }
+  },
+  "prescriptions": {
+    "headerLabel": "Treatment history",
+    "title": "Prescriptions",
+    "subtitle": "All prescriptions issued by your doctor appear instantly. No more paper copies.",
+    "total": "Total prescriptions",
+    "loading": "Loading prescriptions...",
+    "emptyTitle": "No prescriptions yet",
+    "emptyMessage": "Your prescriptions will show up here the moment a doctor uploads them.",
+    "table": {
+      "condition": "Condition",
+      "symptoms": "Symptoms",
+      "medicines": "Medicines",
+      "issued": "Issued",
+      "followUp": "Follow-up"
+    },
+    "detail": {
+      "condition": "Condition",
+      "symptoms": "Symptoms",
+      "medicines": "Medicines",
+      "duration": "Duration",
+      "followUp": "Follow-up",
+      "contagious": "Contagious",
+      "doctorNotes": "Doctor notes",
+      "tapHint": "Tap for details"
+    }
+  },
+  "labReports": {
+    "headerLabel": "Diagnostics",
+    "title": "Lab Reports",
+    "subtitle": "Digital lab reports stay safe here, so you can access them anytime.",
+    "summary": {
+      "total": "Total reports",
+      "downloads": "Downloads ready",
+      "pending": "Pending uploads"
+    },
+    "status": {
+      "fetching": "Fetching lab reports...",
+      "available": "{{count}} report(s) available",
+      "none": "No reports yet"
+    },
+    "empty": {
+      "title": "No lab reports yet",
+      "message": "When a hospital uploads documents, they will appear in this list automatically."
+    },
+    "report": {
+      "uploaded": "Uploaded {{date}}",
+      "view": "View document"
+    }
+  },
+  "profile": {
+    "headerLabel": "Your information",
+    "title": "Patient profile",
+    "subtitle": "Keep your details current so hospital teams can reach you instantly.",
+    "loading": "Fetching your profile...",
+    "emptyTitle": "Profile unavailable",
+    "emptyMessage": "We could not find your profile details right now. Please try signing in again.",
+    "fullName": "Full name",
+    "quickFacts": {
+      "gender": "Gender",
+      "age": "Age",
+      "ageValue": "{{value}} yrs",
+      "bloodGroup": "Blood group",
+      "phone": "Phone"
+    },
+    "emergencyContact": "Emergency contact",
+    "emergencyMessage": "Reach out to your health coordinator if this number changes so we can contact your family quickly during emergencies.",
+    "location": {
+      "district": "District",
+      "taluk": "Taluk",
+      "village": "Village",
+      "address": "Address"
+    },
+    "lists": {
+      "allergies": {
+        "title": "Allergies",
+        "empty": "No allergies recorded."
+      },
+      "chronic": {
+        "title": "Chronic Conditions",
+        "empty": "No chronic conditions reported."
+      },
+      "medication": {
+        "title": "Current Medication",
+        "empty": "No active medication."
+      },
+      "vaccinations": {
+        "title": "Vaccinations",
+        "empty": "No vaccination records.",
+        "fallback": "Vaccine"
+      }
+    }
+  },
+  "login": {
+    "title": "Migrant Health Panel",
+    "description": "Securely access your prescriptions, lab records, and personal information anywhere in Kerala.",
+    "featurePhone": "Sign in with your registered phone number",
+    "featureSecure": "Two-factor security enabled at hospitals",
+    "formTitle": "Patient login",
+    "welcome": "Welcome back",
+    "formSubtitle": "Enter your registered details to continue.",
+    "phoneLabel": "Phone Number",
+    "phonePlaceholder": "+91 98765 43210",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter password",
+    "missingFields": "Please enter both phone number and password.",
+    "signingIn": "Signing in...",
+    "signIn": "Sign In"
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "app": {
+    "name": "JeevanRakshak",
+    "tagline": "প্ৰৱাসী স্বাস্থ্য পেনেল",
+    "locationFallback": "নাগৰিক",
+    "idLabel": "আইডি"
+  },
+  "nav": {
+    "dashboard": "ডেশ্ববʼৰ্ড",
+    "profile": "প্ৰফাইল",
+    "prescriptions": "প্ৰেছক্ৰিপচন",
+    "labReports": "লেব রিপোর্ট"
+  },
+  "language": {
+    "prompt": "আপোনাৰ ভাষা নিৰ্বাচন কৰক",
+    "navbarLabel": "ভাষা"
+  },
+  "logout": {
+    "button": "লগ আউট",
+    "confirmLabel": "লগআউট নিশ্চিতকৰণ",
+    "confirmHeading": "প্ৰৱাসী পেনেলৰ পৰা বাহিৰ যাব নে?",
+    "confirmMessage": "আপোনাৰ বৰ্তমান ছেশ্যন বন্ধ হʼব আৰু লগইন স্ক্ৰীণলৈ লৈ যোৱা হʼব। সংৰক্ষণ নোহোৱা তথ্য হেৰাই যাব।",
+    "confirmAccept": "হʼ, মোক লগ আউট কৰক",
+    "confirmCancel": "সাইন ইন হৈ থাকো"
+  },
+  "common": {
+    "overview": "সাৰাংশ",
+    "dashboard": "ডেশ্ববʼৰ্ড",
+    "loading": "লʼড হৈছে",
+    "viewAll": "সকলো দেখুৱাও",
+    "notProvided": "উপলব্ধ নহʼয়",
+    "records": "{{count}} ৰেকৰ্ড",
+    "entries": "{{count}} প্ৰবিষ্টি",
+    "selectPrescription": "সম্পূৰ্ণ তথ্য চাবলৈ এটা প্ৰেছক্ৰিপচন বাছনি কৰক।",
+    "condition": "অৱস্থা",
+    "symptoms": "লক্ষণ",
+    "medicines": "ঔষধ",
+    "issued": "জাৰী",
+    "followUp": "ফলো-আপ",
+    "duration": "অৱধি",
+    "contagious": "সংক্রামক",
+    "doctorNotes": "ডাক্তৰৰ টোকা",
+    "diagnosisPending": "ৰোগ নিৰ্ণয় অপেক্ষাৰত",
+    "noMedicines": "কোনো ঔষধ নথিভুক্ত নাই",
+    "notScheduled": "সময় নিৰ্ধারিত নহʼয়",
+    "yes": "হʼ",
+    "no": "নহʼ",
+    "tapForDetails": "বিৱৰণৰ বাবে টেপ কৰক",
+    "fileNotProvided": "নথিপত্ৰ নাই",
+    "labReport": "লেব রিপোর্ট",
+    "general": "সাধাৰণ",
+    "refresh": "ৰিফ্ৰেশ",
+    "priority": "আগ্ৰাধিকাৰ",
+    "awaiting": "সম্প্ৰচাৰৰ অপেক্ষাত",
+    "audienceAll": "সকলো",
+    "syncing": "চিঙ্ক হৈ আছে...",
+    "noBroadcasts": "কোনো সম্প্ৰচার নাই"
+  },
+  "dashboard": {
+    "subtitle": "এটা ঠাইতে প্ৰেছক্ৰিপচন, টিকাকৰণ, ভিজিট আৰু ডায়াগনস্টিক নজৰ ৰাখক।",
+    "broadcast": "সম্প্ৰচার",
+    "noBroadcast": "কোনো সম্প্ৰচার নাই",
+    "upToDate": "আপুনি আপডেটেড",
+    "defaultMessage": "সরকাৰী পৰামৰ্শ আৰু স্বাস্থ্য সতৰ্কবাণী আহিলেই ইয়াত দৰ্শোৱা হʼব।",
+    "errors": {
+      "announcements": "ঘোষণা লোড কৰিব নোৱাৰিলো"
+    },
+    "stats": {
+      "totalPrescriptions": "মুঠ প্ৰেছক্ৰিপচন",
+      "vaccinations": "সম্পূৰ্ণ টিকাকৰণ",
+      "visits": "ৰেকৰ্ড কৰা ভিজিট",
+      "labs": "লেব রিপোর্ট"
+    },
+    "sections": {
+      "recentPrescriptions": {
+        "title": "শেহতীয়া প্ৰেছক্ৰিপচন",
+        "emptyTitle": "এতিয়ালৈকে কোনো প্ৰেছক্ৰিপচন নাই",
+        "emptyMessage": "আপোনাৰ ডাক্তৰে জাৰী কৰা মাত্ৰ ইয়াত দেখিব।"
+      },
+      "labReports": {
+        "title": "লেব রিপোর্ট",
+        "emptyTitle": "কোনো লেব রিপোর্ট নাই",
+        "emptyMessage": "আপলোড কৰা রিপোর্টসমূহ ইয়াত দেখা যাব।"
+      }
+    }
+  },
+  "prescriptions": {
+    "headerLabel": "চিকিৎসা ইতিহাস",
+    "title": "প্ৰেছক্ৰিপচন",
+    "subtitle": "ডাক্তৰে জাৰী কৰা সকলো প্ৰেছক্ৰিপচন তৎক্ষণাত চাওক। কাগজৰ কপি নালাগে।",
+    "total": "মুঠ প্ৰেছক্ৰিপচন",
+    "loading": "প্ৰেছক্ৰিপচন লোড হৈছে...",
+    "emptyTitle": "এতিয়ালৈকে কোনো প্ৰেছক্ৰিপচন নাই",
+    "emptyMessage": "ডাক্তৰে আপলোড কৰাতেই ইয়াত দেখিব।",
+    "table": {
+      "condition": "অৱস্থা",
+      "symptoms": "লক্ষণ",
+      "medicines": "ঔষধ",
+      "issued": "জাৰী",
+      "followUp": "ফলো-আপ"
+    },
+    "detail": {
+      "condition": "অৱস্থা",
+      "symptoms": "লক্ষণ",
+      "medicines": "ঔষধ",
+      "duration": "অৱধি",
+      "followUp": "ফলো-আপ",
+      "contagious": "সংক্রামক",
+      "doctorNotes": "ডাক্তৰৰ টোকা",
+      "tapHint": "বিৱৰণৰ বাবে টেপ কৰক"
+    }
+  },
+  "labReports": {
+    "headerLabel": "ডায়াগনস্টিক",
+    "title": "লেব রিপোর্ট",
+    "subtitle": "ডিজিটেল লেব রিপোর্ট সুৰক্ষিত থাকে, যেতিয়া খুশি প্ৰৱেশ কৰক।",
+    "summary": {
+      "total": "মুঠ রিপোর্ট",
+      "downloads": "ডাউনলোড সাজু",
+      "pending": "অপেক্ষমাণ আপলোড"
+    },
+    "status": {
+      "fetching": "লেব রিপোর্ট সংগ্ৰহ কৰা হৈছে...",
+      "available": "{{count}}টা রিপোর্ট উপলব্ধ",
+      "none": "এতিয়ালৈকে কোনো রিপোর্ট নাই"
+    },
+    "empty": {
+      "title": "এতিয়ালৈকে কোনো লেব রিপোর্ট নাই",
+      "message": "হস্পিতালে নথি আপলোড কৰিলে তালিকাত নিজেই আহিব।"
+    },
+    "report": {
+      "uploaded": "{{date}} ত আপলোড",
+      "view": "দলিল চাওক"
+    }
+  },
+  "profile": {
+    "headerLabel": "আপোনাৰ তথ্য",
+    "title": "ৰোগী প্ৰফাইল",
+    "subtitle": "হস্পিতাল টীমে তৎক্ষণাত যোগাযোগ কৰিব পাৰিবলৈ তথ্য আপডেট ৰাখক।",
+    "loading": "প্ৰফাইল লোড হৈছে...",
+    "emptyTitle": "প্ৰফাইল অনুপস্থিত",
+    "emptyMessage": "এতিয়া প্ৰফাইল পোৱা নগʼল। অনুগ্ৰহ কৰি পুনৰ লগইন কৰক।",
+    "fullName": "পূৰ্ণ নাম",
+    "quickFacts": {
+      "gender": "লিংগ",
+      "age": "বয়স",
+      "ageValue": "{{value}} বছৰ",
+      "bloodGroup": "ৰক্তৰ গোট",
+      "phone": "ফোন"
+    },
+    "emergencyContact": "জৰুৰি যোগাযোগ",
+    "emergencyMessage": "নম্বৰ সলনি হʼলে স্বাস্থ্য সমন্বয়কৰক জনাওক যাতে জৰুৰী পৰিস্থিতিত পৰিয়ালৰ সৈতে যোগাযোগ কৰিব পাৰো।",
+    "location": {
+      "district": "জিলা",
+      "taluk": "তহচিল",
+      "village": "গাওঁ",
+      "address": "ঠিকনা"
+    },
+    "lists": {
+      "allergies": {
+        "title": "এলাৰ্জি",
+        "empty": "কোনো এলাৰ্জি নথিভুক্ত নাই।"
+      },
+      "chronic": {
+        "title": "দীৰ্ঘস্থায়ী অৱস্থা",
+        "empty": "দীৰ্ঘস্থায়ী ৰোগৰ তথ্য নাই।"
+      },
+      "medication": {
+        "title": "চলমান ঔষধ",
+        "empty": "কোনো সক্ৰিয় ঔষধ নাই।"
+      },
+      "vaccinations": {
+        "title": "টিকাকৰণ",
+        "empty": "টিকাকৰণ ৰেকৰ্ড নাই।",
+        "fallback": "ভেক্সিন"
+      }
+    }
+  },
+  "login": {
+    "title": "প্ৰৱাসী স্বাস্থ্য পেনেল",
+    "description": "কাচচিত কেৰালা ৰ পৰা সুৰক্ষিতভাৱে প্ৰেছক্ৰিপচন, লেব ৰেকৰ্ড আৰু ব্যক্তিগত তথ্য চাওক।",
+    "featurePhone": "নিবন্ধিত ফোন নম্বৰৰে সাইন ইন কৰক",
+    "featureSecure": "হস্পিতালত দ্বিস্তৰ সুৰক্ষা",
+    "formTitle": "ৰোগী লগইন",
+    "welcome": "ফেৰাই আহা",
+    "formSubtitle": "আগবঢ়াবলৈ নিবন্ধিত তথ্য দিয়ক।",
+    "phoneLabel": "ফোন নম্বৰ",
+    "phonePlaceholder": "+91 98765 43210",
+    "passwordLabel": "পাছৱৰ্ড",
+    "passwordPlaceholder": "পাছৱৰ্ড লিখক",
+    "missingFields": "অনুগ্ৰহ কৰি ফোন নম্বৰ আৰু পাছৱৰ্ড দুয়োখনেই দিয়ক।",
+    "signingIn": "সাইন ইন হৈ আছে...",
+    "signIn": "সাইন ইন"
+  }
+}
