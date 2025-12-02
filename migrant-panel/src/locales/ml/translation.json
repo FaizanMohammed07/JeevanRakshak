@@ -185,7 +185,7 @@
     "welcome": "തിരികെ വരവേൽപ്പ്",
     "formSubtitle": "തുടരാൻ രജിസ്റ്റർ ചെയ്ത വിവരങ്ങൾ നൽകുക.",
     "phoneLabel": "ഫോൺ നമ്പർ",
-    "phonePlaceholder": "+91 98765 43210",
+    "phonePlaceholder": "ഫോൺ നമ്പർ നൽകുക",
     "passwordLabel": "പാസ്വേഡ്",
     "passwordPlaceholder": "പാസ്വേഡ് നൽകുക",
     "missingFields": "ഫോൺ നമ്പറും പാസ്വേഡും നൽകുക.",

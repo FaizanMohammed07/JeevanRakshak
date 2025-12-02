@@ -185,7 +185,7 @@
     "welcome": "மீண்டும் வருக",
     "formSubtitle": "தொடர உங்கள் பதிவுசெய்யப்பட்ட விவரங்களை உள்ளிடவும்.",
     "phoneLabel": "தொலைபேசி எண்",
-    "phonePlaceholder": "+91 98765 43210",
+    "phonePlaceholder": "தொலைபேசி எண்ணை உள்ளிடவும்",
     "passwordLabel": "கடவுச்சொல்",
     "passwordPlaceholder": "கடவுச்சொல் உள்ளிடவும்",
     "missingFields": "தொலைபேசி எண் மற்றும் கடவுச்சொல்லை உள்ளிடவும்.",

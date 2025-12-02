@@ -185,7 +185,7 @@
     "welcome": "Welcome back",
     "formSubtitle": "Enter your registered details to continue.",
     "phoneLabel": "Phone Number",
-    "phonePlaceholder": "+91 98765 43210",
+    "phonePlaceholder": "Enter phone number",
     "passwordLabel": "Password",
     "passwordPlaceholder": "Enter password",
     "missingFields": "Please enter both phone number and password.",

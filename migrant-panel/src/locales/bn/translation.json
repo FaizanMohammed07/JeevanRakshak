@@ -185,7 +185,7 @@
     "welcome": "ফিরে আসায় স্বাগতম",
     "formSubtitle": "জারি রাখতে আপনার নিবন্ধিত তথ্য দিন।",
     "phoneLabel": "ফোন নম্বর",
-    "phonePlaceholder": "+91 98765 43210",
+    "phonePlaceholder": "ফোন নম্বর লিখুন",
     "passwordLabel": "পাসওয়ার্ড",
     "passwordPlaceholder": "পাসওয়ার্ড লিখুন",
     "missingFields": "অনুগ্রহ করে ফোন নম্বর ও পাসওয়ার্ড দুটোই দিন।",
