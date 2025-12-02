@@ -185,7 +185,7 @@
     "welcome": "ফেৰাই আহা",
     "formSubtitle": "আগবঢ়াবলৈ নিবন্ধিত তথ্য দিয়ক।",
     "phoneLabel": "ফোন নম্বৰ",
-    "phonePlaceholder": "+91 98765 43210",
+    "phonePlaceholder": "ফোন নম্বৰ লিখক",
     "passwordLabel": "পাছৱৰ্ড",
     "passwordPlaceholder": "পাছৱৰ্ড লিখক",
     "missingFields": "অনুগ্ৰহ কৰি ফোন নম্বৰ আৰু পাছৱৰ্ড দুয়োখনেই দিয়ক।",

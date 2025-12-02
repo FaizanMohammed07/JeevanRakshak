@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-export default function LanguageSwitcher({ className = "" }) {
+export default function LanguageSwitcher({ className = "", ariaLabel }) {
   const { i18n } = useTranslation();
 
   const languages = [
@@ -23,11 +23,16 @@ export default function LanguageSwitcher({ className = "" }) {
     .split("-")[0]
     .toLowerCase();
 
+  const combinedClassName =
+    `px-3 py-2 rounded-lg border border-gray-300 bg-white text-black shadow-sm focus:ring-blue-500 focus:outline-none ${className}`.trim();
+
   return (
     <select
       onChange={handleChange}
       value={currentLanguage}
-      className={`px-3 py-2 rounded-lg border border-gray-300 bg-white text-black shadow-sm focus:ring-blue-500 focus:outline-none ${className}`.trim()}
+      aria-label={ariaLabel || "Select language"}
+      title={ariaLabel || "Select language"}
+      className={combinedClassName}
     >
       {languages.map((lang) => (
         <option key={lang.code} value={lang.code}>

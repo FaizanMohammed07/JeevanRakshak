@@ -185,7 +185,7 @@
     "welcome": "वापसी पर स्वागत है",
     "formSubtitle": "जारी रखने के लिए अपने पंजीकृत विवरण दर्ज करें।",
     "phoneLabel": "फ़ोन नंबर",
-    "phonePlaceholder": "+91 98765 43210",
+    "phonePlaceholder": "फ़ोन नंबर दर्ज करें",
     "passwordLabel": "पासवर्ड",
     "passwordPlaceholder": "पासवर्ड दर्ज करें",
     "missingFields": "कृपया फ़ोन नंबर और पासवर्ड दोनों दर्ज करें।",

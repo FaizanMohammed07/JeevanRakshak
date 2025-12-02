@@ -16,6 +16,7 @@ import {
   LogOut,
   Hospital,
   MapPin,
+  Languages,
 } from "lucide-react";
 import { PatientsProvider } from "./context/PatientsContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -28,26 +29,22 @@ import LanguageSwitcher from "./components/LanguageSwitcher";
 
 const navItems = [
   {
-    // label: "Dashboard",
     labelKey: "nav.dashboard",
     to: "/",
     icon: LayoutDashboard,
     end: true,
   },
   {
-    // label: "Profile",
     labelKey: "nav.profile",
     to: "/profile",
     icon: UserRound,
   },
   {
-    // label: "Prescriptions",
     labelKey: "nav.prescriptions",
     to: "/prescriptions",
     icon: FileText,
   },
   {
-    // label: "Lab Reports",
     labelKey: "nav.labReports",
     to: "/lab-reports",
     icon: FlaskConical,
@@ -99,41 +96,42 @@ function ShellLayout() {
   return (
     <div className="min-h-screen bg-sky-50/70">
       <header className="sticky top-0 z-30 border-b border-sky-100/70 bg-white/95 shadow-sm backdrop-blur">
-        <div className="flex w-full flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-8">
-          <div className="flex flex-col gap-2">
+        <div className="flex w-full flex-col gap-4 px-4 py-4 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3 text-sky-600">
               <Hospital className="h-8 w-8" />
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                JeevanRakshak
-              </h1>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                  JeevanRakshak
+                </h1>
+                <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
+                  {t("app.tagline")}
+                </p>
+              </div>
             </div>
-            {/* <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">Migrant Health Panel</p> */}
-            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
-              {t("app.tagline")}
-            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-right">
+
+          <div className="flex flex-wrap items-center justify-end gap-3 text-right">
             <span className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800">
               <UserRound className="h-4 w-4 text-sky-500" />
               {patient?.name || "Guest"}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-600">
               <MapPin className="h-3.5 w-3.5 text-sky-500" />
-              {
-                [patient?.district, patient?.taluk]
-                  .filter(Boolean)
-                  .join(" · ") || t("app.locationFallback") /* Citizen */
-              }
+              {[patient?.district, patient?.taluk]
+                .filter(Boolean)
+                .join(" · ") || t("app.locationFallback")}
             </span>
             <div className="rounded-2xl border border-sky-100 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-600">
-              {t("app.idLabel") /* ID */}:{" "}
+              {t("app.idLabel")}:{" "}
               {patient?._id ? patient._id.slice(-6).toUpperCase() : "—"}
             </div>
-            <div className="flex flex-col items-end gap-2">
-              <span className="text-[0.6rem] font-semibold uppercase tracking-[0.4em] text-slate-400">
-                {t("language.navbarLabel") /* Language */}
-              </span>
-              <LanguageSwitcher className="bg-white text-slate-900" />
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-sky-100 bg-white px-3 py-2">
+              <Languages className="h-4 w-4 text-sky-500" aria-hidden="true" />
+              <LanguageSwitcher
+                ariaLabel={t("language.navbarLabel")}
+                className="border-0 bg-transparent px-0 py-0 text-sm font-semibold text-slate-700 shadow-none focus:ring-sky-500"
+              />
             </div>
             <button
               type="button"
@@ -141,7 +139,7 @@ function ShellLayout() {
               className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500"
             >
               <LogOut className="h-4 w-4" />
-              {t("logout.button") /* Logout */}
+              {t("logout.button")}
             </button>
           </div>
         </div>
@@ -195,7 +193,6 @@ function ShellLayout() {
                 <LogOut className="h-6 w-6" />
               </div>
               <div>
-                {/* <p className="text-sm font-semibold uppercase tracking-[0.4em] text-sky-500">Confirm Logout</p> */}
                 <p className="text-sm font-semibold uppercase tracking-[0.4em] text-sky-500">
                   {t("logout.confirmLabel")}
                 </p>
