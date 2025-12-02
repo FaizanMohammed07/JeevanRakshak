@@ -34,7 +34,7 @@ router.get("/doctor/my", protect, allowRoles("doctor"), getDoctorPrescriptions);
 router.get(
   "/patient/:patientId",
   protect,
-  allowRoles("doctor"),
+  allowRoles("doctor", "patient"),
   getPrescriptionsForPatient
 );
 
