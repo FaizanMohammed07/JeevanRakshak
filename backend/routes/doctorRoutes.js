@@ -1,5 +1,9 @@
 import express from "express";
-import { allowDoctorsOnly, protect } from "../middleware/protect.js";
+import {
+  allowDoctorsOnly,
+  allowRoles,
+  protect,
+} from "../middleware/protect.js";
 import {
   login,
   signup,
@@ -13,6 +17,6 @@ router.post("/signup", signup);
 router.post("/login", login);
 router.get("/logout", logout);
 
-router.get("/me", protect, allowDoctorsOnly, getMe);
+router.get("/me", protect, allowRoles("doctor"), getMe);
 
 export default router;
