@@ -41,9 +41,11 @@ function PatientDetailsPage() {
     error: prescriptionsError,
   } = usePrescriptions(patient?.id);
 
-
-  const { reports, loading: reportsLoading, error: reportsError } =
-  usePatientReports(patient?.id);
+  const {
+    reports,
+    loading: reportsLoading,
+    error: reportsError,
+  } = usePatientReports(patient?.id);
   // console.log(prescriptions);
 
   // 3. NOW you can do your conditional returns (after all hooks are declared)
@@ -485,89 +487,86 @@ function PatientDetailsPage() {
                 </div>
               </div>
             )}
-<div className="bg-white rounded-2xl shadow-lg p-6">
-  <div className="flex items-center gap-2 mb-4">
-    <FileText className="w-5 h-5 text-purple-600" />
-    <h3 className="text-lg font-bold text-gray-800">Uploaded Documents</h3>
-  </div>
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="w-5 h-5 text-purple-600" />
+                <h3 className="text-lg font-bold text-gray-800">
+                  Uploaded Documents
+                </h3>
+              </div>
 
-  {reportsLoading && <p className="text-gray-500">Loading documents...</p>}
-  {reportsError && <p className="text-red-500">{reportsError}</p>}
+              {reportsLoading && (
+                <p className="text-gray-500">Loading documents...</p>
+              )}
+              {reportsError && <p className="text-red-500">{reportsError}</p>}
 
-  {reports.length > 0 ? (
-    <div className="space-y-3">
+              {reports.length > 0 ? (
+                <div className="space-y-3">
+                  {reports.map((doc) => (
+                    <div
+                      key={doc._id}
+                      className="border border-gray-200 rounded-lg p-4"
+                    >
+                      {/* Header */}
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold text-gray-600">
+                          <span className="text-gray-500 mr-1">Document:</span>
+                          {doc.documentName}
+                        </h4>
+                        <span className="text-sm text-gray-500">
+                          {formatDate(doc.createdAt)}
+                        </span>
+                      </div>
 
-      {reports.map((doc) => (
-        <div
-          key={doc._id}
-          className="border border-gray-200 rounded-lg p-4"
-        >
-          {/* Header */}
-          <div className="flex justify-between items-start mb-2">
-            <h4 className="font-semibold text-gray-600">
-              <span className="text-gray-500 mr-1">Document:</span>
-              {doc.documentName}
-            </h4>
-            <span className="text-sm text-gray-500">
-              {formatDate(doc.createdAt)}
-            </span>
-          </div>
+                      {/* Type */}
+                      <p className="text-sm text-gray-700 mb-1">
+                        <b>Type:</b> {doc.notes}
+                      </p>
 
-          {/* Type */}
-          <p className="text-sm text-gray-700 mb-1">
-            <b>Type:</b> {doc.notes}
-          </p>
+                      {/* Uploaded By */}
+                      <p className="text-sm text-gray-700 mb-1">
+                        <b>Uploaded By:</b> {doc.doctor}
+                      </p>
 
-          {/* Uploaded By */}
-          <p className="text-sm text-gray-700 mb-1">
-            <b>Uploaded By:</b> {doc.doctor}
-          </p>
+                      {/* View button */}
+                      <div className="mt-3">
+                        <button
+                          onClick={() => {
+                            setSelectedFile(doc.file);
+                            setShowModal(true);
+                          }}
+                          className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition"
+                        >
+                          View Document
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No documents uploaded.</p>
+              )}
+            </div>
+            {showModal && selectedFile && (
+              <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+                <div className="bg-white p-4 rounded-xl shadow-lg max-w-4xl w-[95%] h-[90vh] relative">
+                  {/* Close Button */}
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="absolute top-3 right-3 text-gray-600 text-xl font-bold hover:text-black"
+                  >
+                    ✕
+                  </button>
 
-          {/* View button */}
-          <div className="mt-3">
-            <button
-              onClick={() => {
-                setSelectedFile(doc.file);
-                setShowModal(true);
-              }}
-              className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition"
-            >
-              View Document
-            </button>
-          </div>
-        </div>
-      ))}
-
-    </div>
-  ) : (
-    <p className="text-gray-500 text-sm">No documents uploaded.</p>
-  )}
-</div>
-{showModal && selectedFile && (
-  <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-    <div className="bg-white p-4 rounded-xl shadow-lg max-w-4xl w-[95%] h-[90vh] relative">
-
-      {/* Close Button */}
-      <button
-        onClick={() => setShowModal(false)}
-        className="absolute top-3 right-3 text-gray-600 text-xl font-bold hover:text-black"
-      >
-        ✕
-      </button>
-
-      {/* PDF Viewer */}
-      <iframe
-        src={selectedFile}
-        className="w-full h-full rounded-md"
-        style={{ border: "none" }}
-      ></iframe>
-    </div>
-  </div>
-)}
-
-
-
-
+                  {/* PDF Viewer */}
+                  <iframe
+                    src={selectedFile}
+                    className="w-full h-full rounded-md"
+                    style={{ border: "none" }}
+                  ></iframe>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
