@@ -9,8 +9,35 @@ import {
 import { fetchMyProfile, fetchMyLabReports } from "../api/patients";
 import { fetchMyPrescriptions } from "../api/prescriptions";
 import { useAuth } from "./AuthContext";
+import api from "../api/client";
 
 const PatientsContext = createContext(undefined);
+
+export function usePatientReports(patientId) {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!patientId) return;
+
+    const fetchReports = async () => {
+      try {
+        const res = await api.get(`/reports/patient/${patientId}`);
+        setReports(res.data?.reports || []);
+        console.log(res.data?.reports);
+      } catch (err) {
+        setError("Could not load reports");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, [patientId]);
+
+  return { reports, loading, error };
+}
 
 export function PatientsProvider({ children }) {
   const { patient: authPatient, setPatient: syncPatient } = useAuth();

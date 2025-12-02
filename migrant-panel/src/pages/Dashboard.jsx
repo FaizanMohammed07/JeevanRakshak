@@ -16,9 +16,10 @@ import {
   Megaphone,
   RefreshCw,
   Syringe,
+  Link2,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { usePatientData } from "../context/PatientsContext";
+import { usePatientData, usePatientReports } from "../context/PatientsContext";
 import { fetchHeroAnnouncements } from "../api/announcements";
 
 export default function Dashboard() {
@@ -32,6 +33,12 @@ export default function Dashboard() {
     status,
     errors,
   } = usePatientData();
+  const {
+    reports,
+    loading: reportsLoading,
+    error: reportsError,
+  } = usePatientReports(patient?._id);
+  // console.log(reports);
   const [heroAnnouncements, setHeroAnnouncements] = useState([]);
   const [activeAnnouncementIndex, setActiveAnnouncementIndex] = useState(0);
   const [announcementsStatus, setAnnouncementsStatus] = useState("loading");
@@ -123,12 +130,12 @@ export default function Dashboard() {
       {
         // label: "Lab Reports",
         label: t("dashboard.stats.labs"),
-        value: labReports.length,
+        value: reports.length,
         icon: Activity,
         accent: "bg-purple-50 text-purple-600",
       },
     ];
-  }, [patient, prescriptions.length, labReports.length, t]);
+  }, [patient, prescriptions.length, reports.length, t]);
 
   const hasAnnouncements = heroAnnouncements.length > 0;
   const activeAnnouncement = hasAnnouncements
@@ -313,15 +320,15 @@ export default function Dashboard() {
         <SectionCard
           // title="Lab Reports"
           title={t("dashboard.sections.labReports.title")}
-          status={status.labs}
-          error={errors.labs}
-          count={labReports.length}
+          // status={status.labs}
+          error={reportsError}
+          count={reports.length}
           link={{
             to: "/lab-reports",
             label: t("common.viewAll") /* View all */,
           }}
         >
-          {labReports.length === 0 ? (
+          {reports.length === 0 ? (
             <EmptyState
               title={
                 t(
@@ -336,20 +343,35 @@ export default function Dashboard() {
             />
           ) : (
             <ul className="space-y-4 overflow-y-auto pr-1 lg:max-h-80">
-              {labReports.slice(0, 4).map((report) => (
+              {reports.slice(0, 4).map((report) => (
                 <li
-                  key={`${report.document_name}-${report.uploaded_at}`}
+                  key={`${report.documentName}-${report.uploaded_at}`}
                   className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4"
                 >
+                  {/* <p className="font-semibold text-slate-900">
+                    {report.documentName}
+                  </p> */}
                   <p className="font-semibold text-slate-900">
-                    {report.document_name}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {report.document_type || t("common.labReport") /* Report */}
+                    {report.documentName || t("common.labReport") /* Report */}
                   </p>
                   <p className="text-xs text-slate-400">
-                    {formatDate(report.uploaded_at)}
+                    {formatDate(report.createdAt)}
                   </p>
+                  {report.file ? (
+                    <a
+                      href={report.file}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 text-sky-600"
+                    >
+                      <Link2 className="h-4 w-4" />
+                      {t("labReports.report.view") /* View document */}
+                    </a>
+                  ) : (
+                    <span className="text-slate-400">
+                      {t("common.fileNotProvided") /* File not provided */}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

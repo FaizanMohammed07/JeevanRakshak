@@ -1,48 +1,57 @@
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { FlaskConical, FileDown, Link2, TimerReset } from "lucide-react";
-import { usePatientData } from "../context/PatientsContext";
+import { usePatientData, usePatientReports } from "../context/PatientsContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function LabReportsPage() {
   const { labReports, loadLabReports, status, errors } = usePatientData();
+  const { patient } = useAuth();
   const { t } = useTranslation();
 
   useEffect(() => {
     loadLabReports();
   }, [loadLabReports]);
 
+  // console.log(patient?.id);
+  const {
+    reports,
+    loading: reportsLoading,
+    error: reportsError,
+  } = usePatientReports(patient?._id);
+
   const summaryCards = useMemo(
     () => [
       {
         // label: "Total reports",
         label: t("labReports.summary.total"),
-        value: labReports.length,
+        value: reports.length,
         icon: FlaskConical,
         accent: "bg-sky-50 text-sky-600",
       },
       {
         // label: "Downloads ready",
         label: t("labReports.summary.downloads"),
-        value: labReports.filter((report) => Boolean(report.file_url)).length,
+        value: reports.filter((report) => Boolean(report.file_url)).length,
         icon: FileDown,
         accent: "bg-emerald-50 text-emerald-600",
       },
       {
         // label: "Pending uploads",
         label: t("labReports.summary.pending"),
-        value: labReports.filter((report) => !report.file_url).length,
+        value: reports.filter((report) => !report.file_url).length,
         icon: TimerReset,
         accent: "bg-amber-50 text-amber-600",
       },
     ],
-    [labReports, t]
+    [reports, t]
   );
 
-  const isLoading = status.labs === "loading";
-  const hasData = labReports.length > 0;
+  const isLoading = reportsLoading;
+  const hasData = reports.length > 0;
 
-  if (errors.labs) {
-    return <p className="text-red-600">{errors.labs}</p>;
+  if (reportsError) {
+    return <p className="text-red-600">{reportsError}</p>;
   }
 
   return (
@@ -89,7 +98,7 @@ export default function LabReportsPage() {
 
       <article className="rounded-3xl border border-sky-100 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-6 py-5">
-          {isLoading ? (
+          {reportsLoading ? (
             <p className="text-sm text-slate-500">
               {t("labReports.status.fetching") /* Fetching lab reports... */}
             </p>
@@ -97,7 +106,7 @@ export default function LabReportsPage() {
             <p className="text-sm text-slate-500">
               {
                 t("labReports.status.available", {
-                  count: labReports.length,
+                  count: reports.length,
                 }) /* {{count}} report(s) available */
               }
             </p>
@@ -121,7 +130,7 @@ export default function LabReportsPage() {
           </div>
         ) : (
           <ul className="divide-y divide-slate-100">
-            {labReports.map((report) => (
+            {reports.map((report) => (
               <li
                 key={`${report.document_name}-${report.uploaded_at}`}
                 className="px-6 py-4"
@@ -156,9 +165,9 @@ function ReportItem({ report }) {
             }) /* Uploaded {{date}} */
           }
         </p>
-        {report.file_url ? (
+        {report.file ? (
           <a
-            href={report.file_url}
+            href={report.file}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 text-sky-600"
