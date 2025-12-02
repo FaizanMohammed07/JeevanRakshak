@@ -25,7 +25,7 @@ const router = express.Router();
 router.post("/", protect, allowRoles("doctor"), addPrescription);
 
 //get my prescriptions (patient)
-router.get("/my", protect, allowRoles("patinet"), getMyPrescriptions);
+router.get("/my", protect, allowRoles("patient"), getMyPrescriptions);
 
 // Doctor Dashboard Data
 router.get("/doctor/my", protect, allowRoles("doctor"), getDoctorPrescriptions);
