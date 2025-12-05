@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, FileText, Search, User } from "lucide-react";
+import { AlertCircle, FileText, Search, User, QrCode } from "lucide-react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 import { usePatients } from "../context/PatientsContext";
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -13,6 +14,7 @@ function SearchPage() {
   const [previewPatient, setPreviewPatient] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewMessage, setPreviewMessage] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -91,6 +93,32 @@ function SearchPage() {
     };
   }, [trimmedInput, findPatientByHealthId, fetchPatient]);
 
+  useEffect(() => {
+    if (!scannerOpen) return;
+
+    const scanner = new Html5QrcodeScanner(
+      "qr-reader",
+      {
+        fps: 10,
+        qrbox: 250,
+        aspectRatio: 2.0,
+      },
+      false
+    );
+
+    scanner.render(
+      (decodedText) => {
+        setScannerOpen(false);
+        window.location.href = decodedText;
+      },
+      (errorMessage) => {
+        // ignore scan errors
+      }
+    );
+
+    return () => scanner.clear();
+  }, [scannerOpen]);
+
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-6">
@@ -146,6 +174,14 @@ function SearchPage() {
                 className="px-6 py-3 bg-gray-100 text-gray-800 font-semibold rounded-lg hover:bg-gray-200 transition"
               >
                 Clear
+              </button>
+              <button
+                type="button"
+                onClick={() => setScannerOpen(true)}
+                className="px-4 py-3 bg-gray-100 text-gray-800 font-semibold rounded-lg hover:bg-gray-200 transition flex items-center gap-2"
+              >
+                <QrCode className="h-5 w-5" />
+                Scan QR
               </button>
             </div>
           </form>
@@ -236,6 +272,30 @@ function SearchPage() {
                 className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap disabled:bg-blue-200 disabled:cursor-not-allowed"
               >
                 View Profile
+              </button>
+            </div>
+          </div>
+        )}
+        {scannerOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[100]"
+            onClick={() => setScannerOpen(false)}
+          >
+            <div
+              className="bg-white rounded-3xl p-6 shadow-xl w-[90%] max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold mb-4 text-center">
+                Scan QR Code
+              </h2>
+
+              <div id="qr-reader" className="rounded-xl overflow-hidden"></div>
+
+              <button
+                onClick={() => setScannerOpen(false)}
+                className="mt-4 w-full py-2 bg-gray-200 rounded-lg font-semibold hover:bg-gray-300"
+              >
+                Close
               </button>
             </div>
           </div>
