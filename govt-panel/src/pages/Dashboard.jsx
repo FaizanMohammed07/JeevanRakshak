@@ -12,6 +12,12 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import {
+  fetchDiseaseDistricts,
+  fetchDiseaseSummary,
+  fetchActiveDiseaseCases,
+  fetchTalukBreakdown,
+} from "../api/disease";
+import {
   ResponsiveContainer,
   BarChart as RechartBarChart,
   Bar,
@@ -29,7 +35,7 @@ import {
   fetchSdgImpact,
   fetchOversightChecklist,
 } from "../api/dashboard";
-import { fetchDiseaseDistricts } from "../api/disease";
+// import { fetchDiseaseDistricts } from "../api/disease";
 
 const ALL_DISTRICTS_LABEL = "All Districts";
 const REFRESH_INTERVAL_MS = 45_000;
@@ -47,10 +53,40 @@ const sdgIconMap = {
   scale: Scale,
   shield: ShieldCheck,
 };
+const hotspotRangeOptions = [
+  { label: "Today", value: "today", rangeDays: 1, offsetDays: 0 },
+  { label: "Yesterday", value: "yesterday", rangeDays: 1, offsetDays: 1 },
+  { label: "5 Days", value: "5d", rangeDays: 5, offsetDays: 0 },
+  { label: "10 Days", value: "10d", rangeDays: 10, offsetDays: 0 },
+];
+
+const activeCaseRangeOptions = [
+  { label: "Today", value: "today", rangeDays: 1, offsetDays: 0 },
+  { label: "Yesterday", value: "yesterday", rangeDays: 1, offsetDays: 1 },
+  { label: "5 Days", value: "5d", rangeDays: 5, offsetDays: 0 },
+  { label: "10 Days", value: "10d", rangeDays: 10, offsetDays: 0 },
+  { label: "30 Days", value: "30d", rangeDays: 30, offsetDays: 0 },
+];
+
+const districtCasesRangeOptions = [
+  { label: "Today", value: "today", rangeDays: 1, offsetDays: 0 },
+  { label: "Yesterday", value: "yesterday", rangeDays: 1, offsetDays: 1 },
+  { label: "5 Days", value: "5d", rangeDays: 5, offsetDays: 0 },
+  { label: "10 Days", value: "10d", rangeDays: 10, offsetDays: 0 },
+  { label: "15 Days", value: "15d", rangeDays: 15, offsetDays: 0 },
+];
+
+const talukWindowOptions = [
+  { label: "Today", value: "today", rangeDays: 1, offsetDays: 0 },
+  { label: "Yesterday", value: "yesterday", rangeDays: 1, offsetDays: 1 },
+  { label: "5 Days", value: "5d", rangeDays: 5, offsetDays: 0 },
+  { label: "10 Days", value: "10d", rangeDays: 10, offsetDays: 0 },
+  { label: "15 Days", value: "15d", rangeDays: 15, offsetDays: 0 },
+  { label: "Custom", value: "custom" },
+];
 
 function Dashboard() {
   const [districtOptions, setDistrictOptions] = useState([ALL_DISTRICTS_LABEL]);
-  const { districtId } = useParams();
   const navigate = useNavigate();
   const [selectedDistrict, setSelectedDistrict] = useState(ALL_DISTRICTS_LABEL);
   const [stats, setStats] = useState([]);
@@ -62,6 +98,22 @@ function Dashboard() {
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState(null);
   const [refreshTick, setRefreshTick] = useState(Date.now());
+  const [districtInsights, setDistrictInsights] = useState([]);
+  const [hotspotInsights, setHotspotInsights] = useState([]);
+  const [expandedTaluk, setExpandedTaluk] = useState(null);
+  const { districtId, talukId } = useParams();
+  const [districtTalukInsight, setDistrictTalukInsight] = useState(null);
+  const [talukWindowKey, setTalukWindowKey] = useState(
+    talukWindowOptions[0].value
+  );
+  const [talukLoading, setTalukLoading] = useState(false);
+  const [customTalukStartDate, setCustomTalukStartDate] = useState("");
+  const [customTalukEndDate, setCustomTalukEndDate] = useState("");
+  const [selectedVillageDetails, setSelectedVillageDetails] = useState(null);
+
+  const [hotspotRangeKey, setHotspotRangeKey] = useState(
+    hotspotRangeOptions[0].value
+  );
 
   // Pull district names once so the filter dropdown stays in sync with backend metadata.
   useEffect(() => {
@@ -111,6 +163,311 @@ function Dashboard() {
     setSelectedDistrict(match);
   }, [districtId, districtOptions, navigate]);
 
+  const activeDistrictData = districtTalukInsight;
+
+  const canShowTalukDrilldown =
+    selectedDistrict && selectedDistrict !== ALL_DISTRICTS_LABEL;
+
+  const maxTalukCases = useMemo(() => {
+    if (!activeDistrictData || !activeDistrictData.taluks?.length) return 0;
+    return Math.max(...activeDistrictData.taluks.map((taluk) => taluk.cases));
+  }, [activeDistrictData]);
+  const handleDistrictChange = (event) => {
+    const nextDistrict = event.target.value;
+    if (!nextDistrict) return;
+    setSelectedDistrict(nextDistrict);
+    setExpandedTaluk(null);
+    setSelectedVillageDetails(null);
+    setCustomTalukStartDate("");
+    setCustomTalukEndDate("");
+    navigate(`/dashboard/district/${slugify(nextDistrict)}`);
+  };
+  const handleTalukToggle = (taluk) => {
+    if (!taluk?.name) return;
+    setExpandedTaluk((current) => (current === taluk.name ? null : taluk.name));
+    // Clear previously selected village when switching taluks for clarity.
+    setSelectedVillageDetails(null);
+  };
+
+  const handleTalukKeyDown = (event, taluk) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleTalukToggle(taluk);
+    }
+  };
+
+  const handleVillageSelect = (talukName, village) => {
+    if (!village) return;
+    setSelectedVillageDetails({
+      taluk: talukName,
+      ...village,
+    });
+  };
+
+  const handleVillagePanelClose = () => {
+    setSelectedVillageDetails(null);
+  };
+
+  const handleTalukWindowChange = (value) => {
+    setTalukWindowKey(value);
+    if (value !== "custom") {
+      setCustomTalukStartDate("");
+      setCustomTalukEndDate("");
+    }
+  };
+  const hotspotRangeConfig = useMemo(
+    () =>
+      hotspotRangeOptions.find((option) => option.value === hotspotRangeKey) ??
+      hotspotRangeOptions[0],
+    [hotspotRangeKey]
+  );
+  const { config: talukWindowConfig, error: talukWindowError } = useMemo(() => {
+    if (talukWindowKey !== "custom") {
+      return {
+        config:
+          talukWindowOptions.find(
+            (option) => option.value === talukWindowKey
+          ) ?? talukWindowOptions[0],
+        error: null,
+      };
+    }
+
+    if (!customTalukStartDate || !customTalukEndDate) {
+      return { config: null, error: "Select start and end dates" };
+    }
+
+    const start = new Date(customTalukStartDate);
+    const end = new Date(customTalukEndDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return { config: null, error: "Invalid date range" };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    if (end < start) {
+      return { config: null, error: "End date must be after start date" };
+    }
+    if (end > today) {
+      return { config: null, error: "Future dates not allowed" };
+    }
+
+    const rangeDays =
+      Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+    if (rangeDays <= 0) {
+      return { config: null, error: "Invalid range" };
+    }
+    const offsetDays = Math.round(
+      (today.getTime() - end.getTime()) / 86_400_000
+    );
+
+    return {
+      config: {
+        label: `Custom (${start.toLocaleDateString(
+          "en-IN"
+        )} → ${end.toLocaleDateString("en-IN")})`,
+        rangeDays,
+        offsetDays,
+      },
+      error: null,
+    };
+  }, [talukWindowKey, customTalukStartDate, customTalukEndDate]);
+  const highAlertVillages = useMemo(() => {
+    // Flatten to expose highest case villages regardless of district for quick hero alerts.
+    return hotspotInsights
+      .flatMap((district) =>
+        (district.taluks ?? []).flatMap((taluk) =>
+          (taluk.villages ?? []).map((village) => ({
+            district: district.district,
+            taluk: taluk.name,
+            name: village.name,
+            cases: village.cases,
+          }))
+        )
+      )
+      .sort((a, b) => b.cases - a.cases)
+      .slice(0, 5);
+  }, [hotspotInsights]);
+
+  const villageSummary = useMemo(() => {
+    if (!highAlertVillages.length) {
+      return { total: 0, average: 0, topTaluk: "--", peakVillage: "--" };
+    }
+    const total = highAlertVillages.reduce(
+      (sum, village) => sum + village.cases,
+      0
+    );
+    const peakVillage = highAlertVillages[0];
+    return {
+      total,
+      average: Math.round(total / highAlertVillages.length),
+      topTaluk: peakVillage.taluk,
+      peakVillage: peakVillage.name,
+    };
+  }, [highAlertVillages]);
+
+  const priorityActions = useMemo(() => {
+    if (!highAlertVillages.length) return [];
+    return highAlertVillages.slice(0, 3).map((village) => ({
+      title: `Deploy rapid squad to ${village.name}`,
+      detail: `${village.cases} cases • ${village.taluk} Taluk`,
+    }));
+  }, [highAlertVillages]);
+  useEffect(() => {
+    let ignore = false;
+    async function loadHotspotInsights() {
+      try {
+        const response = await fetchDiseaseDistricts({
+          rangeDays: hotspotRangeConfig.rangeDays,
+          offsetDays: hotspotRangeConfig.offsetDays,
+        });
+        if (ignore || !Array.isArray(response?.districts)) return;
+        setHotspotInsights(response.districts);
+      } catch (error) {
+        console.error("Failed to fetch hotspot insights", error);
+        setDataSyncError((prev) => prev ?? "Unable to sync hotspot alerts.");
+      }
+    }
+    loadHotspotInsights();
+    return () => {
+      ignore = true;
+    };
+  }, [
+    hotspotRangeConfig.rangeDays,
+    hotspotRangeConfig.offsetDays,
+    refreshTick,
+  ]);
+  const getVillageSeverity = (cases) => {
+    if (cases >= 10)
+      return { badge: "bg-red-100 text-red-800", label: "Critical" };
+    if (cases >= 6)
+      return { badge: "bg-orange-100 text-orange-700", label: "Watch" };
+    return { badge: "bg-green-100 text-green-700", label: "Stable" };
+  };
+  const resolvedDistrict = useMemo(() => {
+    const fallbackDistrict = districtInsights[0]?.district ?? "";
+    if (!districtId) return fallbackDistrict;
+    return (
+      districtInsights.find(
+        (district) => slugify(district.district) === districtId
+      )?.district ?? fallbackDistrict
+    );
+  }, [districtId, districtInsights]);
+
+  useEffect(() => {
+    let ignore = false;
+    async function loadDistrictInsights() {
+      try {
+        const response = await fetchDiseaseDistricts();
+        if (
+          ignore ||
+          !Array.isArray(response?.districts) ||
+          response.districts.length === 0
+        ) {
+          return;
+        }
+        setDistrictInsights(response.districts);
+      } catch (error) {
+        console.error("Failed to fetch district insights", error);
+        setDataSyncError(
+          (prev) => prev ?? "Unable to sync district drill-down."
+        );
+      }
+    }
+    loadDistrictInsights();
+    return () => {
+      ignore = true;
+    };
+  }, [refreshTick]);
+
+  useEffect(() => {
+    if (
+      !selectedDistrict ||
+      selectedDistrict === ALL_DISTRICTS_LABEL ||
+      !talukWindowConfig
+    ) {
+      setDistrictTalukInsight(null);
+      setTalukLoading(false);
+      return;
+    }
+
+    let ignore = false;
+    async function loadTalukBreakdown() {
+      setTalukLoading(true);
+      setDistrictTalukInsight(null);
+      try {
+        const response = await fetchTalukBreakdown(slugify(selectedDistrict), {
+          rangeDays: talukWindowConfig.rangeDays,
+          offsetDays: talukWindowConfig.offsetDays,
+        });
+        if (ignore) return;
+        setDistrictTalukInsight(response?.district ?? null);
+      } catch (error) {
+        console.error("Failed to fetch taluk drill-down", error);
+        if (ignore) return;
+        setDistrictTalukInsight(null);
+        setDataSyncError((prev) => prev ?? "Unable to sync taluk drill-down.");
+      } finally {
+        if (!ignore) {
+          setTalukLoading(false);
+        }
+      }
+    }
+
+    loadTalukBreakdown();
+    return () => {
+      ignore = true;
+    };
+  }, [
+    selectedDistrict,
+    talukWindowConfig?.rangeDays,
+    talukWindowConfig?.offsetDays,
+    refreshTick,
+  ]);
+  useEffect(() => {
+    if (!talukId) {
+      setExpandedTaluk(null);
+      return;
+    }
+
+    const match = activeDistrictData?.taluks?.find(
+      (taluk) => slugify(taluk.name) === talukId
+    );
+    setExpandedTaluk(match?.name ?? null);
+  }, [talukId, activeDistrictData]);
+
+  useEffect(() => {
+    if (!selectedVillageDetails) return;
+    const stillPresent = districtTalukInsight?.taluks?.some((taluk) => {
+      if (taluk.name !== selectedVillageDetails.taluk) return false;
+      return taluk.villages?.some(
+        (village) => village.name === selectedVillageDetails.name
+      );
+    });
+    if (!stillPresent) {
+      setSelectedVillageDetails(null);
+    }
+  }, [districtTalukInsight, selectedVillageDetails]);
+
+  useEffect(() => {
+    if (!selectedVillageDetails) return undefined;
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setSelectedVillageDetails(null);
+      }
+    };
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [selectedVillageDetails]);
+
   // Refresh key triggers re-fetch for all dashboard widgets.
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -127,6 +484,10 @@ function Dashboard() {
     } else {
       navigate(`/dashboard/district/${slugify(value)}`);
     }
+    setExpandedTaluk(null);
+    setSelectedVillageDetails(null);
+    setCustomTalukStartDate("");
+    setCustomTalukEndDate("");
   };
 
   const districtFilter = useMemo(() => {
@@ -325,12 +686,6 @@ function Dashboard() {
             </option>
           ))}
         </select>
-
-        <select className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-          <option>Today</option>
-          <option>This Week</option>
-          <option>This Month</option>
-        </select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
@@ -365,13 +720,113 @@ function Dashboard() {
           })
         )}
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {selectedVillageDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Patients in ${selectedVillageDetails.name}`}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[85vh] flex flex-col"
+          >
+            <div className="px-6 py-4 border-b border-gray-100 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase text-blue-500 tracking-wide">
+                  Village patients
+                </p>
+                <h4 className="text-lg font-semibold text-gray-900">
+                  {selectedVillageDetails.name} • {selectedVillageDetails.taluk}
+                </h4>
+                <p className="text-xs text-gray-500">
+                  {selectedVillageDetails.patients?.length ?? 0} patient
+                  {selectedVillageDetails.patients?.length === 1 ? "" : "s"} in
+                  focus
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleVillagePanelClose}
+                className="text-sm font-semibold text-blue-700 hover:text-blue-900"
+              >
+                Close
+              </button>
+            </div>
+            <div className="px-6 py-4 overflow-y-auto flex-1 space-y-3">
+              {selectedVillageDetails.patients?.length ? (
+                selectedVillageDetails.patients.map((patient) => (
+                  <div
+                    key={
+                      patient.patientId || `${patient.name}-${patient.disease}`
+                    }
+                    className="border border-gray-100 rounded-xl p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="text-base font-semibold text-gray-900">
+                          {patient.name}
+                        </p>
+                        <p className="text-xs uppercase text-gray-500">
+                          Patient ID: {patient.patientId ?? "--"}
+                        </p>
+                      </div>
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                          patient.contagious
+                            ? "bg-red-100 text-red-700"
+                            : "bg-emerald-100 text-emerald-700"
+                        }`}
+                      >
+                        {patient.contagious ? "Contagious" : "Stable"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 font-semibold">
+                      {patient.disease}
+                    </p>
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                      <div>
+                        <p className="text-xs uppercase text-gray-500">
+                          Doctor
+                        </p>
+                        <p>{patient.doctor || "--"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase text-gray-500">Camp</p>
+                        <p>{patient.camp || "--"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase text-gray-500">Taluk</p>
+                        <p>{patient.taluk || "--"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase text-gray-500">
+                          Village
+                        </p>
+                        <p>{patient.village || "--"}</p>
+                      </div>
+                    </div>
+                    {patient.notes && (
+                      <p className="mt-3 text-xs text-gray-500">
+                        Notes: {patient.notes}
+                      </p>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">
+                  No patient roster shared for this village yet.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* we are getting to know how many migrants are afftected in a district and it is upating hourly first this component present  in dashboard now we have commented no use. */}
+      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="flex flex-col gap-6">
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs uppercase text-gray-500 tracking-wide">
+
                   Rapid risk model
                 </p>
                 <h3 className="text-xl font-bold text-gray-900">
@@ -572,6 +1027,363 @@ function Dashboard() {
               </div>
             </div>
           )}
+        </div>
+      </div> */}
+      {/* from dises monitoring we picked dee dive within districts and top hotspost */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-xl shadow-md p-6">
+          <div className="flex flex-col gap-6 xl:flex-row">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs uppercase text-gray-500 tracking-wide">
+                    Taluk drill-down
+                  </p>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Deep dive within districts
+                  </h3>
+                </div>
+                <select
+                  value={canShowTalukDrilldown ? selectedDistrict : ""}
+                  onChange={handleDistrictChange}
+                  disabled={!districtInsights.length}
+                  className={`px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    districtInsights.length
+                      ? "border-gray-300"
+                      : "border-gray-200 bg-gray-50 text-gray-400"
+                  }`}
+                >
+                  {!canShowTalukDrilldown && (
+                    <option value="" disabled>
+                      Select district
+                    </option>
+                  )}
+                  {districtInsights.map((district) => (
+                    <option key={district.district} value={district.district}>
+                      {district.district}
+                    </option>
+                  ))}
+                  {!districtInsights.length && (
+                    <option value="">No districts synced</option>
+                  )}
+                </select>
+              </div>
+              {canShowTalukDrilldown ? (
+                <p className="text-sm text-gray-600">
+                  {activeDistrictData?.totalCases ?? 0} active cases across{" "}
+                  {activeDistrictData?.taluks?.length ?? 0} taluks in the last{" "}
+                  {talukWindowConfig?.label ?? "selected"} window. Prioritize{" "}
+                  {activeDistrictData?.taluks?.[0]?.name ?? "--"} for field
+                  reinforcement.
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Select a district to inspect its taluk and village alerts.
+                </p>
+              )}
+            </div>
+            <div className="xl:w-64 bg-gray-50 border border-gray-100 rounded-lg p-4">
+              <p className="text-xs uppercase text-gray-500 tracking-wide mb-2">
+                Taluk window
+              </p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {talukWindowOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleTalukWindowChange(option.value)}
+                    disabled={!canShowTalukDrilldown}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                      talukWindowKey === option.value
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-700 border-gray-200"
+                    } ${
+                      canShowTalukDrilldown
+                        ? ""
+                        : "opacity-50 cursor-not-allowed"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              {talukWindowKey === "custom" && (
+                <div className="space-y-3 text-xs text-gray-600 mb-4">
+                  <div className="flex flex-col gap-1">
+                    <label
+                      className="font-semibold"
+                      htmlFor="taluk-custom-start"
+                    >
+                      Start date
+                    </label>
+                    <input
+                      id="taluk-custom-start"
+                      type="date"
+                      value={customTalukStartDate}
+                      onChange={(event) =>
+                        setCustomTalukStartDate(event.target.value)
+                      }
+                      className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="font-semibold" htmlFor="taluk-custom-end">
+                      End date
+                    </label>
+                    <input
+                      id="taluk-custom-end"
+                      type="date"
+                      value={customTalukEndDate}
+                      onChange={(event) =>
+                        setCustomTalukEndDate(event.target.value)
+                      }
+                      className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      min={customTalukStartDate || undefined}
+                    />
+                  </div>
+                  {talukWindowError && (
+                    <span className="text-red-600 text-xs">
+                      {talukWindowError}
+                    </span>
+                  )}
+                </div>
+              )}
+              <p className="text-xs uppercase text-gray-500">Active view</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {talukWindowConfig?.label ?? "Select a window"}
+              </p>
+              <p className="text-xs text-gray-500">
+                {canShowTalukDrilldown
+                  ? "Applies to taluk and village breakdowns"
+                  : "Select a district to enable"}
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 space-y-4">
+            {!canShowTalukDrilldown ? (
+              <p className="text-sm text-gray-500">
+                Pick a district to view taluk drill-down.
+              </p>
+            ) : talukLoading ? (
+              <p className="text-sm text-gray-500">
+                Syncing latest taluk reports...
+              </p>
+            ) : (activeDistrictData?.taluks ?? []).length ? (
+              activeDistrictData.taluks.map((taluk) => {
+                const isExpanded = expandedTaluk === taluk.name;
+                return (
+                  <div
+                    key={taluk.name}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleTalukToggle(taluk)}
+                    onKeyDown={(event) => handleTalukKeyDown(event, taluk)}
+                    className={`w-full text-left border border-gray-100 rounded-lg p-4 transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isExpanded ? "bg-blue-50 border-blue-200" : "bg-white"
+                    }`}
+                    aria-expanded={isExpanded}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          {taluk.name} Taluk
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {taluk.villages.length} villages reporting •{" "}
+                          {taluk.trend}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold text-gray-900">
+                          {taluk.cases} cases
+                        </span>
+                        <span className="text-xs font-semibold text-blue-600">
+                          {isExpanded ? "Hide" : "Expand"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div
+                        className="h-2 bg-blue-600 rounded-full"
+                        style={{
+                          width: `${
+                            (taluk.cases / (maxTalukCases || 1)) * 100
+                          }%`,
+                        }}
+                      ></div>
+                    </div>
+                    <div className="mt-3 text-xs text-gray-500">
+                      {isExpanded
+                        ? "Village-level alerts visible"
+                        : "Click to view village breakdown"}
+                    </div>
+                    {isExpanded && (
+                      <div className="mt-4 border-t border-blue-100 pt-3 space-y-2">
+                        {taluk.villages.map((village) => {
+                          const severity = getVillageSeverity(village.cases);
+                          return (
+                            <div
+                              key={village.name}
+                              className="flex items-center justify-between gap-3"
+                            >
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-gray-900">
+                                  {village.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {village.cases} cases
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`px-3 py-1 rounded-full text-xs font-semibold ${severity.badge}`}
+                                >
+                                  {severity.label}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleVillageSelect(taluk.name, village);
+                                  }}
+                                  disabled={!village.patients?.length}
+                                  className={`text-xs font-semibold px-3 py-1 rounded-full border transition ${
+                                    village.patients?.length
+                                      ? "border-blue-200 text-blue-700 hover:bg-blue-50"
+                                      : "border-gray-200 text-gray-400 cursor-not-allowed"
+                                  }`}
+                                >
+                                  View patients
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-gray-500">
+                No taluk submissions for this window.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-md p-6 flex flex-col">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <p className="text-xs uppercase text-gray-500 tracking-wide">
+                Village level alerts
+              </p>
+              <h3 className="text-xl font-bold text-gray-900">
+                Top hotspots to inspect
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Across Kerala • {hotspotRangeConfig.label} window
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-gray-500">Window</span>
+              {hotspotRangeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setHotspotRangeKey(option.value)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${
+                    hotspotRangeKey === option.value
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "bg-white text-gray-700 border-gray-200"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="scroll-area space-y-3 max-h-72 overflow-y-auto pr-2 pb-2 flex-1">
+            {highAlertVillages.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                No hotspots flagged by the latest submissions.
+              </p>
+            ) : (
+              highAlertVillages.map((village) => {
+                const severity = getVillageSeverity(village.cases);
+                return (
+                  <div
+                    key={`${village.name}-${village.taluk}`}
+                    className="border border-gray-100 rounded-lg p-4 bg-gray-50"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-semibold text-gray-900">
+                        {village.name}
+                      </p>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${severity.badge}`}
+                      >
+                        {severity.label}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      {village.cases} cases • {village.taluk} Taluk
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {village.district} District
+                    </p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-sm text-gray-600">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs uppercase text-gray-500">Total cases</p>
+              <p className="text-xl font-semibold text-gray-900">
+                {villageSummary.total}
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs uppercase text-gray-500">Avg per hotspot</p>
+              <p className="text-xl font-semibold text-gray-900">
+                {villageSummary.average}
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs uppercase text-gray-500">Peak cluster</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {villageSummary.peakVillage}
+              </p>
+              <p className="text-xs text-gray-500">
+                {villageSummary.topTaluk} Taluk
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 border-t border-gray-100 pt-4">
+            <p className="text-xs uppercase text-gray-500 tracking-wide mb-3">
+              Immediate actions
+            </p>
+            {priorityActions.length ? (
+              <ul className="space-y-3">
+                {priorityActions.map((action) => (
+                  <li key={action.title} className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-red-500"></span>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {action.title}
+                      </p>
+                      <p className="text-xs text-gray-500">{action.detail}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500">
+                No immediate escalations for this district.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

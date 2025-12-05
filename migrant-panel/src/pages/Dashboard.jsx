@@ -13,8 +13,13 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  LocateFixed,
+  MapPin,
   Megaphone,
+  Navigation,
   RefreshCw,
+  Route,
+  ShieldCheck,
   Syringe,
   Link2,
 } from "lucide-react";
@@ -268,6 +273,8 @@ export default function Dashboard() {
         ))}
       </div>
 
+      <NearbyHospitalsCTA />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <SectionCard
           // title="Recent Prescriptions"
@@ -425,6 +432,111 @@ function SectionCard({ title, status, error, children, count, link }) {
       {error ? <p className="text-sm text-red-600">{error}</p> : children}
     </div>
   );
+}
+
+function NearbyHospitalsCTA() {
+  const steps = [
+    {
+      title: "Step 1 — Open Dashboard",
+      body: "Tap the new Nearby Hospitals tile on the migrant dashboard whenever you need urgent care guidance.",
+    },
+    {
+      title: "Step 2 — Share Location",
+      body: "We first explain why we need your GPS pin and then request permission in plain language.",
+    },
+    {
+      title: "Step 3 — Fetch Clinics",
+      body: "Within seconds we scan government and private hospitals inside a 10–15 km safety radius.",
+    },
+    {
+      title: "Step 4 — Explore Map",
+      body: "See your live position, nearby hospitals, and bilingual directions without typing a single word.",
+    },
+  ];
+
+  const highlights = [
+    {
+      icon: LocateFixed,
+      title: "Auto-detect",
+      body: "GPS locks onto the exact spot where the migrant is standing—no manual entry.",
+    },
+    {
+      icon: Route,
+      title: "15 km Coverage",
+      body: "We combine OpenStreetMap data to surface clinics within a safe travel radius.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Consent First",
+      body: "A clear consent card explains why location is needed before the browser prompt appears.",
+    },
+  ];
+
+  // Nearly Hospitals CTA is currently disabled
+
+  // return (
+  //   <section className="grid gap-6 rounded-[32px] border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-sky-100 p-6 shadow-sm lg:grid-cols-[1.1fr_0.9fr]">
+  //     <div className="space-y-4">
+  //       <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
+  //         <MapPin className="h-4 w-4 text-sky-600" />
+  //         Nearby Hospitals
+  //       </p>
+  //       <h3 className="text-2xl font-semibold text-slate-900">
+  //         One tap to locate the closest hospital
+  //       </h3>
+  //       <p className="text-sm text-slate-600">
+  //         Migrant workers often stay in unfamiliar towns. This guided flow
+  //         removes the language barrier by showing a map, address, and Google
+  //         Maps navigation link in seconds.
+  //       </p>
+  //       <div className="grid gap-3 md:grid-cols-2">
+  //         {steps.map((step) => (
+  //           <div
+  //             key={step.title}
+  //             className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm"
+  //           >
+  //             <p className="text-xs font-semibold uppercase tracking-widest text-sky-500">
+  //               {step.title}
+  //             </p>
+  //             <p className="mt-2 text-sm text-slate-600">{step.body}</p>
+  //           </div>
+  //         ))}
+  //       </div>
+  //       <Link to="/nearby-hospitals" className="inline-flex">
+  //         <button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-500 md:w-auto">
+  //           <Navigation className="h-5 w-5" />
+  //           Launch Nearby Hospitals
+  //         </button>
+  //       </Link>
+  //       <p className="text-xs text-slate-500">
+  //         We never store your live location. Permission is requested each time
+  //         you tap the feature, so migrants always understand why GPS is
+  //         required.
+  //       </p>
+  //     </div>
+  //     <div className="space-y-4 rounded-[28px] border border-sky-100 bg-white/80 p-5">
+  //       <h4 className="text-sm font-semibold uppercase tracking-[0.4em] text-slate-500">
+  //         What migrants see
+  //       </h4>
+  //       <div className="space-y-3">
+  //         {highlights.map(({ icon: Icon, title, body }) => (
+  //           <div
+  //             key={title}
+  //             className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
+  //           >
+  //             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+  //               <Icon className="h-5 w-5" />
+  //             </div>
+  //             <div>
+  //               <p className="text-sm font-semibold text-slate-900">{title}</p>
+  //               <p className="text-xs text-slate-500">{body}</p>
+  //             </div>
+  //           </div>
+  //         ))}
+  //       </div>
+  //     </div>
+  //   </section>
+  // );
 }
 
 function EmptyState({ title, message }) {

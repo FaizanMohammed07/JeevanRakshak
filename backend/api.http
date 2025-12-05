@@ -85,15 +85,15 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjgwZWI5N
 Content-Type: application/json
 
 {
-    "patientId": "692815bcaa6551268fb9727b",
+    "patientId": "692a92133e5932a3e7e62d56",
     "symptoms": "Fever, vomiting",
     "durationOfSymptoms": "4 days",
     "contagious": true,
-    "medicinesIssued": ["Oral Rehydration Salts", "Paracetamol"],
-    "suspectedDisease": "malaria ",
-    "confirmedDisease": "malaria",
+    "medicinesIssued": ["Paracetamol", "ORS"],
+    "suspectedDisease": "Dengue",
+    "confirmedDisease": "Dengue",
     "followUpDate": "2025-12-03T10:00:00.000Z",
-    "notes": "Advise rest and hydration"
+    "notes": "Ensure adequate hydration and rest"
 }
 
 ### Repeat prescription in another district for comparison

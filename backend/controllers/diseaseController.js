@@ -899,6 +899,55 @@ const getDiseaseDistricts = async (req, res) => {
 };
 
 /**
+ * Returns taluk + village hierarchy for a specific district window.
+ */
+const getDistrictTaluks = async (req, res) => {
+  const startedAt = performance.now();
+  try {
+    const districtSlug = sanitizeDistrictSlug(req.params.district);
+    if (!districtSlug) {
+      return res
+        .status(400)
+        .json({ message: "District parameter is required" });
+    }
+    const rangeDays = sanitizeRangeDays(req.query.rangeDays, 1);
+    const offsetDays = sanitizeOffsetDays(req.query.offsetDays);
+    const previousOffset = sanitizeOffsetDays(offsetDays + rangeDays);
+
+    const [currentWindow, previousWindow] = await Promise.all([
+      fetchPrescriptions({ rangeDays, offsetDays, districtSlug }),
+      fetchPrescriptions({
+        rangeDays,
+        offsetDays: previousOffset,
+        districtSlug,
+      }),
+    ]);
+
+    const hierarchy = buildDistrictHierarchy(currentWindow, previousWindow);
+    const districtEntry =
+      hierarchy.find((entry) => makeSlug(entry.district) === districtSlug) ??
+      null;
+
+    if (!districtEntry) {
+      const fallbackLabel = toTitleCase(req.params.district);
+      res.json({
+        district: {
+          district: fallbackLabel,
+          totalCases: 0,
+          taluks: [],
+        },
+      });
+    } else {
+      res.json({ district: districtEntry });
+    }
+    logSlowController("getDistrictTaluks", startedAt);
+  } catch (error) {
+    logControllerError("Failed to assemble taluk hierarchy", error);
+    res.status(500).json({ message: "Unable to build taluk drill-down" });
+  }
+};
+
+/**
  * Returns district comparison bars plus disease trend lines for a district.
  */
 const getDiseaseSummary = async (req, res) => {
@@ -1029,6 +1078,7 @@ const getKeralaRiskMap = async (req, res) => {
 
 export {
   getDiseaseDistricts,
+  getDistrictTaluks,
   getDiseaseSummary,
   getActiveDiseaseCases,
   getTimelineStats,
