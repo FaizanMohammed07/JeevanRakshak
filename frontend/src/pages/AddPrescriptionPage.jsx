@@ -36,6 +36,10 @@ function AddPrescriptionPage() {
     notes: "",
     contagious: false,
   });
+  const isConfirmedRequiredAndMissing =
+    formData.contagious && !formData.confirmedDisease.trim();
+
+  const mustConfirm = formData.contagious && !formData.confirmedDisease.trim();
 
   // Medicines State (Array of Strings)
   const [medicines, setMedicines] = useState([""]);
@@ -73,7 +77,6 @@ function AddPrescriptionPage() {
       setError("");
     }
   };
-
   const handleFileUploadSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -84,8 +87,9 @@ function AddPrescriptionPage() {
       return;
     }
 
-    if (!formData.confirmedDisease.trim()) {
-      setError("Please enter the confirmed disease.");
+    // HARD VALIDATION → Only when contagious is TRUE
+    if (formData.contagious && !formData.confirmedDisease.trim()) {
+      setError("Confirmed disease is required for contagious cases.");
       return;
     }
 
@@ -265,51 +269,93 @@ function AddPrescriptionPage() {
               </div>
 
               {/* --- New Fields for Upload Mode --- */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100"> */}
+              <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
                 {/* Confirmed Disease */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirmed Disease <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="confirmedDisease"
-                    value={formData.confirmedDisease}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white"
-                    placeholder="Diagnosis"
-                    required
-                  />
-                </div>
+                <div
+                  className={`grid gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100 
+  ${formData.contagious ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}
+                >
+                  {/* Suspected Disease in upload file */}
+                  <div
+                    className={`${formData.contagious ? "" : "md:col-span-2"}`}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Suspected Disease
+                    </label>
+                    <input
+                      type="text"
+                      name="suspectedDisease"
+                      value={formData.suspectedDisease}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                      placeholder="Provisional diagnosis"
+                      required
+                    />
+                  </div>
 
-                {/* Contagious Toggle */}
-                <div className="flex items-center h-full pt-6">
-                  <label className="flex items-center cursor-pointer space-x-3 select-none">
-                    <div className="relative">
+                  {/* Confirmed Disease in uploadfile */}
+                  {formData.contagious && (
+                    <div>
+                      <label className="block text-sm font-medium text-red-600 mb-2">
+                        Confirmed Disease{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+
                       <input
-                        type="checkbox"
-                        name="contagious"
-                        checked={formData.contagious}
+                        type="text"
+                        name="confirmedDisease"
+                        value={formData.confirmedDisease}
                         onChange={handleInputChange}
-                        className="sr-only peer"
+                        className="w-full px-4 py-2 border border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 outline-none bg-white"
+                        placeholder="Final diagnosis"
+                        required
                       />
-                      <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-500"></div>
+
+                      {mustConfirm && (
+                        <p className="text-red-600 text-sm mt-1">
+                          Confirmed disease is required for contagious cases.
+                        </p>
+                      )}
                     </div>
-                    <div className="flex flex-col">
-                      <span
-                        className={`font-semibold ${
-                          formData.contagious ? "text-red-600" : "text-gray-600"
-                        }`}
-                      >
-                        {formData.contagious
-                          ? "Contagious / High Risk"
-                          : "Not Contagious"}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        Toggle if this requires isolation
-                      </span>
-                    </div>
-                  </label>
+                  )}
+
+                  {/* Contagious Toggle */}
+                  <div className="flex items-center h-full pt-6">
+                    <label className="flex items-center cursor-pointer space-x-3 select-none">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          name="contagious"
+                          checked={formData.contagious}
+                          onChange={handleInputChange}
+                          className="sr-only peer"
+                        />
+                        <div
+                          className="w-12 h-7 bg-gray-300 rounded-full peer peer-checked:bg-red-500 peer-focus:outline-none 
+        after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:border-gray-300 
+        after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"
+                        ></div>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span
+                          className={`font-semibold ${
+                            formData.contagious
+                              ? "text-red-600"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          {formData.contagious
+                            ? "Contagious / High Risk"
+                            : "Not Contagious"}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          Toggle if this requires isolation
+                        </span>
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -327,7 +373,7 @@ function AddPrescriptionPage() {
 
               <button
                 type="submit"
-                disabled={submitting || !selectedFile}
+                disabled={submitting || !selectedFile || mustConfirm}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-blue-300 disabled:cursor-not-allowed shadow-lg shadow-blue-200"
               >
                 {submitting ? "Uploading..." : "Submit Prescription File"}
@@ -395,8 +441,14 @@ function AddPrescriptionPage() {
               </div>
 
               {/* Section 2: Diagnosis */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <div>
+              <div
+                className={`grid gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100 
+            ${formData.contagious ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}
+              >
+                {/* Suspected Disease */}
+                <div
+                  className={`${formData.contagious ? "" : "md:col-span-2"}`}
+                >
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Suspected Disease
                   </label>
@@ -409,19 +461,23 @@ function AddPrescriptionPage() {
                     placeholder="Provisional diagnosis"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirmed Disease
-                  </label>
-                  <input
-                    type="text"
-                    name="confirmedDisease"
-                    value={formData.confirmedDisease}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                    placeholder="Final diagnosis (if available)"
-                  />
-                </div>
+
+                {/* Confirmed Disease — only shown if contagious */}
+                {formData.contagious && (
+                  <div>
+                    <label className="block text-sm font-medium text-red-600 mb-2">
+                      Confirmed Disease
+                    </label>
+                    <input
+                      type="text"
+                      name="confirmedDisease"
+                      value={formData.confirmedDisease}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-red-400 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+                      placeholder="Final diagnosis"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Section 3: Medicines Issued */}
@@ -518,8 +574,13 @@ function AddPrescriptionPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting || success}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-blue-300 disabled:cursor-not-allowed shadow-lg shadow-blue-200"
+                  disabled={
+                    submitting || success || isConfirmedRequiredAndMissing
+                  }
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium 
+             hover:bg-blue-700 transition 
+             disabled:bg-blue-300 disabled:cursor-not-allowed 
+             shadow-lg shadow-blue-200"
                 >
                   {submitting
                     ? "Saving..."

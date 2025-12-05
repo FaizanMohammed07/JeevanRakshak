@@ -25,7 +25,7 @@ const prescriptionSchema = new mongoose.Schema(
 
     contagious: {
       type: Boolean,
-      required: true,
+      required: false,
       default: false,
     },
 
@@ -40,7 +40,7 @@ const prescriptionSchema = new mongoose.Schema(
 
     confirmedDisease: {
       type: String,
-      required: [true, "Please mention the disease"],
+      required: [false, "Please mention the disease"],
     },
 
     dateOfIssue: {
