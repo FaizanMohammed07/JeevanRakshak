@@ -10,6 +10,7 @@ import {
 import {
   allowDoctorsOnly,
   allowPatientsOnly,
+  allowRoles,
   protect,
 } from "../middleware/protect.js";
 import multer from "multer";
@@ -21,19 +22,19 @@ const upload = multer({
 const router = express.Router();
 
 // Doctor adds prescription
-router.post("/", protect, allowDoctorsOnly, addPrescription);
+router.post("/", protect, allowRoles("doctor"), addPrescription);
 
 //get my prescriptions (patient)
-router.get("/my", protect, allowPatientsOnly, getMyPrescriptions);
+router.get("/my", protect, allowRoles("patient"), getMyPrescriptions);
 
 // Doctor Dashboard Data
-router.get("/doctor/my", protect, allowDoctorsOnly, getDoctorPrescriptions);
+router.get("/doctor/my", protect, allowRoles("doctor"), getDoctorPrescriptions);
 
 //get all prescriptions of specific patient
 router.get(
   "/patient/:patientId",
   protect,
-  // allowDoctorsOnly,
+  allowRoles("doctor", "patient"),
   getPrescriptionsForPatient
 );
 
@@ -42,7 +43,7 @@ router.get("/diseases", diseasesByArea);
 router.post(
   "/images",
   protect,
-  allowDoctorsOnly,
+  allowRoles("doctor"),
   upload.array("images", 10), // allow up to 10 images
   addPrescriptionImagesOnly
 );

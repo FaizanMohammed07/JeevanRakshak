@@ -36,10 +36,10 @@ export const getPatientByPhone = async (req, res) => {
 
 export const latestPatients = async (req, res) => {
   try {
-    const latest = await Prescription.find()
+    const latest = await Patient.find()
       .sort({ dateOfIssue: -1 })
-      .limit(10)
-      .populate("patient", "name age phoneNumber district taluk village")
+      // .limit(10)
+      // .select("name age gender phoneNumber district taluk village createdAt")
       .lean();
 
     res.status(200).json({ latest });

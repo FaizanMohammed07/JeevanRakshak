@@ -27,7 +27,9 @@ export const protect = async (req, res, next) => {
 
     // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.isAdmin = decoded.isAdmin || false; 
+    // console.log(decoded);
+
+    // req.isAdmin = decoded.isAdmin || false;
     const userId = decoded.id;
 
     // Try to find doctor first
@@ -84,25 +86,38 @@ export const allowPatientsOnly = (req, res, next) => {
   next();
 };
 
-// export const allowReportAssistantsOnly = (req, res, next) => {
-//   if (!req.isReportAssistant)
-//     return res
-//       .status(403)
-//       .json({ msg: "Only report assistants can access this route" });
-
-//   next();
-// };
 export const allowReportAssistantsOnly = (req, res, next) => {
-  // Allow if user is admin or report assistant
-  if (req.isAdmin || req.isReportAssistant) {
-    return next();
-  }
+  if (!req.isReportAssistant)
+    return res
+      .status(403)
+      .json({ msg: "Only report assistants can access this route" });
 
-  return res.status(403).json({
-    msg: "Only report assistants or admins can access this route",
-  });
+  next();
 };
 
+export const allowRoles = (...allowedRoles) => {
+  return (req, res, next) => {
+    const { isDoctor, isPatient, isReportAssistant } = req;
+
+    const userRole =
+      (isDoctor && "doctor") ||
+      (isPatient && "patient") ||
+      (isReportAssistant && "reportAssistant") ||
+      null;
+
+    if (!userRole) {
+      return res.status(401).json({ msg: "User role not determined" });
+    }
+
+    if (!allowedRoles.includes(userRole)) {
+      return res
+        .status(403)
+        .json({ msg: `Access denied for role: ${userRole}` });
+    }
+
+    next();
+  };
+};
 
 export const govtProtect = async (req, res, next) => {
   try {

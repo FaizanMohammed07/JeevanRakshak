@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { allowReportAssistantsOnly, protect } from "../middleware/protect.js";
+import { allowRoles, protect } from "../middleware/protect.js";
 import {
   addPatientReport,
   getReportsForPatient,
@@ -15,7 +15,7 @@ const router = express.Router();
 router.post(
   "/",
   protect,
-  // allowReportAssistantsOnly,
+  allowRoles("doctor", "reportAssistant"),
   upload.single("pdf"),
   addPatientReport
 );
@@ -24,7 +24,7 @@ router.post(
 router.get(
   "/patient/:patientId",
   protect,
-  //   allowDoctorsOnly,
+  allowRoles("doctor", "reportAssistant", "patient"),
   getReportsForPatient
 );
 

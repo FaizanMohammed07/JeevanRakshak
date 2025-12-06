@@ -9,7 +9,8 @@
     "dashboard": "Dashboard",
     "profile": "Profile",
     "prescriptions": "Prescriptions",
-    "labReports": "Lab Reports"
+    "labReports": "Lab Reports",
+    "nearbyHospitals": "Nearby Hospitals"
   },
   "language": {
     "prompt": "Choose your language",

@@ -31,20 +31,20 @@ export const addPrescription = async (req, res) => {
     // req.user is the logged-in doctor (from doctor auth middleware)
     const doctorId = req.user._id;
 
-    // Check if the doctor already wrote a prescription for this patient within 30 mins
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    // Check if the doctor already wrote a prescription for this patient within 30 mins TIME LIMIT-PRESCRPTION
+    // const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
-    const recentPrescription = await Prescription.findOne({
-      patient: patientId,
-      doctor: doctorId,
-      dateOfIssue: { $gte: thirtyMinutesAgo },
-    });
+    // const recentPrescription = await Prescription.findOne({
+    //   patient: patientId,
+    //   doctor: doctorId,
+    //   dateOfIssue: { $gte: thirtyMinutesAgo },
+    // });
 
-    if (recentPrescription) {
-      return res.status(429).json({
-        msg: "You already added a prescription for this patient within the last 30 minutes.",
-      });
-    }
+    // if (recentPrescription) {
+    //   return res.status(429).json({
+    //     msg: "You already added a prescription for this patient within the last 30 minutes.",
+    //   });
+    // }
 
     const prescription = await Prescription.create({
       patient: patientId,
@@ -266,19 +266,19 @@ export const addPrescriptionImagesOnly = async (req, res) => {
     const doctorId = req.user._id;
 
     // Check if the doctor already wrote a prescription for this patient within 30 mins
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    // const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
 
-    const recentPrescription = await Prescription.findOne({
-      patient: patientId,
-      doctor: doctorId,
-      dateOfIssue: { $gte: thirtyMinutesAgo },
-    });
+    // const recentPrescription = await Prescription.findOne({
+    //   patient: patientId,
+    //   doctor: doctorId,
+    //   dateOfIssue: { $gte: thirtyMinutesAgo },
+    // });
 
-    if (recentPrescription) {
-      return res.status(429).json({
-        msg: "You already added a prescription for this patient within the last 30 minutes.",
-      });
-    }
+    // if (recentPrescription) {
+    //   return res.status(429).json({
+    //     msg: "You already added a prescription for this patient within the last 30 minutes.",
+    //   });
+    // }
 
     const imageUrls = await uploadCompressedImages(
       req.files,

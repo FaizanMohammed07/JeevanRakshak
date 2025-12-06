@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   UserRound,
@@ -7,6 +7,8 @@ import {
   Droplet,
   ShieldCheck,
   IdCard,
+  QrCode,
+  X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { usePatientData } from "../context/PatientsContext";
@@ -15,10 +17,19 @@ export default function ProfilePage() {
   const { patient } = useAuth();
   const { loadProfile, status, errors } = usePatientData();
   const { t } = useTranslation();
+  const [showQR, setShowQR] = useState(false);
 
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") setShowQR(false);
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
 
   const quickFacts = useMemo(() => {
     if (!patient) return [];
@@ -106,7 +117,7 @@ export default function ProfilePage() {
 
   return (
     <section className="w-full space-y-8">
-      <header className="rounded-3xl border border-sky-100 bg-white/95 px-6 py-5 shadow-sm">
+      <header className="relative rounded-3xl border border-sky-100 bg-white/95 px-6 py-5 shadow-sm">
         {/* <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">Your information</p> */}
         <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
           {t("profile.headerLabel")}
@@ -122,6 +133,12 @@ export default function ProfilePage() {
             ) /* Keep your details current so hospital teams can reach you instantly. */
           }
         </p>
+        <div className="absolute top-4 right-4 cursor-pointer">
+          <QrCode
+            className="h-7 w-7 text-sky-600 hover:text-sky-800 transition"
+            onClick={() => setShowQR(true)}
+          />
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -242,6 +259,30 @@ export default function ProfilePage() {
           }
         />
       </div>
+      {showQR && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          onClick={() => setShowQR(false)} // clicking outside closes
+        >
+          <div
+            className="relative bg-white p-6 rounded-3xl shadow-xl border border-sky-100"
+            onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+          >
+            <button
+              className="absolute top-3 right-3 text-slate-500 hover:text-slate-700"
+              onClick={() => setShowQR(false)}
+            >
+              <X className="h-6 w-6" />
+            </button>
+
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://localhost:5174/patients/${patient.phoneNumber}`}
+              alt="QR Code"
+              className="rounded-xl"
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

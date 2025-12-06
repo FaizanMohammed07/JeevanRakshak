@@ -6,6 +6,8 @@ import Prescription from "../models/prescriptionModel.js";
 const DEFAULT_LOOKBACK_DAYS = 7;
 const OUTBREAK_LOOKBACK_DAYS = 5;
 const TREND_WIDGET_DAYS = 7;
+const MAX_TREND_WEEK_OFFSET = 3;
+const INDIA_TZ = "Asia/Kolkata";
 const ALERT_RESULT_LIMIT = 12;
 const RISK_ROWS_LIMIT = 6;
 const DISTRICT_REGEX_CACHE_LIMIT = 150;
@@ -63,6 +65,12 @@ const buildDateWindow = (rangeDays, offsetDays = 0) => {
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - (safeRange - 1));
   return { start, end };
+};
+
+const sanitizeWeekOffset = (value) => {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed < 0) return 0;
+  return Math.min(parsed, MAX_TREND_WEEK_OFFSET);
 };
 
 /**
@@ -655,14 +663,19 @@ const getOversightChecklist = async (req, res) => {
  * Builds a day-wise matrix of disease counts so the TrendCharts component can draw
  * multi-series line graphs without additional transformations client-side.
  */
-const buildDiseaseTrendWidget = async (match) => {
+const buildDiseaseTrendWidget = async (match, weekOffset = 0) => {
   if (hasEmptyPatientScope(match)) return [];
-  const { start } = buildDateWindow(TREND_WIDGET_DAYS);
+  const offsetDays = Math.max(0, weekOffset) * TREND_WIDGET_DAYS;
+  const { start, end } = buildDateWindow(TREND_WIDGET_DAYS, offsetDays);
   const pipeline = [
-    { $match: { ...match, dateOfIssue: { $gte: start } } },
+    {
+      $match: {
+        ...match,
+        dateOfIssue: { $gte: start, $lte: end },
+      },
+    },
     {
       $addFields: {
-        dayNumber: { $dayOfWeek: "$dateOfIssue" },
         diseaseLabel: {
           $cond: [
             {
@@ -679,7 +692,11 @@ const buildDiseaseTrendWidget = async (match) => {
     {
       $addFields: {
         dayKey: {
-          $arrayElemAt: [DAY_LABELS, { $subtract: ["$dayNumber", 1] }],
+          $dateToString: {
+            format: "%Y-%m-%d",
+            date: "$dateOfIssue",
+            timezone: INDIA_TZ,
+          },
         },
       },
     },
@@ -697,12 +714,48 @@ const buildDiseaseTrendWidget = async (match) => {
   rows.forEach((row) => {
     const day = row._id.day;
     if (!dayMap.has(day)) {
-      dayMap.set(day, { day });
+      dayMap.set(day, { date: day });
     }
     const entry = dayMap.get(day);
     entry[row._id.disease.toLowerCase()] = row.total;
   });
-  return Array.from(dayMap.values());
+
+  const diseaseKeys = new Set();
+  dayMap.forEach((entry) => {
+    Object.keys(entry).forEach((key) => {
+      if (key !== "date") {
+        diseaseKeys.add(key);
+      }
+    });
+  });
+
+  const orderedRows = [];
+  for (let index = 0; index < TREND_WIDGET_DAYS; index += 1) {
+    const current = new Date(start);
+    current.setDate(start.getDate() + index);
+    current.setHours(0, 0, 0, 0);
+    const isoDate = current.toLocaleDateString("en-CA", { timeZone: INDIA_TZ });
+    const existing = dayMap.get(isoDate) ?? { date: isoDate };
+    const row = {
+      day: current
+        .toLocaleDateString("en-IN", { weekday: "short", timeZone: INDIA_TZ })
+        .replace(".", ""),
+      date: isoDate,
+      sequence: index,
+      axisLabel: current.toLocaleDateString("en-IN", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+        timeZone: INDIA_TZ,
+      }),
+    };
+    diseaseKeys.forEach((key) => {
+      row[key] = existing[key] ?? 0;
+    });
+    orderedRows.push(row);
+  }
+
+  return orderedRows;
 };
 
 /**
@@ -746,8 +799,9 @@ const buildVaccinationWidget = async (match) => {
 const getTrendWidgets = async (req, res) => {
   try {
     const districtScope = await collectDistrictScope(req.query.district);
+    const weekOffset = sanitizeWeekOffset(req.query.weekOffset);
     const [diseaseTrends, vaccinationProgress] = await Promise.all([
-      buildDiseaseTrendWidget(districtScope.prescriptionMatch),
+      buildDiseaseTrendWidget(districtScope.prescriptionMatch, weekOffset),
       buildVaccinationWidget(districtScope.prescriptionMatch),
     ]);
 

@@ -26,6 +26,7 @@ import PrescriptionsPage from "./pages/PrescriptionsPage";
 import LabReportsPage from "./pages/LabReportsPage";
 import LoginPage from "./pages/Login";
 import LanguageSwitcher from "./components/LanguageSwitcher";
+import NearbyHospitals from "./pages/NearbyHospitals";
 
 const navItems = [
   {
@@ -49,6 +50,11 @@ const navItems = [
     to: "/lab-reports",
     icon: FlaskConical,
   },
+  {
+    labelKey: "nav.nearbyHospitals",
+    to: "/nearby-hospitals",
+    icon: MapPin,
+  },
 ];
 
 function App() {
@@ -70,6 +76,7 @@ function App() {
               <Route path="profile" element={<ProfilePage />} />
               <Route path="prescriptions" element={<PrescriptionsPage />} />
               <Route path="lab-reports" element={<LabReportsPage />} />
+              <Route path="nearby-hospitals" element={<NearbyHospitals />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
