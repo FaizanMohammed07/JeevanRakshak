@@ -1,6 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+.user-location-icon .dot {
+  width: 18px;
+  height: 18px;
+  background: #007bff; /* Blue color */
+  border-radius: 50%; /* Make it a circle */
+  border: 3px solid white; /* White border like Google Maps */
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.7); /* Glow */
+}
 
 @layer base {
   body {
