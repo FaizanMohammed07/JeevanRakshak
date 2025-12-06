@@ -16,6 +16,7 @@ const geoUrl =
 
 const heatmapRangeOptions = [
   { label: "Today", value: "today", rangeDays: 1, offsetDays: 0 },
+  { label: "Yesterday", value: "yesterday", rangeDays: 1, offsetDays: 1 },
   { label: "7 Days", value: "7d", rangeDays: 7, offsetDays: 0 },
   { label: "14 Days", value: "14d", rangeDays: 14, offsetDays: 0 },
   { label: "30 Days", value: "30d", rangeDays: 30, offsetDays: 0 },
@@ -29,8 +30,13 @@ const riskStyles = {
   },
   observe: {
     label: "Observe",
-    color: "#facc15",
+    color: "#fde047",
     chip: "bg-yellow-100 text-yellow-800",
+  },
+  moderate: {
+    label: "Moderate",
+    color: "#fb923c",
+    chip: "bg-orange-100 text-orange-800",
   },
   critical: {
     label: "Critical",
@@ -38,6 +44,8 @@ const riskStyles = {
     chip: "bg-red-100 text-red-800",
   },
 };
+
+const riskOrder = ["critical", "moderate", "observe", "stable"];
 
 const changeBadge = (value) => {
   if (typeof value !== "number" || Number.isNaN(value)) {
@@ -53,6 +61,14 @@ const changeBadge = (value) => {
   return { label: formatted, badge: "bg-gray-100 text-gray-700" };
 };
 
+const computeRiskLevel = (activeCases) => {
+  const cases = Number(activeCases) || 0;
+  if (cases >= 6) return "critical";
+  if (cases >= 3) return "moderate";
+  if (cases >= 1) return "observe";
+  return "stable";
+};
+
 function KeralaHeatMap({ compact = false, refreshKey }) {
   const navigate = useNavigate();
   const [riskProfile, setRiskProfile] = useState([]);
@@ -60,6 +76,9 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rangeKey, setRangeKey] = useState(heatmapRangeOptions[0].value);
+  const [customRangeOpen, setCustomRangeOpen] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
 
   const rangeConfig = useMemo(
     () =>
@@ -88,6 +107,68 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
       .range([6, 18]);
   }, [riskProfile]);
 
+  const riskSummary = useMemo(() => {
+    const totals = riskProfile.reduce(
+      (acc, district) => {
+        const risk = computeRiskLevel(district.activeCases);
+        acc[risk] = (acc[risk] ?? 0) + 1;
+        acc.totalActive += district.activeCases ?? 0;
+        return acc;
+      },
+      { totalActive: 0, stable: 0, observe: 0, moderate: 0, critical: 0 }
+    );
+    const topDistrict = riskProfile.reduce((prev, next) => {
+      if (!prev) return next;
+      return (next.activeCases ?? 0) > (prev.activeCases ?? 0) ? next : prev;
+    }, null);
+    return {
+      ...totals,
+      total: riskProfile.length,
+      topDistrict,
+    };
+  }, [riskProfile]);
+
+  const groupedDistricts = useMemo(() => {
+    const sorted = [...riskProfile].sort(
+      (a, b) => (b.activeCases ?? 0) - (a.activeCases ?? 0)
+    );
+    return sorted.reduce(
+      (acc, district) => {
+        const risk = computeRiskLevel(district.activeCases);
+        acc[risk] = acc[risk] ?? [];
+        acc[risk].push(district);
+        return acc;
+      },
+      { critical: [], moderate: [], observe: [], stable: [] }
+    );
+  }, [riskProfile]);
+
+  const activeDistrictRisk = useMemo(
+    () => computeRiskLevel(activeDistrict?.activeCases),
+    [activeDistrict?.activeCases]
+  );
+
+  const customRangeActive = customRangeOpen && customStartDate && customEndDate;
+
+  const heatmapQueryParams = useMemo(() => {
+    if (customRangeActive) {
+      return {
+        startDate: customStartDate,
+        endDate: customEndDate,
+      };
+    }
+    return {
+      rangeDays: rangeConfig.rangeDays,
+      offsetDays: rangeConfig.offsetDays,
+    };
+  }, [
+    customRangeActive,
+    customStartDate,
+    customEndDate,
+    rangeConfig.rangeDays,
+    rangeConfig.offsetDays,
+  ]);
+
   useEffect(() => {
     let ignore = false;
     async function loadRiskMap() {
@@ -96,10 +177,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
           setLoading(true);
           setError(null);
         }
-        const response = await fetchKeralaRiskMap({
-          rangeDays: rangeConfig.rangeDays,
-          offsetDays: rangeConfig.offsetDays,
-        });
+        const response = await fetchKeralaRiskMap(heatmapQueryParams);
         if (ignore) return;
         const districts = Array.isArray(response?.districts)
           ? response.districts
@@ -131,12 +209,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
     return () => {
       ignore = true;
     };
-  }, [
-    activeDistrictSlug,
-    rangeConfig.offsetDays,
-    rangeConfig.rangeDays,
-    refreshKey,
-  ]);
+  }, [activeDistrictSlug, heatmapQueryParams, refreshKey]);
 
   const handleDistrictClick = (district) => {
     if (!district?.name) return;
@@ -144,40 +217,25 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
     navigate(`/disease/district/${slugify(district.name)}`);
   };
 
+  const mapHeight = compact ? "min-h-[360px]" : "min-h-[460px]";
+
   return (
     <div
-      className={`bg-white rounded-xl shadow-md p-6 h-full flex flex-col ${
-        compact ? "min-h-[360px]" : "min-h-[440px]"
+      className={`bg-gradient-to-br from-slate-900/5 via-white to-white rounded-2xl border border-slate-200 shadow-2xl p-6 w-full ${
+        compact ? "min-h-[380px]" : "min-h-[520px]"
       }`}
     >
-      <div className="flex items-center gap-2 mb-4">
-        <MapPin className="text-blue-600" size={24} />
-        <div>
-          <h3 className="text-xl font-bold text-gray-900">Disease Heatmap</h3>
-          <p className="text-sm text-gray-500">
-            Interactive Kerala map with district risk indicators
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <MapPin className="text-blue-600" size={24} />
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">Disease Heatmap</h3>
+            <p className="text-sm text-gray-500">
+              District risk levels mapped across Kerala
+            </p>
+          </div>
         </div>
-      </div>
-      {error && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          {error}
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <div className="flex flex-wrap items-center gap-4">
-          {Object.entries(riskStyles).map(([key, value]) => (
-            <div key={key} className="flex items-center gap-2">
-              <span
-                className="inline-flex h-3 w-3 rounded-full"
-                style={{ backgroundColor: value.color }}
-              ></span>
-              <span className="text-sm text-gray-600">{value.label}</span>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-gray-500">Window</span>
           {heatmapRangeOptions.map((option) => (
             <button
@@ -193,123 +251,312 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
               {option.label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setCustomRangeOpen((prev) => !prev)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+              customRangeOpen
+                ? "bg-slate-900 text-white border-slate-900"
+                : "bg-white text-gray-700 border-gray-200"
+            }`}
+          >
+            Custom range
+          </button>
         </div>
       </div>
+      {customRangeOpen && (
+        <div className="grid w-full gap-3 md:grid-cols-3 mb-4">
+          <label className="flex flex-col text-xs text-gray-600">
+            Start date
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(event) => setCustomStartDate(event.target.value)}
+              className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-xs focus:border-slate-500 focus:ring-0"
+            />
+          </label>
+          <label className="flex flex-col text-xs text-gray-600">
+            End date
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(event) => setCustomEndDate(event.target.value)}
+              className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-xs focus:border-slate-500 focus:ring-0"
+            />
+          </label>
+          {customRangeActive && (
+            <p className="text-xs text-slate-500 flex items-end">
+              Showing data from {customStartDate} to {customEndDate}
+            </p>
+          )}
+        </div>
+      )}
 
-      <div className={`flex-1 ${compact ? "min-h-[240px]" : "min-h-[320px]"}`}>
-        <ComposableMap
-          projection="geoMercator"
-          projectionConfig={{ scale: 5200, center: [76.5, 10.2] }}
-          style={{ width: "100%", height: "100%" }}
+      {error && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {error}
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-[1.8fr,1fr]">
+        <div
+          className={`relative ${mapHeight} rounded-2xl border border-slate-100 shadow-inner overflow-hidden bg-slate-950/5`}
         >
-          <Geographies geography={geoUrl}>
-            {({ geographies }) =>
-              geographies
-                .filter((geo) => {
-                  const name =
-                    geo.properties?.st_nm ||
-                    geo.properties?.name ||
-                    geo.properties?.NAME_1;
-                  return name === "Kerala";
-                })
-                .map((geo) => (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    fill="#dbeafe"
-                    stroke="#1d4ed8"
-                    strokeWidth={0.75}
-                    style={{
-                      default: { outline: "none" },
-                      hover: { outline: "none", fill: "#bfdbfe" },
-                      pressed: { outline: "none" },
-                    }}
-                  />
-                ))
-            }
-          </Geographies>
-
-          {riskProfile.map((district) => {
-            const style = riskStyles[district.risk] || riskStyles.observe;
-            return (
-              <Marker
-                key={district.name}
-                coordinates={district.coordinates}
-                onMouseEnter={() => setActiveDistrict(district)}
-                onFocus={() => setActiveDistrict(district)}
-                onClick={() => handleDistrictClick(district)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    handleDistrictClick(district);
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-30"
+            style={{
+              backgroundImage:
+                "url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Kerala_outline_map.svg/1024px-Kerala_outline_map.svg.png')",
+              backgroundSize: "180%",
+              filter: "grayscale(1) brightness(0.8)",
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/80 to-white" />
+          <div className="relative flex h-full flex-col p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                {Object.entries(riskStyles).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="flex items-center gap-1 text-xs text-gray-600"
+                  >
+                    <span
+                      className="inline-flex h-3 w-3 rounded-full"
+                      style={{ backgroundColor: value.color }}
+                    />
+                    {value.label}
+                  </div>
+                ))}
+              </div>
+              <span className="text-xs text-gray-500">
+                Total districts: {riskSummary.total}
+              </span>
+            </div>
+            <div className="relative flex-1 min-h-[220px]">
+              <ComposableMap
+                projection="geoMercator"
+                projectionConfig={{ scale: 5200, center: [76.5, 10.2] }}
+                style={{ width: "100%", height: "100%" }}
+              >
+                <Geographies geography={geoUrl}>
+                  {({ geographies }) =>
+                    geographies
+                      .filter((geo) => {
+                        const name =
+                          geo.properties?.st_nm ||
+                          geo.properties?.name ||
+                          geo.properties?.NAME_1;
+                        return name === "Kerala";
+                      })
+                      .map((geo) => (
+                        <Geography
+                          key={geo.rsmKey}
+                          geography={geo}
+                          fill="transparent"
+                          stroke="#0f172a"
+                          strokeWidth={0.75}
+                          style={{
+                            default: { outline: "none" },
+                            hover: {
+                              outline: "none",
+                              fill: "rgba(14,165,233,0.15)",
+                            },
+                            pressed: { outline: "none" },
+                          }}
+                        />
+                      ))
                   }
-                }}
+                </Geographies>
+                {riskProfile.map((district) => {
+                  const style = riskStyles[district.risk] || riskStyles.observe;
+                  return (
+                    <Marker
+                      key={district.name}
+                      coordinates={district.coordinates}
+                      onMouseEnter={() => setActiveDistrict(district)}
+                      onFocus={() => setActiveDistrict(district)}
+                      onClick={() => handleDistrictClick(district)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          handleDistrictClick(district);
+                        }
+                      }}
+                    >
+                      <g>
+                        <circle
+                          r={radiusScale(district.activeCases)}
+                          fill={style.color}
+                          fillOpacity={0.35}
+                          stroke={style.color}
+                          strokeWidth={2}
+                        />
+                        <circle r={3.5} fill={style.color} />
+                      </g>
+                    </Marker>
+                  );
+                })}
+              </ComposableMap>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <div className="rounded-2xl bg-white/90 border border-gray-100 p-4 shadow-sm max-h-[520px]">
+            <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
+              Quick view
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-[11px] text-gray-500">Active districts</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {riskSummary.total}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-[11px] text-gray-500">Active cases</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {riskSummary.totalActive.toLocaleString?.() ?? "--"}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-[11px] text-gray-500">Critical districts</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {riskSummary.critical}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-[11px] text-gray-500">Moderate districts</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {riskSummary.moderate}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-gray-500">
+                  District risk watch
+                </p>
+                <span className="text-xs text-gray-500">Scroll for more</span>
+              </div>
+              <div
+                className="mt-3 space-y-3 overflow-y-auto pr-1"
+                style={{ maxHeight: 230 }}
               >
-                <g>
-                  <circle
-                    r={radiusScale(district.activeCases)}
-                    fill={style.color}
-                    fillOpacity={0.25}
-                    stroke={style.color}
-                    strokeWidth={2}
-                  />
-                  <circle r={3.5} fill={style.color} />
-                </g>
-              </Marker>
-            );
-          })}
-        </ComposableMap>
-      </div>
-
-      <div className="mt-4 bg-slate-50 rounded-lg p-4">
-        <p className="text-sm text-gray-500 mb-1">District Focus</p>
-        {activeDistrict ? (
-          <>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <p className="text-xl font-semibold text-gray-900">
-                {activeDistrict.name}
+                {riskOrder.map((key) => {
+                  const districts = groupedDistricts[key] ?? [];
+                  const percentage = riskSummary.total
+                    ? Math.round((districts.length / riskSummary.total) * 100)
+                    : 0;
+                  return (
+                    <div
+                      key={key}
+                      className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 shadow-inner"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+                            {riskStyles[key].label}
+                          </p>
+                          <p className="text-xl font-semibold text-gray-900">
+                            {districts.length}
+                          </p>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {percentage}% of districts
+                        </span>
+                      </div>
+                      <div className="mt-2 h-2 w-full rounded-full bg-slate-200">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${Math.min(100, percentage)}%`,
+                            backgroundColor: riskStyles[key].color,
+                          }}
+                        />
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-700">
+                        {districts.length ? (
+                          districts.map((district) => (
+                            <button
+                              key={district.name}
+                              type="button"
+                              onClick={() => handleDistrictClick(district)}
+                              className="rounded-full border border-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:border-slate-400"
+                            >
+                              {district.name}
+                            </button>
+                          ))
+                        ) : (
+                          <span className="text-slate-400">
+                            No districts highlighted
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white/90 border border-gray-100 p-4 shadow-sm">
+            <p className="text-sm text-gray-500 mb-2">District Focus</p>
+            {activeDistrict ? (
+              <>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <p className="text-xl font-semibold text-gray-900">
+                    {activeDistrict.name}
+                  </p>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      riskStyles[activeDistrict.risk]?.chip
+                    }`}
+                  >
+                    {riskStyles[activeDistrict.risk]?.label ?? "--"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-y-2 text-sm text-gray-600">
+                  <span className="font-medium text-gray-500">Migrants:</span>
+                  <span>
+                    {activeDistrict.migrants?.toLocaleString?.() ?? "--"}
+                  </span>
+                  <span className="font-medium text-gray-500">
+                    Active Cases:
+                  </span>
+                  <span>{activeDistrict.activeCases ?? "--"}</span>
+                  <span className="font-medium text-gray-500">
+                    Top Disease:
+                  </span>
+                  <span>{activeDistrict.topDisease ?? "--"}</span>
+                  <span className="font-medium text-gray-500">
+                    Weekly Trend:
+                  </span>
+                  <span>{activeDistrict.trend ?? "--"}</span>
+                  <span className="font-medium text-gray-500">Change:</span>
+                  <span>
+                    <span
+                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${activeDistrictChange.badge}`}
+                    >
+                      {activeDistrictChange.label}
+                    </span>
+                  </span>
+                  <span className="font-medium text-gray-500">Advisory:</span>
+                  <span>{activeDistrict.riskNote ?? "--"}</span>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">
+                {loading
+                  ? "Loading live district data..."
+                  : error ?? "Live district data unavailable."}
               </p>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  riskStyles[activeDistrict.risk]?.chip
-                }`}
-              >
-                {riskStyles[activeDistrict.risk]?.label ?? "--"}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-y-1 text-sm text-gray-600">
-              <span className="font-medium text-gray-500">Migrants:</span>
-              <span>{activeDistrict.migrants?.toLocaleString?.() ?? "--"}</span>
-              <span className="font-medium text-gray-500">Active Cases:</span>
-              <span>{activeDistrict.activeCases ?? "--"}</span>
-              <span className="font-medium text-gray-500">Top Disease:</span>
-              <span>{activeDistrict.topDisease ?? "--"}</span>
-              <span className="font-medium text-gray-500">Weekly Trend:</span>
-              <span>{activeDistrict.trend ?? "--"}</span>
-              <span className="font-medium text-gray-500">Change:</span>
-              <span>
-                <span
-                  className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${activeDistrictChange.badge}`}
-                >
-                  {activeDistrictChange.label}
-                </span>
-              </span>
-              <span className="font-medium text-gray-500">Advisory:</span>
-              <span>{activeDistrict.riskNote ?? "--"}</span>
-            </div>
+            )}
             <p className="text-xs text-gray-500 mt-3">
               Click a district marker to jump into drill-down view.
             </p>
-          </>
-        ) : (
-          <p className="text-sm text-gray-500">
-            {loading
-              ? "Loading live district data..."
-              : error ?? "Live district data unavailable."}
-          </p>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

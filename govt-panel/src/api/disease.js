@@ -8,8 +8,13 @@ export function fetchDiseaseSummary(params) {
   return apiClient(`/disease/summary${buildQuery(params)}`);
 }
 
-export function fetchTalukBreakdown(districtSlug) {
-  return apiClient(`/disease/districts/${districtSlug}/taluks`);
+export function fetchTalukBreakdown(districtSlug, params) {
+  if (!districtSlug) {
+    throw new Error("districtSlug is required for taluk breakdown");
+  }
+  return apiClient(
+    `/disease/districts/${districtSlug}/taluks${buildQuery(params)}`
+  );
 }
 
 export function fetchHighAlertVillages() {

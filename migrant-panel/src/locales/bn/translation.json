@@ -9,7 +9,8 @@
     "dashboard": "ড্যাশবোর্ড",
     "profile": "প্রোফাইল",
     "prescriptions": "প্রেসক্রিপশন",
-    "labReports": "ল্যাব রিপোর্ট"
+    "labReports": "ল্যাব রিপোর্ট",
+    "nearbyHospitals": "কাছাকাছি হাসপাতাল"
   },
   "language": {
     "prompt": "আপনার ভাষা বেছে নিন",
