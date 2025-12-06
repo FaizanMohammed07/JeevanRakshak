@@ -176,3 +176,12 @@ export const getReportsForPatient = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+export const getMe = (req, res) => {
+  res.status(200).json({
+    status: "success",
+    data: {
+      assistant: req.user,
+    },
+  });
+};

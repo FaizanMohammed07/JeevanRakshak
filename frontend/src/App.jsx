@@ -18,7 +18,10 @@ import UpdatePatientInfoPage from "./pages/UpdatePatientInfoPage";
 import DoctorAuthPage from "./pages/DoctorsAuthPage";
 import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
-
+import LabAssistantAuthPage from "./pages/LabAssistantAuthPage";
+import { LabAssistantProvider } from "./context/LabAssistantContext";
+import ProtectedRouteLabAssistant from "./components/ProtectedRouteLabAssistant";
+import LabAssistantDashboard from "./pages/LabAssistantDashboard";
 // --- THE ARCHITECTURE HELPER ---
 // This corresponds to: Protected Route -> Patient Context -> Page
 const ProtectedLayout = () => {
@@ -30,15 +33,35 @@ const ProtectedLayout = () => {
     </ProtectedRouteDoctor>
   );
 };
+const ProtectedAssistant = () => {
+  return (
+    <ProtectedRouteLabAssistant>
+      <PatientsProvider>
+        <Outlet /> {/* This renders the child route (Search, Details, etc.) */}
+      </PatientsProvider>
+    </ProtectedRouteLabAssistant>
+  );
+};
 
 function App() {
   return (
     <BrowserRouter>
       {/* 1. Doctor Auth covers the WHOLE app */}
       <DoctorsProvider>
+        <LabAssistantProvider>
         <Routes>
           {/* 2. Login Route (Public, No Patient Data) */}
           <Route path="/doctors/login" element={<DoctorAuthPage />} />
+          <Route path="/lab-assistant/login" element={<LabAssistantAuthPage />} />
+           {/* Lab Assistant Protected Route */}
+      <Route
+        element={<ProtectedAssistant />}>
+            <Route path="/lab-assistant/dashboard" element={<LabAssistantDashboard />} />
+            <Route path="/lab-assistant/patient/:patientId"></Route>
+            </Route>
+
+
+          {/* <Route path="/lab-assistant/signup" element={<LabAssistantauth  />} /> */}
 
           {/* 3. Protected Routes (Wrapped in Layout) */}
           {/* Anything inside this Route automatically gets Protected + Patient Context */}
@@ -68,11 +91,16 @@ function App() {
               element={<UpdatePatientInfoPage />}
             />
           </Route>
+          
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
         </Routes>
+        </LabAssistantProvider>
       </DoctorsProvider>
+      
+
     </BrowserRouter>
   );
 }

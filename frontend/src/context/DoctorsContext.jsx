@@ -27,6 +27,7 @@ export function DoctorsProvider({ children }) {
       } catch (err) {
         // If 401 (Unauthorized), it means no valid cookie.
         // We stay logged out (doctor is null).
+        
         setDoctor(null);
       } finally {
         // 3. STOP LOADING regardless of success or failure

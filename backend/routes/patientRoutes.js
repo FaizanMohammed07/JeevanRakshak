@@ -21,6 +21,6 @@ router.post("/login", login);
 router.get("/me", protect, allowRoles("patient"), getMyProfile);
 router.get("/me/labs", protect, allowRoles("patient"), getMyLabReports);
 
-router.get("/:identifier", protect, allowRoles("patient","doctor"), getPatientProfile);
+router.get("/:identifier", protect, allowRoles("patient","doctor","reportAssistant"), getPatientProfile);
 
 export default router;

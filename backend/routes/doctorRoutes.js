@@ -19,4 +19,5 @@ router.get("/logout", logout);
 
 router.get("/me", protect, allowRoles("doctor"), getMe);
 
+
 export default router;
