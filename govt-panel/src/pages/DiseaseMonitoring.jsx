@@ -20,6 +20,7 @@ import {
   Tooltip,
   CartesianGrid,
   Legend,
+  Cell,
 } from "recharts";
 
 const timelineOptions = [
@@ -121,6 +122,9 @@ function DiseaseMonitoring() {
   const [dataSyncError, setDataSyncError] = useState(null);
   const [refreshTick, setRefreshTick] = useState(Date.now());
   const [selectedVillage, setSelectedVillage] = useState(null);
+  const [customRangeOpen, setCustomRangeOpen] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
 
   // Range selections
   const [hotspotRangeKey, setHotspotRangeKey] = useState(
@@ -192,6 +196,49 @@ function DiseaseMonitoring() {
       .filter(Boolean);
   }, [trendKeys, trendData]);
 
+  const chartDiseaseKeys = useMemo(() => {
+    if (normalizedDiseaseKeys.length) return normalizedDiseaseKeys;
+    return [{ key: "totalCases", label: "Total Cases" }];
+  }, [normalizedDiseaseKeys]);
+
+  const horizontalChartData = useMemo(() => {
+    return [...districtCases]
+      .map((entry) => ({ ...entry }))
+      .sort((a, b) => (b.totalCases ?? 0) - (a.totalCases ?? 0));
+  }, [districtCases]);
+
+  const horizontalChartSummary = useMemo(() => {
+    if (!horizontalChartData.length) {
+      return {
+        totalCases: 0,
+        highestDistrict: "—",
+        highestCases: 0,
+      };
+    }
+    const totalCases = horizontalChartData.reduce(
+      (sum, entry) => sum + (entry.totalCases ?? 0),
+      0
+    );
+    const topDistrict = horizontalChartData[0];
+    return {
+      totalCases,
+      highestDistrict: topDistrict?.district ?? "—",
+      highestCases: topDistrict?.totalCases ?? 0,
+    };
+  }, [horizontalChartData]);
+
+  const diseaseTotals = useMemo(() => {
+    const totalsMap = new Map();
+    cases.forEach((row) => {
+      const name = row.topDisease?.trim() || "Not specified";
+      const increment = row.topDiseaseCount ?? row.totalCases ?? 0;
+      totalsMap.set(name, (totalsMap.get(name) ?? 0) + increment);
+    });
+    return Array.from(totalsMap.entries())
+      .map(([name, value]) => ({ name, total: value }))
+      .sort((a, b) => b.total - a.total);
+  }, [cases]);
+
   const hotspotRangeConfig = useMemo(
     () =>
       hotspotRangeOptions.find((option) => option.value === hotspotRangeKey) ??
@@ -260,6 +307,24 @@ function DiseaseMonitoring() {
     } catch (error) {
       return "—";
     }
+  };
+
+  const formatShortDate = (value) => {
+    if (!value) return "—";
+    try {
+      return patientDateFormatter.format(new Date(value));
+    } catch {
+      return "—";
+    }
+  };
+
+  const formatNumber = (value) =>
+    typeof value === "number" ? value.toLocaleString("en-IN") : value;
+
+  const getSeverityColor = (caseCount = 0) => {
+    if (caseCount >= 6) return "#ef4444";
+    if (caseCount >= 3) return "#fbbf24";
+    return "#22c55e";
   };
 
   const getDistrictCaseSeverity = (caseCount = 0) => {
@@ -332,9 +397,88 @@ function DiseaseMonitoring() {
       return "Critical";
     } else if (caseCount >= 3) {
       return "Moderate";
-    } else {
-      return "Normal";
     }
+    return "Normal";
+  };
+
+  const renderDistrictTooltip = ({ active, label, payload }) => {
+    if (!active || !payload?.length) return null;
+    const rowData = payload[0]?.payload ?? {};
+    const totalCases =
+      rowData.totalCases ??
+      rowData.total ??
+      payload.reduce((sum, entry) => sum + (entry.value ?? 0), 0);
+    const severityLabel = getStatusFromCases(totalCases);
+    const severityColor = getSeverityColor(totalCases);
+    const diseaseBreakdown = payload
+      .filter((entry) => entry.value > 0)
+      .sort((a, b) => b.value - a.value);
+    return (
+      <div className="bg-white/95 rounded-xl shadow-lg p-3 text-xs text-gray-700 border border-gray-100 w-64">
+        <p className="text-[11px] uppercase tracking-wide text-gray-400 mb-2">
+          {label}
+        </p>
+        <div className="flex items-center justify-between mb-2">
+          <span
+            className="inline-flex items-center gap-2 text-[11px] uppercase font-semibold"
+            style={{ color: severityColor }}
+          >
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: severityColor }}
+            />
+            Severity: {severityLabel}
+          </span>
+          <span className="text-[11px] text-gray-400">
+            {formatShortDate(rowData.lastUpdated)}
+          </span>
+        </div>
+        {diseaseBreakdown.length ? (
+          diseaseBreakdown.map((entry) => (
+            <div
+              key={`${entry.dataKey}-${entry.name}`}
+              className="flex items-center justify-between mb-1"
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-block w-2 h-2 rounded-full"
+                  style={{ background: entry.fill }}
+                />
+                <span className="font-medium text-[12px] text-gray-800">
+                  {entry.name}
+                </span>
+              </div>
+              <span className="font-semibold text-gray-900">
+                {formatNumber(entry.value)}
+              </span>
+            </div>
+          ))
+        ) : (
+          <p className="text-xs text-gray-500">
+            Awaiting latest response from the server
+          </p>
+        )}
+        <div className="border-t border-dashed border-gray-200 mt-2 pt-2 text-[11px] text-gray-500 space-y-0.5">
+          <p>
+            Total cases:{" "}
+            <span className="font-semibold text-gray-900">
+              {formatNumber(totalCases)}
+            </span>
+          </p>
+          {rowData.topDisease && (
+            <p>
+              Top disease:{" "}
+              <span className="font-semibold text-gray-900">
+                {rowData.topDisease}
+              </span>
+            </p>
+          )}
+        </div>
+        <p className="mt-2 text-[11px] text-gray-400">
+          Sorted by highest contributor
+        </p>
+      </div>
+    );
   };
 
   const handleDistrictChange = (event) => {
@@ -444,6 +588,8 @@ function DiseaseMonitoring() {
           rangeDays: trendRange,
           casesRangeDays: districtCasesRangeConfig.rangeDays,
           casesOffsetDays: districtCasesRangeConfig.offsetDays,
+          startDate: customStartDate || undefined,
+          endDate: customEndDate || undefined,
         });
         if (ignore || !response) return;
         setDistrictCases(
@@ -473,6 +619,8 @@ function DiseaseMonitoring() {
     refreshTick,
     districtCasesRangeConfig.rangeDays,
     districtCasesRangeConfig.offsetDays,
+    customStartDate,
+    customEndDate,
   ]);
 
   useEffect(() => {
@@ -482,6 +630,8 @@ function DiseaseMonitoring() {
         const response = await fetchActiveDiseaseCases({
           rangeDays: activeCasesRangeConfig.rangeDays,
           offsetDays: activeCasesRangeConfig.offsetDays,
+          startDate: customStartDate || undefined,
+          endDate: customEndDate || undefined,
         });
         if (ignore || !response) return;
         setCases(Array.isArray(response.cases) ? response.cases : []);
@@ -503,6 +653,8 @@ function DiseaseMonitoring() {
     activeCasesRangeConfig.rangeDays,
     activeCasesRangeConfig.offsetDays,
     refreshTick,
+    customStartDate,
+    customEndDate,
   ]);
 
   useEffect(() => {
@@ -532,9 +684,9 @@ function DiseaseMonitoring() {
   }, [selectedDistrict, timelineRange, refreshTick]);
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-8 min-h-screen bg-gray-50">
       {dataSyncError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <div className="flex items-center gap-2">
             <AlertTriangle className="text-red-600" size={20} />
             <p className="text-sm text-red-800">
@@ -544,85 +696,230 @@ function DiseaseMonitoring() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="space-y-8 mb-12">
         {/* District-wise Cases Chart */}
-        <div className="bg-white rounded-xl shadow-md p-6 flex flex-col h-full">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="text-blue-600" size={24} />
-              <h3 className="text-xl font-bold text-gray-900">
-                District-wise Cases
-              </h3>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-600 rounded-xl shadow">
+                <BarChart3 className="text-white" size={26} />
+              </div>
+              <div>
+                <h3 className="text-3xl font-semibold text-gray-900 mb-0">
+                  District-wise Cases
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Horizontal overview with disease contributions ranked by
+                  impact.
+                </p>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {districtCasesRangeOptions.map((option) => (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
+              <div className="flex flex-wrap gap-3">
+                {districtCasesRangeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setDistrictCasesRangeKey(option.value)}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold border border-gray-300 transition ${
+                      districtCasesRangeKey === option.value
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-700 hover:border-blue-500 hover:text-blue-700"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-col items-end gap-2 text-sm text-gray-500">
                 <button
-                  key={option.value}
                   type="button"
-                  onClick={() => setDistrictCasesRangeKey(option.value)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                    districtCasesRangeKey === option.value
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-700 border-gray-200"
-                  }`}
+                  onClick={() => setCustomRangeOpen((prev) => !prev)}
+                  className="px-3 py-1.5 rounded-md border text-xs font-semibold transition text-gray-600 border-gray-300 bg-white hover:border-blue-500 hover:text-blue-700"
                 >
-                  {option.label}
+                  {customRangeOpen ? "Hide date range" : "Select date range"}
                 </button>
-              ))}
+                {customRangeOpen && (
+                  <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2 w-full">
+                    <label className="flex flex-col text-gray-600">
+                      Start date
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(event) =>
+                          setCustomStartDate(event.target.value)
+                        }
+                        className="mt-1 rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-700 focus:border-blue-500 focus:ring-0"
+                      />
+                    </label>
+                    <label className="flex flex-col text-gray-600">
+                      End date
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(event) =>
+                          setCustomEndDate(event.target.value)
+                        }
+                        className="mt-1 rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-700 focus:border-blue-500 focus:ring-0"
+                      />
+                    </label>
+                  </div>
+                )}
+                {customStartDate && customEndDate && (
+                  <p className="text-[11px] text-gray-400">
+                    Viewing snapshot from {formatShortDate(customStartDate)} to{" "}
+                    {formatShortDate(customEndDate)}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-          <div className="h-64">
-            {districtCases.length ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartBarChart
-                  data={districtCases}
-                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="district"
-                    stroke="#6b7280"
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis stroke="#6b7280" />
-                  <Tooltip contentStyle={{ borderRadius: 12 }} />
-                  <Legend />
-                  {normalizedDiseaseKeys.map((entry, index) => (
-                    <Bar
-                      key={entry.key}
-                      dataKey={entry.key}
-                      name={entry.label}
-                      fill={barPalette[index % barPalette.length]}
-                      radius={[6, 6, 0, 0]}
-                    />
-                  ))}
-                </RechartBarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-sm text-gray-500">
-                Waiting for district reports
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5 mt-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  District Hits
+                </p>
+                <h3 className="text-2xl font-bold text-slate-900">
+                  District impact view
+                </h3>
               </div>
-            )}
+              <div className="flex flex-wrap gap-3 text-slate-700 w-full sm:w-auto">
+                <div className="bg-slate-50 rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-1">
+                  <span className="text-[11px] uppercase tracking-wider text-slate-500">
+                    Total hits
+                  </span>
+                  <span className="text-lg font-semibold text-slate-900">
+                    {formatNumber(horizontalChartSummary.totalCases)}
+                  </span>
+                </div>
+                <div className="bg-slate-50 rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-1">
+                  <span className="text-[11px] uppercase tracking-wider text-slate-500">
+                    Top district
+                  </span>
+                  <span className="text-lg font-semibold text-slate-900">
+                    {horizontalChartSummary.highestDistrict}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {formatNumber(horizontalChartSummary.highestCases)} cases
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="relative mt-6 h-[460px] rounded-xl bg-gradient-to-b from-white to-slate-50 border border-gray-100 shadow-inner">
+              {horizontalChartData.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartBarChart
+                    data={horizontalChartData}
+                    margin={{ top: 24, right: 30, left: 24, bottom: 60 }}
+                  >
+                    <defs>
+                      <linearGradient id="barFade" x1="0" y1="0" x2="0" y2="1">
+                        <stop
+                          offset="0%"
+                          stopColor="#0f172a"
+                          stopOpacity={0.2}
+                        />
+                        <stop
+                          offset="90%"
+                          stopColor="#0f172a"
+                          stopOpacity={0.01}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#e0f2fe"
+                      horizontal
+                    />
+                    <XAxis
+                      type="category"
+                      dataKey="district"
+                      stroke="#0f172a"
+                      tick={{ fontSize: 11, fontWeight: 600 }}
+                      interval={0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis
+                      type="number"
+                      stroke="#0f172a"
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value) => value.toLocaleString()}
+                    />
+                    <Tooltip
+                      cursor={{ fill: "rgba(15,23,42,0.04)" }}
+                      content={renderDistrictTooltip}
+                    />
+                    <Legend
+                      formatter={(value) => (
+                        <span className="text-sm font-semibold text-slate-600">
+                          {value}
+                        </span>
+                      )}
+                      wrapperStyle={{ top: 6, right: 12 }}
+                    />
+                    {chartDiseaseKeys.map((entry, index) => (
+                      <Bar
+                        key={entry.key}
+                        dataKey={entry.key}
+                        name={entry.label}
+                        fill={barPalette[index % barPalette.length]}
+                        radius={[4, 4, 0, 0]}
+                        stroke={barPalette[index % barPalette.length]}
+                        strokeWidth={1}
+                        stackId="disease-stack"
+                        barSize={30}
+                        animationDuration={600}
+                      />
+                    ))}
+                  </RechartBarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center gap-3 text-slate-500">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+                    <BarChart3 className="w-8 h-8 text-slate-400" />
+                  </div>
+                  <p className="text-base font-semibold">
+                    Awaiting district data
+                  </p>
+                  <p className="text-xs text-slate-400 text-center px-4">
+                    Data will appear once the server delivers the latest
+                    breakdowns.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Disease Trend Chart */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="text-green-600" size={24} />
-              <h3 className="text-xl font-bold text-gray-900">Disease Trend</h3>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-600 rounded-lg shadow">
+                <TrendingUp className="text-white" size={22} />
+              </div>
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900">
+                  Disease Trend
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Progression across the selected window
+                </p>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3 text-sm">
               {trendRangeOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setTrendRange(option.value)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                  className={`px-3 py-1.5 rounded-md font-semibold border ${
                     trendRange === option.value
-                      ? "bg-green-600 text-white border-green-600"
-                      : "bg-white text-gray-700 border-gray-200"
+                      ? "bg-emerald-600 text-white border-emerald-600"
+                      : "bg-white text-gray-700 border-gray-300 hover:border-emerald-400"
                   }`}
                 >
                   {option.label}
@@ -630,12 +927,12 @@ function DiseaseMonitoring() {
               ))}
             </div>
           </div>
-          <div className="h-64">
+          <div className="h-80 bg-gray-50 rounded-xl shadow-inner p-4 border border-gray-100">
             {trendData.length && normalizedTrendKeys.length ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={trendData}
-                  margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#d1fae5" />
                   <XAxis
@@ -644,7 +941,15 @@ function DiseaseMonitoring() {
                     tick={{ fontSize: 12 }}
                   />
                   <YAxis stroke="#6b7280" />
-                  <Tooltip contentStyle={{ borderRadius: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "none",
+                      boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+                      backgroundColor: "rgba(255,255,255,0.95)",
+                    }}
+                    labelStyle={{ fontWeight: "bold", color: "#1f2937" }}
+                  />
                   <Legend />
                   {normalizedTrendKeys.map((entry, index) => (
                     <Line
@@ -654,14 +959,25 @@ function DiseaseMonitoring() {
                       name={entry.label}
                       stroke={linePalette[index % linePalette.length]}
                       strokeWidth={3}
-                      dot={{ r: 3 }}
+                      dot={{ r: 4, strokeWidth: 2, fill: "white" }}
+                      activeDot={{ r: 6, strokeWidth: 2 }}
                     />
                   ))}
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-sm text-gray-500">
-                Not enough data for selected range
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <TrendingUp className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">
+                    Not enough data for selected range
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Try selecting a different time period
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -669,12 +985,12 @@ function DiseaseMonitoring() {
       </div>
 
       {/* Heat Map */}
-      <div className="mb-8 xl:max-w-5xl">
-        <KeralaHeatMap compact refreshKey={refreshTick} />
+      <div className="mb-12">
+        <KeralaHeatMap refreshKey={refreshTick} />
       </div>
 
       {/* Active Disease Cases Table */}
-      <div className="bg-white rounded-xl shadow-md">
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -744,6 +1060,29 @@ function DiseaseMonitoring() {
             </div>
           </div>
         </div>
+
+        {diseaseTotals.length > 0 && (
+          <div className="px-6 py-4 bg-white border-b border-gray-100">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {diseaseTotals.slice(0, 4).map((entry) => (
+                <div
+                  key={entry.name}
+                  className="rounded-2xl bg-slate-50 border border-gray-100 p-3 shadow-sm"
+                >
+                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                    {entry.name}
+                  </p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {formatNumber(entry.total)}
+                  </p>
+                  <p className="text-[11px] text-gray-500">
+                    Total checked cases
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Cases Table */}
         <div className="overflow-x-auto">
