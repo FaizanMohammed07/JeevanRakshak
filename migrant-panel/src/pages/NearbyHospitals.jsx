@@ -3,6 +3,14 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { AlertTriangle, MapPin, Navigation, ShieldCheck } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
+import L from "leaflet";
+const userLocationIcon = L.divIcon({
+  className: "user-location-icon",
+  html: `<div class="dot"></div>`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+});
+
 export default function NearbyHospitals() {
   const [position, setPosition] = useState(null);
   const [status, setStatus] = useState("idle");
@@ -115,7 +123,7 @@ export default function NearbyHospitals() {
       const params = new URLSearchParams({
         format: "json",
         q: "hospital",
-        limit: "20",
+        limit: "25",
         bounded: "1",
         viewbox: viewboxStr,
         addressdetails: "1",
@@ -205,7 +213,7 @@ export default function NearbyHospitals() {
           lat,
           lon,
           distance,
-          shortName: hospital.display_name?.split(",")[0] || "Hospital",
+          shortName: hospital.name || "Hospital",
         };
       })
       .sort((a, b) => a.distance - b.distance);
@@ -347,6 +355,7 @@ export default function NearbyHospitals() {
                 {isFetchingHospitals ? "Refreshing..." : "Refresh list"}
               </button>
             </div>
+
             <div className="h-[520px] overflow-hidden rounded-[28px]">
               <MapContainer
                 center={position}
@@ -354,9 +363,10 @@ export default function NearbyHospitals() {
                 className="h-full w-full"
               >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                <Marker position={position}>
+                <Marker position={position} icon={userLocationIcon}>
                   <Popup>You are here</Popup>
                 </Marker>
+
                 {preparedHospitals.map((hospital) => (
                   <Marker
                     key={hospital.place_id}
