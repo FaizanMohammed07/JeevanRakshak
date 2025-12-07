@@ -9,6 +9,7 @@ import {
   signup,
   getMe,
   logout,
+  getDoctorPrescriptions,
 } from "../controllers/doctorController.js";
 
 const router = express.Router();
@@ -19,5 +20,11 @@ router.get("/logout", logout);
 
 router.get("/me", protect, allowRoles("doctor"), getMe);
 
+router.get(
+  "/:doctorId/prescriptions",
+  protect,
+  // allowRoles("doctor"),
+  getDoctorPrescriptions
+);
 
 export default router;

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import Doctor from "../models/doctorModel.js";
 import Patient from "../models/patientModel.js";
+import Prescription from "../models/prescriptionModel.js";
 import jwt from "jsonwebtoken";
 import { serialize } from "cookie";
 
@@ -129,4 +130,43 @@ export const getMe = (req, res, next) => {
       user: req.user, // This comes from the protectDoctor middleware
     },
   });
+};
+
+export const getDoctorPrescriptions = async (req, res) => {
+  try {
+    const doctorId = req.params.doctorId;
+
+    if (!doctorId) {
+      return res.status(400).json({ msg: "Doctor ID is required" });
+    }
+
+    const prescriptions = await Prescription.find(
+      { doctor: doctorId },
+      {
+        symptoms: 1,
+        confirmedDisease: 1,
+        suspectedDisease: 1,
+        medicinesIssued: 1,
+        dateOfIssue: 1,
+        followUpDate: 1,
+        contagious: 1,
+        notes: 1,
+      }
+    )
+      .populate({
+        path: "patient",
+        select: "name age gender district",
+      })
+      .sort({ dateOfIssue: -1 }) // newest first
+      .lean();
+
+    return res.status(200).json({
+      doctorId,
+      count: prescriptions.length,
+      prescriptions,
+    });
+  } catch (err) {
+    console.error("Error fetching doctor prescriptions:", err);
+    return res.status(500).json({ error: err.message });
+  }
 };

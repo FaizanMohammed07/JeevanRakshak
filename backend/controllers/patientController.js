@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import Patient from "../models/patientModel.js";
 import jwt from "jsonwebtoken";
+import Prescription from "../models/prescriptionModel.js";
 
 export const login = async (req, res) => {
   try {
@@ -128,6 +129,43 @@ export const getMyLabReports = async (req, res) => {
     res.status(200).json({ documents: patient.documents || [] });
   } catch (err) {
     console.error("getMyLabReports error", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getPatientDiseases = async (req, res) => {
+  try {
+    const patientId = req.params.patientId;
+
+    if (!patientId) {
+      return res.status(400).json({ msg: "Patient ID is required" });
+    }
+
+    // Fetch all prescriptions of the patient
+    const prescriptions = await Prescription.find(
+      { patient: patientId },
+      { confirmedDisease: 1 }
+    ).lean();
+
+    // Extract confirmed diseases only (no suspected)
+    const diseases = prescriptions
+      .map((p) => p.confirmedDisease?.trim())
+      .filter(Boolean); // removes null/empty entries
+
+    // Deduplicate
+    const uniqueDiseases = [
+      ...new Set(
+        diseases.map((d) => d.toLowerCase()) // normalize
+      ),
+    ];
+
+    res.status(200).json({
+      patientId,
+      diseases: uniqueDiseases,
+      count: uniqueDiseases.length,
+    });
+  } catch (err) {
+    console.error("Error fetching patient diseases:", err);
     res.status(500).json({ error: err.message });
   }
 };
