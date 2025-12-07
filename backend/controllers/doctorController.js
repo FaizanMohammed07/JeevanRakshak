@@ -155,7 +155,7 @@ export const getDoctorPrescriptions = async (req, res) => {
     )
       .populate({
         path: "patient",
-        select: "name age gender district",
+        select: "name age gender district phoneNumber",
       })
       .sort({ dateOfIssue: -1 }) // newest first
       .lean();
