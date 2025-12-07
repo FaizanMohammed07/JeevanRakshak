@@ -29,7 +29,7 @@
     "dashboard": "Dashboard",
     "loading": "Loading",
     "viewAll": "View all",
-    "notProvided": "Not provided",
+    "notProvided": "Address",
     "records": "{{count}} records",
     "entries": "{{count}} entries",
     "selectPrescription": "Select a prescription to view complete details.",

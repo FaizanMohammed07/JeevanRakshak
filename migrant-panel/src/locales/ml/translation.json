@@ -29,7 +29,7 @@
     "dashboard": "ഡാഷ്ബോർഡ്",
     "loading": "ലോഡ് ചെയ്യുന്നു",
     "viewAll": "എല്ലാം കാണുക",
-    "notProvided": "ലഭ്യമല്ല",
+    "notProvided": "വിലാസം",
     "records": "{{count}} റെക്കോർഡുകൾ",
     "entries": "{{count}} എൻട്രികൾ",
     "selectPrescription": "പൂർണ്ണ വിവരങ്ങൾ കാണാൻ ഒരു മരുന്ന് രേഖ തിരഞ്ഞെടുക്കൂ.",

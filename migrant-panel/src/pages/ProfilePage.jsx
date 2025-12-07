@@ -188,10 +188,11 @@ export default function ProfilePage() {
           <div className="flex items-center gap-3">
             <IdCard className="h-10 w-10 rounded-2xl bg-sky-50 p-2 text-sky-600" />
             <div>
-              <p className="text-sm text-slate-500">
-                {t("profile.emergencyContact") /* Emergency contact */}
-              </p>
-              <p className="text-xl font-semibold text-slate-900">
+              {/* /* Emergency contact */ }
+              {/* <p className="text-sm text-slate-500">
+                {t("profile.emergencyContact") }
+              </p> */}
+              <p className="text-2xl font-bold text-slate-900">
                 {patient.emergencyContact || t("common.notProvided")}
               </p>
             </div>
