@@ -219,6 +219,14 @@ function DoctorAuthPage() {
               </button>
             </p>
           </div>
+          <div className="mt-4 text-center">
+  <button
+    onClick={() => navigate("/lab-assistant/login")}
+    className="text-purple-600 font-semibold hover:underline focus:outline-none"
+  >
+    Lab Assistant Login →
+  </button>
+</div>
         </div>
       </div>
     </div>

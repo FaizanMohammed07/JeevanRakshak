@@ -1,12 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck, LogIn, Globe, Users } from "lucide-react";
-
-const features = [
-  { icon: Globe, label: "Secure statewide access" },
-  { icon: Users, label: "Centralized health intelligence" },
-];
+import { ShieldCheck, LogIn } from "lucide-react";
+import keralaLogo from "../KERALALOGO.webp"; // adjust path as needed
 
 function GovtLogin() {
   const [govtId, setGovtId] = useState("");
@@ -34,45 +30,19 @@ function GovtLogin() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-4 py-10">
-      <div className="mx-auto grid w-full max-w-6xl gap-6 rounded-[36px] bg-white/5 p-2 text-white shadow-2xl backdrop-blur-lg lg:grid-cols-2">
-        <section className="rounded-[28px] bg-white/10 p-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20">
-            <ShieldCheck className="h-6 w-6" aria-hidden="true" />
-          </div>
-          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.4em] text-white/70">
-            Kerala Govt Panel
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Government Health Console
-          </h1>
-          <p className="mt-3 text-sm text-white/80">
-            Monitor migrant health incidents, approve alerts, and govern relief
-            efforts securely.
-          </p>
-          <ul className="mt-6 space-y-3 text-sm text-white/85">
-            {features.map((item) => (
-              <li
-                key={item.label}
-                className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2"
-              >
-                <item.icon
-                  className="h-4 w-4 text-emerald-300"
-                  aria-hidden="true"
-                />
-                <span>{item.label}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-8 rounded-2xl border border-white/20 bg-black/20 p-4 text-sm text-white/80">
-            <p className="font-semibold tracking-wide text-white">
-              Real-time governance
-            </p>
-            <p className="mt-1 text-white/70">
-              Stay connected to Kerala’s migrant health pulse.
-            </p>
-          </div>
-        </section>
+    <div className="min-h-screen flex items-center justify-center bg-blue-50 p-6">
+      <div className="w-full max-w-md bg-white shadow-xl rounded-xl p-8">
+        <div className="flex flex-col items-center mb-6">
+          <img
+            src={keralaLogo}
+            alt="Kerala Emblem"
+            className="w-14 h-14 object-contain brightness-75 contrast-125"
+          />
+          <h2 className="text-2xl font-bold text-gray-900">
+            Govt Officer Login
+          </h2>
+          <p className="text-gray-600 text-sm">Kerala Migrant Health System</p>
+        </div>
 
         <form
           onSubmit={handleLogin}

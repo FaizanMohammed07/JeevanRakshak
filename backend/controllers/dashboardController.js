@@ -4,6 +4,7 @@ import Prescription from "../models/prescriptionModel.js";
 
 // Shared ranges so every widget talks about the same slice of time.
 const DEFAULT_LOOKBACK_DAYS = 7;
+const DEFAULT_RISK_LOOKBACK_DAYS = 7;
 const OUTBREAK_LOOKBACK_DAYS = 5;
 const TREND_WIDGET_DAYS = 7;
 const MAX_TREND_WEEK_OFFSET = 3;
@@ -235,7 +236,8 @@ const getDashboardSummary = async (req, res) => {
         ),
         countHighRiskCamps(
           districtScope.prescriptionMatch,
-          DEFAULT_LOOKBACK_DAYS
+          // DEFAULT_LOOKBACK_DAYS
+          DEFAULT_RISK_LOOKBACK_DAYS
         ),
         countHighRiskCamps(
           districtScope.prescriptionMatch,
@@ -311,14 +313,14 @@ const getDashboardSummary = async (req, res) => {
         trend: "+0%",
       },
       {
-        label: "High-Risk Camps",
+        label: "High-Risk Villages",
         value: formatNumber(highRiskCamps),
         iconKey: "camps",
         color: "red",
         trend: formatPercentChange(highRiskCamps, previousHighRisk),
       },
       {
-        label: "Active Disease Cases",
+        label: "Diseases Per Week",
         value: formatNumber(activeCases),
         iconKey: "alerts",
         color: "orange",

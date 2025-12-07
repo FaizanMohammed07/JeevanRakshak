@@ -220,7 +220,7 @@ function TrendCharts({ district, refreshKey }) {
         <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h3 className="text-xl font-bold text-gray-900">
-              Weekly Disease Trends
+              District-wise Disease Activity
             </h3>
             <p className="text-sm text-gray-500">
               Comparative line chart of active cases

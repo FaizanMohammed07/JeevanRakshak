@@ -228,6 +228,16 @@ export default function PrescriptionsPage() {
 
 function PrescriptionTable({ rows, onSelect, activeId }) {
   const { t } = useTranslation();
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full border-separate border-spacing-y-2 text-left">
@@ -242,6 +252,12 @@ function PrescriptionTable({ rows, onSelect, activeId }) {
             <th className="px-4 py-2 font-semibold">
               {t("prescriptions.table.medicines") /* Medicines */}
             </th>
+
+            {/* --- NEW COLUMN HEADER --- */}
+            <th className="px-4 py-2 font-semibold">
+              {t("prescriptions.table.files") || "Files" /* Files */}
+            </th>
+
             <th className="px-4 py-2 font-semibold">
               {t("prescriptions.table.issued") /* Issued */}
             </th>
@@ -253,6 +269,8 @@ function PrescriptionTable({ rows, onSelect, activeId }) {
         <tbody>
           {rows.map((rx) => {
             const isActive = activeId === rx._id;
+            const hasImages = rx.images && rx.images.length > 0;
+
             return (
               <tr
                 key={rx._id}
@@ -268,13 +286,39 @@ function PrescriptionTable({ rows, onSelect, activeId }) {
                       t("common.diagnosisPending") /* Diagnosis pending */
                   }
                 </td>
+
                 <td className="px-4 py-3">{rx.symptoms || "—"}</td>
+
                 <td className="px-4 py-3">
                   {(rx.medicinesIssued || []).join(", ") || "—"}
                 </td>
+
+                {/* --- NEW FILES COLUMN --- */}
+                <td className="px-4 py-3">
+                  {hasImages ? (
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={rx.images[0]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()} // Prevent row selection when clicking link
+                        className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200"
+                      >
+                        {/* <Paperclip className="h-3 w-3" /> */}
+                        {rx.images.length > 1
+                          ? `View (${rx.images.length})`
+                          : "View File"}
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-slate-400 text-xs">None</span>
+                  )}
+                </td>
+
                 <td className="px-4 py-3 font-semibold text-slate-800">
                   {formatDate(rx.dateOfIssue)}
                 </td>
+
                 <td className="rounded-r-2xl px-4 py-3 text-amber-700">
                   {rx.followUpDate ? formatDate(rx.followUpDate) : "—"}
                 </td>
@@ -289,6 +333,8 @@ function PrescriptionTable({ rows, onSelect, activeId }) {
 
 function PrescriptionCard({ rx, onSelect, isActive }) {
   const { t } = useTranslation();
+  // console.log(rx);
+
   return (
     <button
       type="button"

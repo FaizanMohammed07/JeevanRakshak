@@ -106,7 +106,7 @@ export const allowRoles = (...allowedRoles) => {
       null;
 
     if (!userRole) {
-      return res.status(401).json({ msg: "User role not determined" });
+      return res.status(401).json({ msg: "Not Logged In" });
     }
 
     if (!allowedRoles.includes(userRole)) {

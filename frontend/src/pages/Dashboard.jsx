@@ -15,6 +15,7 @@ import {
   Clock,
   CheckCircle,
 } from "lucide-react";
+import api from "../api/axios";
 
 export default function Dashboard() {
   const { doctor } = useAuth();
@@ -30,6 +31,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [heroAnnouncements, setHeroAnnouncements] = useState([]);
   const [activeAnnouncementIndex, setActiveAnnouncementIndex] = useState(0);
+  const [todayCount, setTodayCount] = useState(0);
 
   useEffect(() => {
     if (doctor) {
@@ -42,6 +44,8 @@ export default function Dashboard() {
     if (!doctor) return;
     try {
       setLoading(true);
+      const res = await api.get(`/doctors/${doctor._id}/prescriptions/today`);
+      setTodayCount(res.data.count);
       const snapshot = await fetchDashboardSnapshot(doctor.id);
       setStats(snapshot.stats);
       setRecentActivity(snapshot.recentActivity);
@@ -67,32 +71,32 @@ export default function Dashboard() {
   const statCards = [
     {
       title: "Today's Patients",
-      value: stats.todayPatients,
+      value: todayCount,
       icon: Users,
       color: "blue",
-      trend: "+" + stats.weeklyTrend + "%",
+      // trend: "+" + stats.weeklyTrend + "%",
     },
-    {
-      title: "Pending Follow-ups",
-      value: stats.pendingFollowUps,
-      icon: Calendar,
-      color: "orange",
-      trend: "Due today",
-    },
-    {
-      title: "Chronic Alerts",
-      value: stats.chronicAlerts,
-      icon: Activity,
-      color: "red",
-      trend: "Active cases",
-    },
-    {
-      title: "Weekly Prescriptions",
-      value: stats.recentPrescriptions,
-      icon: FileText,
-      color: "green",
-      trend: "Last 7 days",
-    },
+    // {
+    //   title: "Pending Follow-ups",
+    //   value: stats.pendingFollowUps,
+    //   icon: Calendar,
+    //   color: "orange",
+    //   trend: "Due today",
+    // },
+    // {
+    //   title: "Chronic Alerts",
+    //   value: stats.chronicAlerts,
+    //   icon: Activity,
+    //   color: "red",
+    //   trend: "Active cases",
+    // },
+    // {
+    //   title: "Weekly Prescriptions",
+    //   value: stats.recentPrescriptions,
+    //   icon: FileText,
+    //   color: "green",
+    //   trend: "Last 7 days",
+    // },
   ];
 
   const getSeverityColor = (severity) => {
@@ -315,7 +319,7 @@ export default function Dashboard() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900">
@@ -392,7 +396,7 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
           <div className="flex items-center justify-between">
@@ -409,16 +413,16 @@ export default function Dashboard() {
                   Search Patient
                 </a>
                 <a
-                  href="/follow-ups"
+                  href="/previous-records"
                   className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-400 transition-colors"
                 >
-                  View Follow-ups
+                  Previous Records
                 </a>
                 <a
-                  href="/chronic-cases"
+                  href="/settings"
                   className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-400 transition-colors"
                 >
-                  Chronic Cases
+                  Settings
                 </a>
               </div>
             </div>

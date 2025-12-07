@@ -25,6 +25,7 @@ import {
 // import { useFetchPatient } from "../context/PatientsContext";
 import DashboardLayout from "../components/DashboardLayout";
 import { useDoctors } from "../context/DoctorsContext";
+import api from "../api/axios";
 
 function PatientDetailsPage() {
   const { patientId } = useParams();
@@ -33,8 +34,9 @@ function PatientDetailsPage() {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [previousDiseases, setPreviousDiseases] = useState([]);
   const { patient, loading, error } = useFetchPatient(patientId);
-  console.log(patient);
+  // console.log(patient);
   const {
     prescriptions,
     loading: prescriptionsLoading,
@@ -46,6 +48,23 @@ function PatientDetailsPage() {
     loading: reportsLoading,
     error: reportsError,
   } = usePatientReports(patient?.id);
+
+  useEffect(() => {
+    const loadPreviousDiseases = async () => {
+      if (!patient?.id) return;
+
+      try {
+        const res = await api.get(`/patients/${patient.id}/diseases`);
+        console.log(res);
+
+        setPreviousDiseases(res.data.diseases || []);
+      } catch (err) {
+        console.error("Failed to load previous diseases:", err);
+      }
+    };
+
+    loadPreviousDiseases();
+  }, [patient]);
   // console.log(prescriptions);
 
   // 3. NOW you can do your conditional returns (after all hooks are declared)
@@ -74,11 +93,8 @@ function PatientDetailsPage() {
     );
   }
 
-  const vaccinations = patient.vaccinations || [];
   const visits = patient.visits || [];
-
   const documents = patient.documents || [];
-  const allergies = patient.allergies || [];
   const chronicDiseases = patient.chronic_diseases || [];
   const currentMedication = patient.current_medication || [];
 
@@ -89,6 +105,8 @@ function PatientDetailsPage() {
       year: "numeric",
     });
   };
+
+  const totalPrescriptions = prescriptions.length;
 
   return (
     <DashboardLayout>
@@ -174,46 +192,26 @@ function PatientDetailsPage() {
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex items-center gap-2 mb-4">
-                <AlertCircle className="w-5 h-5 text-orange-600" />
-                <h3 className="text-lg font-bold text-gray-800">Allergies</h3>
-              </div>
-              {allergies.length > 0 ? (
-                <div className="space-y-2">
-                  {allergies.map((allergy, index) => (
-                    <div
-                      key={index}
-                      className="bg-orange-50 border border-orange-200 px-3 py-2 rounded-lg text-sm"
-                    >
-                      {allergy}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">No allergies recorded</p>
-              )}
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center gap-2 mb-4">
                 <Activity className="w-5 h-5 text-red-600" />
                 <h3 className="text-lg font-bold text-gray-800">
-                  Chronic Diseases
+                  Previous Diseases
                 </h3>
               </div>
-              {chronicDiseases.length > 0 ? (
-                <div className="space-y-2">
-                  {chronicDiseases.map((disease, index) => (
-                    <div
+
+              {previousDiseases.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {previousDiseases.map((disease, index) => (
+                    <span
                       key={index}
-                      className="bg-red-50 border border-red-200 px-3 py-2 rounded-lg text-sm"
+                      className="px-3 py-1 text-sm bg-red-50 border border-red-200 text-red-700 rounded-lg"
                     >
                       {disease}
-                    </div>
+                    </span>
                   ))}
                 </div>
               ) : (
                 <p className="text-gray-500 text-sm">
-                  No chronic diseases recorded
+                  No previous diseases found
                 </p>
               )}
             </div>
@@ -281,75 +279,14 @@ function PatientDetailsPage() {
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Syringe className="w-5 h-5 text-green-600" />
-                <h3 className="text-lg font-bold text-gray-800">
-                  Vaccination Status
-                </h3>
-              </div>
-              {vaccinations.length > 0 ? (
-                <div className="space-y-3">
-                  {vaccinations.map((vac) => (
-                    <div
-                      key={vac.id}
-                      className="border border-gray-200 rounded-lg p-4"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-semibold text-gray-800">
-                            {vac.vaccine_name}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            Administered: {formatDate(vac.date_administered)}
-                          </p>
-                          {vac.next_dose_date && (
-                            <p className="text-sm text-blue-600">
-                              Next dose: {formatDate(vac.next_dose_date)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">No vaccination records</p>
-              )}
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center gap-2 mb-4">
                 <Activity className="w-5 h-5 text-blue-600" />
                 <h3 className="text-lg font-bold text-gray-800">
-                  Recent Visits
+                  Number of Visits
                 </h3>
               </div>
-              {visits.length > 0 ? (
-                <div className="space-y-3">
-                  {visits.map((visit) => (
-                    <div
-                      key={visit.id}
-                      className="border border-gray-200 rounded-lg p-4"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-semibold text-gray-800">
-                          {visit.facility_name}
-                        </h4>
-                        <span className="text-sm text-gray-500">
-                          {formatDate(visit.visit_date)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        Dr. {visit.doctor_name}
-                      </p>
-                      <p className="text-sm text-gray-700 mt-1">
-                        {visit.reason}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">No visit records</p>
-              )}
+              <p className="text-sm text-gray-600 mt-1">
+                Total Prescriptions Issued: <b>{totalPrescriptions}</b>
+              </p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -406,7 +343,7 @@ function PatientDetailsPage() {
                           </p>
                           {rx.medicinesIssued.map((med, idx) => (
                             <p key={idx} className="text-sm text-gray-700">
-                              • {med.name} – {med.dosage}
+                              {/* • {med.name} – {med.dosage} */}• {med}
                             </p>
                           ))}
                         </div>

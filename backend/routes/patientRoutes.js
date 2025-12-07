@@ -5,6 +5,7 @@ import {
   getPatientProfile,
   getMyProfile,
   getMyLabReports,
+  getPatientDiseases,
 } from "../controllers/patientController.js";
 import {
   allowDoctorsOnly,
@@ -21,6 +22,18 @@ router.post("/login", login);
 router.get("/me", protect, allowRoles("patient"), getMyProfile);
 router.get("/me/labs", protect, allowRoles("patient"), getMyLabReports);
 
-router.get("/:identifier", protect, allowRoles("patient","doctor"), getPatientProfile);
+router.get(
+  "/:identifier",
+  protect,
+  allowRoles("patient", "doctor", "reportAssistant"),
+  getPatientProfile
+);
+
+router.get(
+  "/:patientId/diseases",
+  protect,
+  // allowRoles("doctor", "patient"),
+  getPatientDiseases
+);
 
 export default router;
