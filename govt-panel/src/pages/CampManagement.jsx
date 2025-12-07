@@ -483,7 +483,7 @@ function CampManagement() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
           <div className="flex items-center gap-3 mb-3">
             <Activity className="text-blue-600" size={24} />
@@ -556,9 +556,9 @@ function CampManagement() {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
 
-      {alerts.length > 0 && (
+      {/* {alerts.length > 0 && (
         <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -599,10 +599,9 @@ function CampManagement() {
             ))}
           </div>
         </div>
-      )}
+      )} */}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+      {/* <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Building2 className="text-blue-600" size={22} />
             <div>
@@ -662,8 +661,9 @@ function CampManagement() {
               ))}
             </div>
           )}
-        </div>
-
+        </div> */}
+      {/* <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8"> */}
+      <div className="w-full mb-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -676,7 +676,7 @@ function CampManagement() {
             </div>
             <span className="text-xs text-gray-500">Doctor & Patient apps</span>
           </div>
-          <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+          <div className="space-y-3">
             {announcementFeed.length === 0 && (
               <p className="text-sm text-gray-500">No announcements yet.</p>
             )}
@@ -795,7 +795,7 @@ function CampManagement() {
         </div>
       )}
 
-      {automation.length > 0 && (
+      {/* {automation.length > 0 && (
         <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -845,7 +845,7 @@ function CampManagement() {
             ))}
           </div>
         </div>
-      )}
+      )} */}
 
       {/*
         Temporarily hiding automation stats cards (Critical escalations / Transfers queued / Automation tasks)
@@ -899,7 +899,7 @@ function CampManagement() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {campCards.map((camp) => (
           <div
             key={camp.id || camp.slug}
@@ -972,7 +972,7 @@ function CampManagement() {
             </button>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {announcementModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-40">

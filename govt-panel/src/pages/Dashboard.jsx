@@ -79,7 +79,7 @@ const districtCasesRangeOptions = [
 const talukWindowOptions = [
   { label: "Today", value: "today", rangeDays: 1, offsetDays: 0 },
   { label: "Yesterday", value: "yesterday", rangeDays: 1, offsetDays: 1 },
-  { label: "5 Days", value: "5d", rangeDays: 5, offsetDays: 0 },
+  { label: "7 Days", value: "7d", rangeDays: 7, offsetDays: 0 },
   { label: "10 Days", value: "10d", rangeDays: 10, offsetDays: 0 },
   { label: "15 Days", value: "15d", rangeDays: 15, offsetDays: 0 },
   { label: "Custom", value: "custom" },
@@ -1116,7 +1116,7 @@ function Dashboard() {
             </div>
             <div className="xl:w-64 bg-gray-50 border border-gray-100 rounded-lg p-4">
               <p className="text-xs uppercase text-gray-500 tracking-wide mb-2">
-                Taluk window
+                Timeline
               </p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {talukWindowOptions.map((option) => (
