@@ -29,7 +29,7 @@ import { fetchHeroAnnouncements } from "../api/announcements";
 export default function Dashboard() {
   const { patient } = useAuth();
   const { t } = useTranslation();
-  const {
+  let {
     prescriptions,
     labReports,
     loadPrescriptions,
@@ -37,6 +37,7 @@ export default function Dashboard() {
     status,
     errors,
   } = usePatientData();
+  prescriptions = [];
   const {
     reports,
     loading: reportsLoading,
@@ -118,17 +119,18 @@ export default function Dashboard() {
       {
         // label: "Total Prescriptions",
         label: t("dashboard.stats.totalPrescriptions"),
-        value: prescriptions.length,
+        // value: prescriptions.length,
+        value: 0,
         icon: FileText,
         accent: "bg-blue-50 text-blue-600",
       },
-      {
-        // label: "Vaccinations Completed",
-        label: t("dashboard.stats.vaccinations"),
-        value: vaccinations.length,
-        icon: Syringe,
-        accent: "bg-emerald-50 text-emerald-600",
-      },
+      // {
+      //   // label: "Vaccinations Completed",
+      //   label: t("dashboard.stats.vaccinations"),
+      //   value: vaccinations.length,
+      //   icon: Syringe,
+      //   accent: "bg-emerald-50 text-emerald-600",
+      // },
       {
         // label: "Recorded Visits",
         label: t("dashboard.stats.visits"),
@@ -136,13 +138,13 @@ export default function Dashboard() {
         icon: CalendarDays,
         accent: "bg-amber-50 text-amber-600",
       },
-      {
-        // label: "Lab Reports",
-        label: t("dashboard.stats.labs"),
-        value: reports.length,
-        icon: Activity,
-        accent: "bg-purple-50 text-purple-600",
-      },
+      // {
+      //   // label: "Lab Reports",
+      //   label: t("dashboard.stats.labs"),
+      //   value: reports.length,
+      //   icon: Activity,
+      //   accent: "bg-purple-50 text-purple-600",
+      // },
     ];
   }, [patient, prescriptions.length, reports.length, t]);
 
@@ -172,22 +174,22 @@ export default function Dashboard() {
         </p>
       </header>
 
-      <section className="rounded-3xl bg-gradient-to-r from-slate-900 via-blue-900 to-sky-700 px-6 py-6 text-white shadow-lg">
+      {/* <section className="rounded-3xl bg-gradient-to-r from-slate-900 via-blue-900 to-sky-700 px-6 py-6 text-white shadow-lg">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
             <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.4em] text-white/70">
               <Megaphone className="h-4 w-4 text-white" />
               {
                 hasAnnouncements
-                  ? t("dashboard.broadcast") /* Broadcast */
-                  : t("dashboard.noBroadcast") /* No Broadcast */
+                  ? t("dashboard.broadcast")
+                  : t("dashboard.noBroadcast")
               }
             </p>
             <h3 className="text-2xl font-semibold">
               {
                 hasAnnouncements
                   ? activeAnnouncement.title
-                  : t("dashboard.upToDate") /* You're up to date */
+                  : t("dashboard.upToDate")
               }
             </h3>
             <p className="text-sm text-white/80">
@@ -196,7 +198,7 @@ export default function Dashboard() {
                   ? activeAnnouncement.message
                   : t(
                       "dashboard.defaultMessage"
-                    ) /* We will surface government advisories and healthcare alerts here as soon as they are issued. */
+                    )
               }
             </p>
           </div>
@@ -216,7 +218,7 @@ export default function Dashboard() {
                   isAnnouncementsLoading ? "animate-spin" : ""
                 }`}
               />
-              {t("common.refresh") /* Refresh */}
+              {t("common.refresh") }
             </button>
             <div className="flex items-center gap-1">
               <button
@@ -240,18 +242,18 @@ export default function Dashboard() {
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-white/80">
           <span>
-            {t("common.priority") /* Priority */}:{" "}
+            {t("common.priority")}:{" "}
             {activeAnnouncement?.priority?.toUpperCase() || "--"}
           </span>
           <span>
             {
               activeAnnouncement
                 ? formatAnnouncementTime(activeAnnouncement.timestamp)
-                : t("common.awaiting") /* Awaiting broadcast */
+                : t("common.awaiting")
             }
           </span>
           <span className="rounded-full bg-white/15 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.3em]">
-            {activeAnnouncement?.audience || t("common.audienceAll") /* All */}
+            {activeAnnouncement?.audience || t("common.audienceAll")}
           </span>
           <span>
             {hasAnnouncements
@@ -274,9 +276,9 @@ export default function Dashboard() {
         {announcementError && (
           <p className="mt-3 text-xs text-rose-200">{announcementError}</p>
         )}
-      </section>
+      </section> */}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         {statCards.map((card) => (
           <StatCard key={card.label} {...card} />
         ))}
@@ -284,7 +286,7 @@ export default function Dashboard() {
 
       <NearbyHospitalsCTA />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="w-full mt-6">
         <SectionCard
           // title="Recent Prescriptions"
           title={t("dashboard.sections.recentPrescriptions.title")}
@@ -333,7 +335,7 @@ export default function Dashboard() {
           )}
         </SectionCard>
 
-        <SectionCard
+        {/* <SectionCard
           // title="Lab Reports"
           title={t("dashboard.sections.labReports.title")}
           // status={status.labs}
@@ -341,7 +343,7 @@ export default function Dashboard() {
           count={reports.length}
           link={{
             to: "/lab-reports",
-            label: t("common.viewAll") /* View all */,
+            label: t("common.viewAll"),
           }}
         >
           {reports.length === 0 ? (
@@ -349,12 +351,12 @@ export default function Dashboard() {
               title={
                 t(
                   "dashboard.sections.labReports.emptyTitle"
-                ) /* No lab reports */
+                ) 
               }
               message={
                 t(
                   "dashboard.sections.labReports.emptyMessage"
-                ) /* Uploaded lab reports will appear here. */
+                )
               }
             />
           ) : (
@@ -364,11 +366,9 @@ export default function Dashboard() {
                   key={`${report.documentName}-${report.uploaded_at}`}
                   className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4"
                 >
-                  {/* <p className="font-semibold text-slate-900">
-                    {report.documentName}
-                  </p> */}
+                }
                   <p className="font-semibold text-slate-900">
-                    {report.documentName || t("common.labReport") /* Report */}
+                    {report.documentName || t("common.labReport")}
                   </p>
                   <p className="text-xs text-slate-400">
                     {formatDate(report.createdAt)}
@@ -381,18 +381,18 @@ export default function Dashboard() {
                       className="inline-flex items-center gap-2 text-sky-600"
                     >
                       <Link2 className="h-4 w-4" />
-                      {t("labReports.report.view") /* View document */}
+                      {t("labReports.report.view")}
                     </a>
                   ) : (
                     <span className="text-slate-400">
-                      {t("common.fileNotProvided") /* File not provided */}
+                      {t("common.fileNotProvided")/}
                     </span>
                   )}
                 </li>
               ))}
             </ul>
           )}
-        </SectionCard>
+        </SectionCard> */}
       </div>
     </section>
   );

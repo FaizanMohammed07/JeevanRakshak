@@ -45,7 +45,8 @@ export default function Dashboard() {
     try {
       setLoading(true);
       const res = await api.get(`/doctors/${doctor._id}/prescriptions/today`);
-      setTodayCount(res.data.count);
+      // setTodayCount(res.data.count);
+      setTodayCount(0);
       const snapshot = await fetchDashboardSnapshot(doctor.id);
       setStats(snapshot.stats);
       setRecentActivity(snapshot.recentActivity);
@@ -181,7 +182,7 @@ export default function Dashboard() {
           <p className="text-gray-600 mt-1">Welcome back, Dr. {doctor?.name}</p>
         </div>
 
-        {hasHeroAnnouncement ? (
+        {/* {hasHeroAnnouncement ? (
           <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-sky-500 text-white rounded-2xl shadow-xl p-6 flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
@@ -289,7 +290,7 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-        )}
+        )} */}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statCards.map((card) => {
@@ -412,12 +413,12 @@ export default function Dashboard() {
                 >
                   Search Patient
                 </a>
-                <a
+                {/* <a
                   href="/previous-records"
                   className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-400 transition-colors"
                 >
                   Previous Records
-                </a>
+                </a> */}
                 <a
                   href="/settings"
                   className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-400 transition-colors"

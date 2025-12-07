@@ -133,12 +133,12 @@ export default function ProfilePage() {
             ) /* Keep your details current so hospital teams can reach you instantly. */
           }
         </p>
-        <div className="absolute top-4 right-4 cursor-pointer">
+        {/* <div className="absolute top-4 right-4 cursor-pointer">
           <QrCode
             className="h-7 w-7 text-sky-600 hover:text-sky-800 transition"
             onClick={() => setShowQR(true)}
           />
-        </div>
+        </div> */}
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -188,7 +188,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-3">
             <IdCard className="h-10 w-10 rounded-2xl bg-sky-50 p-2 text-sky-600" />
             <div>
-              {/* /* Emergency contact */ }
+              {/* /* Emergency contact */}
               {/* <p className="text-sm text-slate-500">
                 {t("profile.emergencyContact") }
               </p> */}
@@ -218,32 +218,24 @@ export default function ProfilePage() {
         </article>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* <div className="grid gap-6 lg:grid-cols-2">
         <InfoList
           // title="Allergies"
           title={t("profile.lists.allergies.title")}
           items={patient.allergies}
-          empty={
-            t("profile.lists.allergies.empty") /* No allergies recorded. */
-          }
+          empty={t("profile.lists.allergies.empty")}
         />
         <InfoList
           // title="Chronic Conditions"
           title={t("profile.lists.chronic.title")}
           items={patient.chronicDiseases}
-          empty={
-            t(
-              "profile.lists.chronic.empty"
-            ) /* No chronic conditions reported. */
-          }
+          empty={t("profile.lists.chronic.empty")}
         />
         <InfoList
           // title="Current Medication"
           title={t("profile.lists.medication.title")}
           items={patient.currentMedication}
-          empty={
-            t("profile.lists.medication.empty") /* No active medication. */
-          }
+          empty={t("profile.lists.medication.empty")}
         />
         <InfoList
           // title="Vaccinations"
@@ -251,15 +243,12 @@ export default function ProfilePage() {
           items={(patient.vaccinations || []).map(
             (item) =>
               `${
-                item.vaccine_name ||
-                t("profile.lists.vaccinations.fallback") /* Vaccine */
+                item.vaccine_name || t("profile.lists.vaccinations.fallback")
               } • ${formatDate(item.date_administered)}`
           )}
-          empty={
-            t("profile.lists.vaccinations.empty") /* No vaccination records. */
-          }
+          empty={t("profile.lists.vaccinations.empty")}
         />
-      </div>
+      </div> */}
       {showQR && (
         <div
           className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"

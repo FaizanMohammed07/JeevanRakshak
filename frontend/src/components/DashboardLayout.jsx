@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }) {
   const navigation = [
     { name: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
     { name: "Search Patient", to: "/search-patient", icon: Search },
-    { name: "Previous Records", to: "/previous-records", icon: History },
+    // { name: "Previous Records", to: "/previous-records", icon: History },
     // { name: "Alerts", to: "/alerts", icon: Bell },
     // { name: "Follow-ups", to: "/follow-ups", icon: Calendar },
     // { name: "Chronic Cases", to: "/chronic-cases", icon: Activity },

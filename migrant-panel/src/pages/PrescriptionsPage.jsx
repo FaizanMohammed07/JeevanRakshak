@@ -99,13 +99,15 @@ const PrescriptionDetailPanel = ({ rx }) => {
 };
 
 export default function PrescriptionsPage() {
-  const { prescriptions, loadPrescriptions, status, errors } = usePatientData();
+  let { prescriptions, loadPrescriptions, status, errors } = usePatientData();
   const { t } = useTranslation();
   const [activeRxId, setActiveRxId] = useState(null);
 
   useEffect(() => {
     loadPrescriptions();
   }, [loadPrescriptions]);
+
+  prescriptions = [];
 
   const sorted = useMemo(
     () =>
@@ -228,7 +230,6 @@ export default function PrescriptionsPage() {
 
 function PrescriptionTable({ rows, onSelect, activeId }) {
   const { t } = useTranslation();
-
   const formatDate = (dateString) => {
     if (!dateString) return "—";
     return new Date(dateString).toLocaleDateString("en-IN", {

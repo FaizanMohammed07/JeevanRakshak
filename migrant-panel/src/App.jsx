@@ -45,16 +45,16 @@ const navItems = [
     to: "/prescriptions",
     icon: FileText,
   },
-  {
-    labelKey: "nav.labReports",
-    to: "/lab-reports",
-    icon: FlaskConical,
-  },
-  {
-    labelKey: "nav.nearbyHospitals",
-    to: "/nearby-hospitals",
-    icon: MapPin,
-  },
+  // {
+  //   labelKey: "nav.labReports",
+  //   to: "/lab-reports",
+  //   icon: FlaskConical,
+  // },
+  // {
+  //   labelKey: "nav.nearbyHospitals",
+  //   to: "/nearby-hospitals",
+  //   icon: MapPin,
+  // },
 ];
 
 function App() {
@@ -133,13 +133,13 @@ function ShellLayout() {
               {t("app.idLabel")}:{" "}
               {patient?._id ? patient._id.slice(-6).toUpperCase() : "—"}
             </div>
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-sky-100 bg-white px-3 py-2">
+            {/* <div className="inline-flex items-center gap-2 rounded-2xl border border-sky-100 bg-white px-3 py-2">
               <Languages className="h-4 w-4 text-sky-500" aria-hidden="true" />
               <LanguageSwitcher
                 ariaLabel={t("language.navbarLabel")}
                 className="border-0 bg-transparent px-0 py-0 text-sm font-semibold text-slate-700 shadow-none focus:ring-sky-500"
               />
-            </div>
+            </div> */}
             <button
               type="button"
               onClick={handleLogoutClick}

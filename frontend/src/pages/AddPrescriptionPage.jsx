@@ -122,6 +122,8 @@ function AddPrescriptionPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("Route Not Defined");
+    return;
     setError("");
     setSuccess(false);
 
@@ -198,7 +200,7 @@ function AddPrescriptionPage() {
           </div>
 
           {/* --- MODE TOGGLE --- */}
-          <div className="mb-8 grid grid-cols-2 gap-4">
+          {/* <div className="mb-8 grid grid-cols-2 gap-4">
             <button
               type="button"
               onClick={() => setUploadMode(false)}
@@ -221,7 +223,7 @@ function AddPrescriptionPage() {
             >
               <Upload className="w-5 h-5" /> Upload File
             </button>
-          </div>
+          </div> */}
 
           {/* --- RENDER BASED ON MODE --- */}
           {uploadMode ? (
@@ -443,7 +445,9 @@ function AddPrescriptionPage() {
               {/* Section 2: Diagnosis */}
               <div
                 className={`grid gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100 
-            ${formData.contagious ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}
+            ${
+              formData.contagious ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
+            }`}
               >
                 {/* Suspected Disease */}
                 <div
