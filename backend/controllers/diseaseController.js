@@ -356,6 +356,27 @@ const getDateWindow = (rangeDays, offsetDays = 0) => {
   return { start, end };
 };
 
+const dedupeSameDiseaseCases = (records) => {
+  const map = new Map();
+
+  for (const rec of records) {
+    const pid = rec.patient?._id?.toString();
+
+    const disease =
+      rec.confirmedDisease?.trim().toLowerCase() ||
+      rec.suspectedDisease?.trim().toLowerCase() ||
+      "unknown";
+
+    const key = `${pid}::${disease}`;
+
+    if (!map.has(key)) {
+      map.set(key, rec);
+    }
+  }
+
+  return Array.from(map.values());
+};
+
 // Single point that pulls prescriptions plus patient/doctor data.
 const fetchPrescriptions = async ({
   rangeDays = null,
@@ -378,13 +399,25 @@ const fetchPrescriptions = async ({
     .populate({ path: "doctor", select: DOCTOR_POPULATE_FIELDS })
     .lean();
 
-  if (!districtSlug) return prescriptions;
-  // When the frontend drills into a district we filter post-query to reuse cache.
-  return prescriptions.filter(
-    (entry) =>
-      makeSlug(entry?.patient?.district ?? FALLBACK_STRINGS.district) ===
-      districtSlug
-  );
+  // if (!districtSlug) return prescriptions;
+  // // When the frontend drills into a district we filter post-query to reuse cache.
+  // return prescriptions.filter(
+  //   (entry) =>
+  //     makeSlug(entry?.patient?.district ?? FALLBACK_STRINGS.district) ===
+  //     districtSlug
+  // );
+  let filtered = prescriptions;
+
+  if (districtSlug) {
+    filtered = prescriptions.filter(
+      (entry) =>
+        makeSlug(entry?.patient?.district ?? FALLBACK_STRINGS.district) ===
+        districtSlug
+    );
+  }
+
+  // 🔥 dedupe HERE so downstream counts are correct
+  return dedupeSameDiseaseCases(filtered);
 };
 
 // Snapshot taluk totals from a window so we can compare against the next one.
