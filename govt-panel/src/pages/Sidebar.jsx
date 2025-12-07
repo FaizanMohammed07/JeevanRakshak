@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
+import keralalogo from "../KERALALOGO.webp";
 import {
   Home,
   Activity,
@@ -85,9 +86,17 @@ function Sidebar() {
 
   return (
     <div className="w-64 bg-white shadow-lg h-screen fixed left-0 top-0 flex flex-col">
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-blue-900">Kerala Govt</h1>
-        <p className="text-xs text-gray-600 mt-1">Migrant Health System</p>
+      <div className="p-6 border-b border-gray-200 flex items-center gap-3">
+        <img
+          src={keralalogo}
+          alt="Kerala Emblem"
+          className="w-14 h-14 object-contain brightness-75 contrast-125"
+        />
+
+        <div>
+          <h1 className="text-xl font-bold text-blue-900">Kerala Govt</h1>
+          <p className="text-xs text-gray-600 -mt-1">Migrant Health System</p>
+        </div>
       </div>
 
       <nav className="flex-1 p-4">

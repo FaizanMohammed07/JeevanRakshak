@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, LogIn } from "lucide-react";
+import keralaLogo from "../KERALALOGO.webp" // adjust path as needed
 
 function GovtLogin() {
   const [govtId, setGovtId] = useState("");
@@ -32,7 +33,11 @@ function GovtLogin() {
     <div className="min-h-screen flex items-center justify-center bg-blue-50 p-6">
       <div className="w-full max-w-md bg-white shadow-xl rounded-xl p-8">
         <div className="flex flex-col items-center mb-6">
-          <ShieldCheck size={48} className="text-blue-600 mb-2" />
+           <img
+          src={keralaLogo}
+          alt="Kerala Emblem"
+          className="w-14 h-14 object-contain brightness-75 contrast-125"
+        />
           <h2 className="text-2xl font-bold text-gray-900">
             Govt Officer Login
           </h2>

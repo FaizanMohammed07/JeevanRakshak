@@ -406,9 +406,10 @@ function PatientDetailsPage() {
                           </p>
                           {rx.medicinesIssued.map((med, idx) => (
                             <p key={idx} className="text-sm text-gray-700">
-                              • {med.name} – {med.dosage}
+                              {/* • {med.name} – {med.dosage} */}
+                              • {med}
                             </p>
-                          ))}
+                            ))}
                         </div>
                       )}
 

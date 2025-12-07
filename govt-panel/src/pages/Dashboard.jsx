@@ -311,7 +311,9 @@ function Dashboard() {
   const priorityActions = useMemo(() => {
     if (!highAlertVillages.length) return [];
     return highAlertVillages.slice(0, 3).map((village) => ({
-      title: `Deploy rapid squad to ${village.name}`,
+      // title: `Deploy rapid squad to ${village.name}`,
+      title: `Deploy camp at ${village.name} village`,
+
       detail: `${village.cases} cases • ${village.taluk} Taluk`,
     }));
   }, [highAlertVillages]);
@@ -343,7 +345,7 @@ function Dashboard() {
     if (cases >= 10)
       return { badge: "bg-red-100 text-red-800", label: "Critical" };
     if (cases >= 6)
-      return { badge: "bg-orange-100 text-orange-700", label: "Watch" };
+      return { badge: "bg-orange-100 text-orange-700", label: "Moderate" };
     return { badge: "bg-green-100 text-green-700", label: "Stable" };
   };
   const resolvedDistrict = useMemo(() => {
@@ -1034,13 +1036,10 @@ function Dashboard() {
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex flex-col gap-6 xl:flex-row">
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-4">
+              {/* <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-xs uppercase text-gray-500 tracking-wide">
-                    Taluk drill-down
-                  </p>
                   <h3 className="text-xl font-bold text-gray-900">
-                    Deep dive within districts
+                    District-Taluk-Village Wise Cases
                   </h3>
                 </div>
                 <select
@@ -1067,7 +1066,40 @@ function Dashboard() {
                     <option value="">No districts synced</option>
                   )}
                 </select>
-              </div>
+              </div> */}
+              <div className="mb-4">
+  <h3 className="text-xl font-bold text-gray-900 mb-2">
+    <b>District-Taluk-Village Wise Cases</b>
+  </h3>
+
+  
+
+  <select
+    value={canShowTalukDrilldown ? selectedDistrict : ""}
+    onChange={handleDistrictChange}
+    disabled={!districtInsights.length}
+    className={`w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+      districtInsights.length
+        ? "border-gray-300"
+        : "border-gray-200 bg-gray-50 text-gray-400"
+    }`}
+  >
+    {!canShowTalukDrilldown && (
+      <option value="" disabled>
+        Select district
+      </option>
+    )}
+    {districtInsights.map((district) => (
+      <option key={district.district} value={district.district}>
+        {district.district}
+      </option>
+    ))}
+    {!districtInsights.length && (
+      <option value="">No districts synced</option>
+    )}
+  </select>
+</div>
+
               {canShowTalukDrilldown ? (
                 <p className="text-sm text-gray-600">
                   {activeDistrictData?.totalCases ?? 0} active cases across{" "}
@@ -1275,11 +1307,11 @@ function Dashboard() {
         <div className="bg-white rounded-xl shadow-md p-6 flex flex-col">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div>
-              <p className="text-xs uppercase text-gray-500 tracking-wide">
+              {/* <p className="text-xs uppercase text-gray-500 tracking-wide">
                 Village level alerts
-              </p>
+              </p> */}
               <h3 className="text-xl font-bold text-gray-900">
-                Top hotspots to inspect
+               <b>Village Level Alerts</b> 
               </h3>
               <p className="text-xs text-gray-500 mt-1">
                 Across Kerala • {hotspotRangeConfig.label} window
@@ -1448,7 +1480,7 @@ function Dashboard() {
         <TrendCharts district={districtFilter} refreshKey={refreshTick} />
       </div>
 
-      <div className="mt-8 bg-gradient-to-r from-slate-900 via-blue-900 to-blue-700 text-white rounded-2xl shadow-xl p-8">
+      {/* <div className="mt-8 bg-gradient-to-r from-slate-900 via-blue-900 to-blue-700 text-white rounded-2xl shadow-xl p-8">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-8">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-blue-200">
@@ -1519,7 +1551,7 @@ function Dashboard() {
             })}
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 }

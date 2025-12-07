@@ -28,12 +28,12 @@ export default function DashboardLayout({ children }) {
   const navigation = [
     { name: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
     { name: "Search Patient", to: "/search-patient", icon: Search },
-    { name: "Alerts", to: "/alerts", icon: Bell },
-    { name: "Follow-ups", to: "/follow-ups", icon: Calendar },
-    { name: "Chronic Cases", to: "/chronic-cases", icon: Activity },
-    { name: "Emergency", to: "/emergency", icon: AlertTriangle },
-    { name: "Scan Prescription", to: "/scan-prescription", icon: ScanLine },
-    { name: "Analytics", to: "/analytics", icon: BarChart3 },
+    // { name: "Alerts", to: "/alerts", icon: Bell },
+    // { name: "Follow-ups", to: "/follow-ups", icon: Calendar },
+    // { name: "Chronic Cases", to: "/chronic-cases", icon: Activity },
+    // { name: "Emergency", to: "/emergency", icon: AlertTriangle },
+    // { name: "Scan Prescription", to: "/scan-prescription", icon: ScanLine },
+    // { name: "Analytics", to: "/analytics", icon: BarChart3 },
   ];
 
   const requestSignOut = () => setConfirmSignOut(true);
