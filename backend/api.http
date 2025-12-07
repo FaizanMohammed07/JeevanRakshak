@@ -68,9 +68,9 @@ POST http://localhost:3030/api/patients/signup
 Content-Type: application/json
 
 {
-    "name": "z",
+    "name": "Rayan Ahmed",
     "age": 21,
-    "phoneNumber": "9959728601",
+    "phoneNumber": "9990000003",
     "password": "Patient@123",
     "passwordConfirm": "Patient@123",
     "district": "Thrissur",

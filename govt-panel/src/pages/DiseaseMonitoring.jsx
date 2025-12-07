@@ -32,11 +32,12 @@ const timelineOptions = [
 ];
 
 const trendRangeOptions = [
-  { label: "Today", value: 1 },
-  { label: "5 Days", value: 5 },
-  { label: "10 Days", value: 10 },
-  { label: "15 Days", value: 15 },
-  { label: "30 Days", value: 30 },
+  { label: "Today", value: "today", rangeDays: 1, offsetDays: 0 },
+  { label: "Yesterday", value: "yesterday", rangeDays: 1, offsetDays: 1 },
+  { label: "5 Days", value: "5d", rangeDays: 5, offsetDays: 0 },
+  { label: "10 Days", value: "10d", rangeDays: 10, offsetDays: 0 },
+  { label: "15 Days", value: "15d", rangeDays: 15, offsetDays: 0 },
+  { label: "30 Days", value: "30d", rangeDays: 30, offsetDays: 0 },
 ];
 
 const hotspotRangeOptions = [
@@ -143,6 +144,15 @@ function DiseaseMonitoring() {
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [expandedTaluk, setExpandedTaluk] = useState(null);
 
+  const trendRangeConfig = useMemo(
+    () =>
+      trendRangeOptions.find((option) => option.value === trendRange) ??
+      trendRangeOptions[0],
+    [trendRange]
+  );
+
+  const customRangeActive = Boolean(customStartDate && customEndDate);
+
   // Computed values
   const todayLabel = useMemo(() => patientDateFormatter.format(new Date()), []);
   const totalDistrictCount = districtInsights.length;
@@ -226,18 +236,6 @@ function DiseaseMonitoring() {
       highestCases: topDistrict?.totalCases ?? 0,
     };
   }, [horizontalChartData]);
-
-  const diseaseTotals = useMemo(() => {
-    const totalsMap = new Map();
-    cases.forEach((row) => {
-      const name = row.topDisease?.trim() || "Not specified";
-      const increment = row.topDiseaseCount ?? row.totalCases ?? 0;
-      totalsMap.set(name, (totalsMap.get(name) ?? 0) + increment);
-    });
-    return Array.from(totalsMap.entries())
-      .map(([name, value]) => ({ name, total: value }))
-      .sort((a, b) => b.total - a.total);
-  }, [cases]);
 
   const hotspotRangeConfig = useMemo(
     () =>
@@ -583,13 +581,23 @@ function DiseaseMonitoring() {
     let ignore = false;
     async function loadDiseaseSummary() {
       try {
-        const response = await fetchDiseaseSummary({
+        const baseParams = {
           district: selectedDistrictSlug || undefined,
-          rangeDays: trendRange,
           casesRangeDays: districtCasesRangeConfig.rangeDays,
           casesOffsetDays: districtCasesRangeConfig.offsetDays,
-          startDate: customStartDate || undefined,
-          endDate: customEndDate || undefined,
+        };
+        const rangeParams = customRangeActive
+          ? {
+              startDate: customStartDate,
+              endDate: customEndDate,
+            }
+          : {
+              rangeDays: trendRangeConfig.rangeDays,
+              offsetDays: trendRangeConfig.offsetDays,
+            };
+        const response = await fetchDiseaseSummary({
+          ...baseParams,
+          ...rangeParams,
         });
         if (ignore || !response) return;
         setDistrictCases(
@@ -627,12 +635,15 @@ function DiseaseMonitoring() {
     let ignore = false;
     async function loadActiveCases() {
       try {
-        const response = await fetchActiveDiseaseCases({
+        const activeParams = {
           rangeDays: activeCasesRangeConfig.rangeDays,
           offsetDays: activeCasesRangeConfig.offsetDays,
-          startDate: customStartDate || undefined,
-          endDate: customEndDate || undefined,
-        });
+        };
+        if (customRangeActive) {
+          activeParams.startDate = customStartDate;
+          activeParams.endDate = customEndDate;
+        }
+        const response = await fetchActiveDiseaseCases(activeParams);
         if (ignore || !response) return;
         setCases(Array.isArray(response.cases) ? response.cases : []);
         setLatestAdmissions(
@@ -730,47 +741,6 @@ function DiseaseMonitoring() {
                     {option.label}
                   </button>
                 ))}
-              </div>
-              <div className="flex flex-col items-end gap-2 text-sm text-gray-500">
-                <button
-                  type="button"
-                  onClick={() => setCustomRangeOpen((prev) => !prev)}
-                  className="px-3 py-1.5 rounded-md border text-xs font-semibold transition text-gray-600 border-gray-300 bg-white hover:border-blue-500 hover:text-blue-700"
-                >
-                  {customRangeOpen ? "Hide date range" : "Select date range"}
-                </button>
-                {customRangeOpen && (
-                  <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2 w-full">
-                    <label className="flex flex-col text-gray-600">
-                      Start date
-                      <input
-                        type="date"
-                        value={customStartDate}
-                        onChange={(event) =>
-                          setCustomStartDate(event.target.value)
-                        }
-                        className="mt-1 rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-700 focus:border-blue-500 focus:ring-0"
-                      />
-                    </label>
-                    <label className="flex flex-col text-gray-600">
-                      End date
-                      <input
-                        type="date"
-                        value={customEndDate}
-                        onChange={(event) =>
-                          setCustomEndDate(event.target.value)
-                        }
-                        className="mt-1 rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-700 focus:border-blue-500 focus:ring-0"
-                      />
-                    </label>
-                  </div>
-                )}
-                {customStartDate && customEndDate && (
-                  <p className="text-[11px] text-gray-400">
-                    Viewing snapshot from {formatShortDate(customStartDate)} to{" "}
-                    {formatShortDate(customEndDate)}
-                  </p>
-                )}
               </div>
             </div>
           </div>
@@ -896,49 +866,105 @@ function DiseaseMonitoring() {
 
         {/* Disease Trend Chart */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-600 rounded-lg shadow">
-                <TrendingUp className="text-white" size={22} />
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-600 rounded-lg shadow">
+                  <TrendingUp className="text-white" size={22} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-semibold text-gray-900">
+                    Disease Trend
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Progression across the selected window
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-900">
-                  Disease Trend
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Progression across the selected window
-                </p>
+              <div className="flex flex-wrap gap-3 text-sm">
+                {trendRangeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setTrendRange(option.value)}
+                    className={`px-3 py-1.5 rounded-md font-semibold border ${
+                      trendRange === option.value
+                        ? "bg-emerald-600 text-white border-emerald-600"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-emerald-400"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
-            <div className="flex flex-wrap gap-3 text-sm">
-              {trendRangeOptions.map((option) => (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                  {customRangeActive ? "Custom window" : trendRangeConfig.label}
+                </span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <button
-                  key={option.value}
                   type="button"
-                  onClick={() => setTrendRange(option.value)}
-                  className={`px-3 py-1.5 rounded-md font-semibold border ${
-                    trendRange === option.value
+                  onClick={() => setCustomRangeOpen((prev) => !prev)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition ${
+                    customRangeOpen
                       ? "bg-emerald-600 text-white border-emerald-600"
                       : "bg-white text-gray-700 border-gray-300 hover:border-emerald-400"
                   }`}
                 >
-                  {option.label}
+                  {customRangeOpen ? "Hide range" : "Custom range"}
                 </button>
-              ))}
+                {customRangeOpen && (
+                  <div className="flex flex-wrap gap-2 text-[11px]">
+                    <label className="flex flex-col text-gray-600">
+                      Start
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(event) =>
+                          setCustomStartDate(event.target.value)
+                        }
+                        className="mt-1 h-8 w-32 rounded-lg border border-gray-300 px-2 text-xs focus:border-emerald-400 focus:ring-0"
+                      />
+                    </label>
+                    <label className="flex flex-col text-gray-600">
+                      End
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(event) =>
+                          setCustomEndDate(event.target.value)
+                        }
+                        className="mt-1 h-8 w-32 rounded-lg border border-gray-300 px-2 text-xs focus:border-emerald-400 focus:ring-0"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
             </div>
+            {customRangeActive && (
+              <p className="text-[12px] text-gray-500">
+                Viewing custom snapshot from {formatShortDate(customStartDate)}{" "}
+                to {formatShortDate(customEndDate)}
+              </p>
+            )}
           </div>
-          <div className="h-80 bg-gray-50 rounded-xl shadow-inner p-4 border border-gray-100">
+          <div className="h-[420px] bg-gray-50 rounded-xl shadow-inner p-4 border border-gray-100">
             {trendData.length && normalizedTrendKeys.length ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={trendData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#d1fae5" />
                   <XAxis
                     dataKey="day"
                     stroke="#6b7280"
                     tick={{ fontSize: 12 }}
+                    tickMargin={6}
+                    interval="preserveStartEnd"
                   />
                   <YAxis stroke="#6b7280" />
                   <Tooltip
@@ -1060,29 +1086,6 @@ function DiseaseMonitoring() {
             </div>
           </div>
         </div>
-
-        {diseaseTotals.length > 0 && (
-          <div className="px-6 py-4 bg-white border-b border-gray-100">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {diseaseTotals.slice(0, 4).map((entry) => (
-                <div
-                  key={entry.name}
-                  className="rounded-2xl bg-slate-50 border border-gray-100 p-3 shadow-sm"
-                >
-                  <p className="text-xs uppercase tracking-wide text-gray-500">
-                    {entry.name}
-                  </p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {formatNumber(entry.total)}
-                  </p>
-                  <p className="text-[11px] text-gray-500">
-                    Total checked cases
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Cases Table */}
         <div className="overflow-x-auto">

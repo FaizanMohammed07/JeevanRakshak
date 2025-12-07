@@ -24,6 +24,10 @@ const announcementSchema = new mongoose.Schema(
       enum: ["low", "medium", "high"],
       default: "medium",
     },
+    districts: {
+      type: [String],
+      default: [],
+    },
     createdBy: {
       type: String,
       default: "automation",

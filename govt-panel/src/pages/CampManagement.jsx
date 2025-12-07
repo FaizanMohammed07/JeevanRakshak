@@ -90,6 +90,7 @@ function CampManagement() {
     message: "",
     audience: "Doctors",
     priority: "medium",
+    districts: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -167,6 +168,16 @@ function CampManagement() {
 
     return Array.from(deduped.values());
   }, [alerts, camps, summary, transferQueue]);
+
+  const districtOptions = useMemo(() => {
+    const unique = new Set();
+    (camps ?? []).forEach((camp) => {
+      if (camp?.district) {
+        unique.add(camp.district);
+      }
+    });
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [camps]);
 
   const loadOverview = useCallback(async () => {
     setLoading(true);
@@ -305,6 +316,31 @@ function CampManagement() {
     });
   };
 
+  const toggleDistrictSelection = (district) => {
+    setAnnouncementForm((prev) => {
+      const exists = prev.districts.includes(district);
+      const next = exists
+        ? prev.districts.filter((item) => item !== district)
+        : [...prev.districts, district];
+      return { ...prev, districts: next };
+    });
+  };
+
+  const selectAllDistricts = () => {
+    if (!districtOptions.length) return;
+    setAnnouncementForm((prev) => ({
+      ...prev,
+      districts: districtOptions,
+    }));
+  };
+
+  const clearDistrictSelection = () => {
+    setAnnouncementForm((prev) => ({
+      ...prev,
+      districts: [],
+    }));
+  };
+
   const handleAnnouncementSubmit = async (event) => {
     event.preventDefault();
     if (!announcementForm.title.trim() || !announcementForm.message.trim()) {
@@ -317,12 +353,14 @@ function CampManagement() {
         message: announcementForm.message.trim(),
         audience: announcementForm.audience,
         priority: announcementForm.priority,
+        districts: announcementForm.districts,
       });
       setAnnouncementFeed((prev) => [response.announcement, ...prev]);
       setAnnouncementForm((prev) => ({
         ...prev,
         title: "",
         message: "",
+        districts: [],
       }));
       setAnnouncementModalOpen(false);
     } catch (err) {
@@ -644,6 +682,11 @@ function CampManagement() {
             )}
             {announcementFeed.map((item) => {
               const priorityMeta = getPriorityMeta(item.priority);
+              const targetLabel = item.districts?.length
+                ? `${item.districts.length} district${
+                    item.districts.length === 1 ? "" : "s"
+                  }: ${item.districts.join(", ")}`
+                : "All districts";
               return (
                 <div
                   key={item.id}
@@ -663,6 +706,7 @@ function CampManagement() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-600 mb-1">{item.message}</p>
+                  <p className="text-xs text-gray-500 mb-2">{targetLabel}</p>
                   <div className="text-xs text-gray-400 flex items-center gap-2">
                     <span>
                       {item.timestamp
@@ -1029,6 +1073,62 @@ function CampManagement() {
                 <p className="text-xs text-gray-500 mt-1">
                   {getPriorityMeta(announcementForm.priority).description}
                 </p>
+              </div>
+              <div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Target districts
+                    </label>
+                    <p className="text-xs text-gray-500">
+                      Leave empty to reach patients in every district.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={selectAllDistricts}
+                      disabled={!districtOptions.length}
+                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 disabled:opacity-40"
+                    >
+                      Select all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearDistrictSelection}
+                      disabled={!announcementForm.districts.length}
+                      className="text-xs font-semibold text-gray-500 hover:text-gray-700 disabled:opacity-40"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+                {districtOptions.length > 0 ? (
+                  <div className="mt-2 grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
+                    {districtOptions.map((district) => {
+                      const active =
+                        announcementForm.districts.includes(district);
+                      return (
+                        <button
+                          key={district}
+                          type="button"
+                          onClick={() => toggleDistrictSelection(district)}
+                          className={`text-sm font-medium px-3 py-2 rounded-lg border focus:outline-none transition ${
+                            active
+                              ? "bg-indigo-600 text-white border-transparent"
+                              : "bg-white text-gray-700 border-gray-200 hover:border-indigo-300"
+                          }`}
+                        >
+                          {district}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 mt-2">
+                    Districts populate once live camp data is loaded.
+                  </p>
+                )}
               </div>
               <div className="flex gap-3">
                 <button

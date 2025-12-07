@@ -1,6 +1,7 @@
 import Patient from "../models/patientModel.js";
 import Prescription from "../models/prescriptionModel.js";
 import Announcement from "../models/announcementModel.js";
+import { sendWhatsAppMessage } from "../utils/sendWhatsAppMessage.js";
 
 const CAMP_ACTIVITY_LOOKBACK_DAYS = 14;
 const MAX_ALERT_RESULTS = 12;
@@ -154,6 +155,7 @@ const formatAnnouncements = (records = []) =>
     message: record.message,
     audience: record.audience,
     priority: record.priority,
+    districts: record.districts || [],
     timestamp: record.createdAt,
   }));
 
@@ -164,6 +166,36 @@ const normalizeAudience = (value = "All") => {
   if (normalized.startsWith("patient")) return "Patients";
   return "All";
 };
+
+const normalizeDistrictFilters = (value) => {
+  if (!Array.isArray(value)) return [];
+  const extracted = value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter((entry) => entry.length);
+  return Array.from(new Set(extracted));
+};
+
+const buildQueryDistrictFilters = (query) => {
+  if (Array.isArray(query)) return normalizeDistrictFilters(query);
+  if (typeof query === "string") return normalizeDistrictFilters([query]);
+  return [];
+};
+
+// Helper: Convert DB phone number into WhatsApp format
+function formatWhatsAppNumber(rawNumber) {
+  if (!rawNumber) return null;
+
+  // Remove all non-digits
+  const cleaned = rawNumber.toString().replace(/\D/g, "");
+
+  // If number already starts with 91 → assume correct
+  if (cleaned.startsWith("91")) {
+    return `whatsapp:+${cleaned}`;
+  }
+
+  // Otherwise assume it's an Indian number without country code
+  return `whatsapp:+91${cleaned}`;
+}
 
 const buildAutomationTasks = (camps = []) =>
   camps
@@ -387,6 +419,98 @@ export const getCampOverview = async (req, res) => {
   }
 };
 
+// export const publishCampAnnouncement = async (req, res) => {
+//   try {
+//     const {
+//       title,
+//       message,
+//       audience = "Doctors",
+//       priority = "medium",
+//     } = req.body || {};
+
+//     // --------------------------
+//     // 1️⃣ Basic validation
+//     // --------------------------
+//     if (!title || !message) {
+//       return res.status(400).json({
+//         message: "Title and message are required",
+//       });
+//     }
+
+//     // --------------------------
+//     // 2️⃣ Store announcement
+//     // --------------------------
+//     const record = await Announcement.create({
+//       title,
+//       message,
+//       audience,
+//       priority,
+//       createdBy: req.user?.name || "dashboard",
+//     });
+
+//     // --------------------------
+//     // 3️⃣ Decide if WhatsApp must be sent
+//     // --------------------------
+//     const shouldNotifyPatients =
+//       audience.toLowerCase().includes("patient") ||
+//       audience.toLowerCase() === "all";
+
+//     let whatsappResults = [];
+
+//     if (shouldNotifyPatients) {
+//       console.log("📢 Broadcasting WhatsApp alerts to patients…");
+
+//       // Fetch patient numbers
+//       const patients = await Patient.find({}, "phoneNumber name");
+
+//       // Send messages in parallel (promise batch)
+//       const sendOps = patients.map(async (user) => {
+//         if (!user.phoneNumber) return null;
+
+//         const formatted = convertToWhatsAppNumber(user.phoneNumber); // your helper function
+
+//         if (!formatted) {
+//           console.log("❌ Invalid number skipped:", user.phoneNumber);
+//           return null;
+//         }
+
+//         try {
+//           await sendWhatsAppMessage(
+//             formatted,
+//             `📢 *Health Announcement*\n\n${title}\n${message}\n\n— Kerala Health Department`
+//           );
+
+//           console.log("✅ WhatsApp sent to:", formatted);
+
+//           return { number: formatted, status: "sent" };
+//         } catch (err) {
+//           console.log("⚠️ WhatsApp FAILED:", formatted, err.message);
+//           return { number: formatted, status: "failed", error: err.message };
+//         }
+//       });
+
+//       // Resolve all promises safely
+//       whatsappResults = await Promise.all(sendOps);
+//     }
+
+//     // --------------------------
+//     // 4️⃣ Respond safely
+//     // --------------------------
+//     return res.status(201).json({
+//       announcement: formatAnnouncements([record])[0],
+//       whatsappBroadcast: shouldNotifyPatients
+//         ? "Processed with partial successes — see logs"
+//         : "No WhatsApp broadcast (audience not patients)",
+//       deliveryReport: whatsappResults.filter(Boolean),
+//     });
+//   } catch (error) {
+//     console.error("[CampController] CRITICAL ERROR:", error);
+//     return res.status(500).json({
+//       message: "System error while publishing announcement",
+//     });
+//   }
+// };
+
 export const publishCampAnnouncement = async (req, res) => {
   try {
     const {
@@ -394,23 +518,72 @@ export const publishCampAnnouncement = async (req, res) => {
       message,
       audience = "Doctors",
       priority = "medium",
-    } = req.body || {};
+      districts,
+    } = req.body;
+
     if (!title || !message) {
       return res
         .status(400)
         .json({ message: "Title and message are required" });
     }
+
+    const targetDistricts = normalizeDistrictFilters(districts);
+
+    // 1️⃣ Save announcement
     const record = await Announcement.create({
       title,
       message,
       audience,
       priority,
+      districts: targetDistricts,
       createdBy: req.user?.name || "dashboard",
     });
-    res.status(201).json({ announcement: formatAnnouncements([record])[0] });
+
+    const shouldNotifyPatients =
+      audience.toLowerCase().includes("patient") ||
+      audience.toLowerCase() === "all";
+
+    // 2️⃣ Respond immediately → no waiting!
+    res.status(201).json({
+      announcement: formatAnnouncements([record])[0],
+      info: "Announcement saved. WhatsApp delivery started in background.",
+    });
+
+    // 3️⃣ Background WhatsApp broadcast (no blocking)
+    setTimeout(async () => {
+      try {
+        if (!shouldNotifyPatients) return;
+
+        const patientFilter = targetDistricts.length
+          ? { district: { $in: targetDistricts } }
+          : {};
+
+        const patients = await Patient.find(
+          patientFilter,
+          "phoneNumber name district"
+        );
+
+        for (const user of patients) {
+          const wa = formatWhatsAppNumber(user.phoneNumber);
+          if (!wa) continue;
+
+          try {
+            await sendWhatsAppMessage(
+              wa,
+              `📢 *Health Announcement*\n\n${title}\n${message}\n\n— Kerala Health Department`
+            );
+            console.log("WhatsApp sent:", wa);
+          } catch (err) {
+            console.log("WhatsApp FAILED:", wa, err.message);
+          }
+        }
+      } catch (err) {
+        console.log("Background WhatsApp error:", err.message);
+      }
+    }, 100); // slight delay so response is already sent
   } catch (error) {
     console.error("[CampController] Failed to publish announcement", error);
-    res.status(500).json({ message: "Unable to publish announcement" });
+    return res.status(500).json({ message: "Unable to publish announcement" });
   }
 };
 
@@ -441,12 +614,27 @@ export const getHeroAnnouncements = async (req, res) => {
             audience: { $in: ["All", audience] },
           };
 
+    const districtFilters = buildQueryDistrictFilters(
+      req.query.districts ?? req.query.district
+    ).map((value) => value.toLowerCase());
+
     const announcements = await Announcement.find(match)
       .sort({ priority: -1, createdAt: -1 })
       .limit(MAX_ANNOUNCEMENTS)
       .lean();
 
-    res.json({ announcements: formatAnnouncements(announcements) });
+    const filtered = announcements.filter((record) => {
+      if (!districtFilters.length) return true;
+      const recordDistricts = normalizeDistrictFilters(
+        record.districts || []
+      ).map((value) => value.toLowerCase());
+      if (!recordDistricts.length) return true;
+      return recordDistricts.some((district) =>
+        districtFilters.includes(district)
+      );
+    });
+
+    res.json({ announcements: formatAnnouncements(filtered) });
   } catch (error) {
     console.error("[CampController] Failed to fetch hero announcements", error);
     res.status(500).json({ message: "Unable to load announcements" });

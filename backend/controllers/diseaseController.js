@@ -584,7 +584,8 @@ const buildDistrictCases = (prescriptions) => {
 const buildTrendData = (
   prescriptions,
   districtSlug,
-  rangeDays = DEFAULT_TREND_DAYS
+  rangeDays = DEFAULT_TREND_DAYS,
+  offsetDays = 0
 ) => {
   const filtered = districtSlug
     ? prescriptions.filter(
@@ -604,7 +605,7 @@ const buildTrendData = (
   const diseaseTotals = new Map();
 
   const days = [];
-  const { start } = getDateWindow(rangeDays);
+  const { start } = getDateWindow(rangeDays, offsetDays);
   const cursor = new Date(start);
   for (let i = 0; i < rangeDays; i += 1) {
     const key = cursor.toISOString().slice(0, 10);
@@ -989,13 +990,17 @@ const getDiseaseSummary = async (req, res) => {
     const districtSlug =
       sanitizeDistrictSlug(req.query.district) ?? DEFAULT_DISTRICT_SLUG;
     const trendRangeDays = sanitizeTrendDays(req.query.rangeDays);
+    const trendOffsetDays = sanitizeOffsetDays(req.query.offsetDays);
     const trendWindowDays = Math.min(MAX_LOOKBACK_DAYS, trendRangeDays * 2);
     const casesRangeDays = sanitizeCasesRange(req.query.casesRangeDays);
     const casesOffsetDays = sanitizeOffsetDays(req.query.casesOffsetDays);
 
     const [trendWindow, districtWindow] = await Promise.all([
-      // Pull a larger window so trend lines stay smooth.
-      fetchPrescriptions({ rangeDays: trendWindowDays }),
+      // Pull a larger offset-aligned window so trend lines stay smooth.
+      fetchPrescriptions({
+        rangeDays: trendWindowDays,
+        offsetDays: trendOffsetDays,
+      }),
       fetchPrescriptions({
         rangeDays: casesRangeDays,
         offsetDays: casesOffsetDays,
@@ -1006,7 +1011,8 @@ const getDiseaseSummary = async (req, res) => {
     const { trendData, trendKeys } = buildTrendData(
       trendWindow,
       districtSlug,
-      trendRangeDays
+      trendRangeDays,
+      trendOffsetDays
     );
 
     const labeledDiseaseKeys = diseaseKeys.map((entry) => ({
