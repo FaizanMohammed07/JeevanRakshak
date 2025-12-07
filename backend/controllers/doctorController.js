@@ -160,13 +160,50 @@ export const getDoctorPrescriptions = async (req, res) => {
       .sort({ dateOfIssue: -1 }) // newest first
       .lean();
 
+    const uniquePatients = new Set(
+      prescriptions.map((p) => p.patient?._id?.toString())
+    ).size;
+
     return res.status(200).json({
       doctorId,
       count: prescriptions.length,
+      uniquePatients,
       prescriptions,
     });
   } catch (err) {
     console.error("Error fetching doctor prescriptions:", err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const getTodayPrescriptionCount = async (req, res) => {
+  try {
+    const doctorId = req.params.doctorId;
+
+    if (!doctorId) {
+      return res.status(400).json({ msg: "Doctor ID is required" });
+    }
+
+    // Build date window for today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Query prescriptions for today
+    const count = await Prescription.countDocuments({
+      doctor: doctorId,
+      dateOfIssue: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    return res.status(200).json({
+      doctorId,
+      date: startOfDay.toISOString().split("T")[0], // yyyy-mm-dd format
+      count,
+    });
+  } catch (err) {
+    console.error("Error counting prescriptions:", err);
     return res.status(500).json({ error: err.message });
   }
 };

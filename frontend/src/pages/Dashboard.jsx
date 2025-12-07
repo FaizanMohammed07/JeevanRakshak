@@ -15,6 +15,7 @@ import {
   Clock,
   CheckCircle,
 } from "lucide-react";
+import api from "../api/axios";
 
 export default function Dashboard() {
   const { doctor } = useAuth();
@@ -30,6 +31,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [heroAnnouncements, setHeroAnnouncements] = useState([]);
   const [activeAnnouncementIndex, setActiveAnnouncementIndex] = useState(0);
+  const [todayCount, setTodayCount] = useState(0);
 
   useEffect(() => {
     if (doctor) {
@@ -42,6 +44,8 @@ export default function Dashboard() {
     if (!doctor) return;
     try {
       setLoading(true);
+      const res = await api.get(`/doctors/${doctor._id}/prescriptions/today`);
+      setTodayCount(res.data.count);
       const snapshot = await fetchDashboardSnapshot(doctor.id);
       setStats(snapshot.stats);
       setRecentActivity(snapshot.recentActivity);
@@ -67,10 +71,10 @@ export default function Dashboard() {
   const statCards = [
     {
       title: "Today's Patients",
-      value: stats.todayPatients,
+      value: todayCount,
       icon: Users,
       color: "blue",
-      trend: "+" + stats.weeklyTrend + "%",
+      // trend: "+" + stats.weeklyTrend + "%",
     },
     // {
     //   title: "Pending Follow-ups",

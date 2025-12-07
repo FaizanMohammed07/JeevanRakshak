@@ -10,6 +10,7 @@ import {
   getMe,
   logout,
   getDoctorPrescriptions,
+  getTodayPrescriptionCount,
 } from "../controllers/doctorController.js";
 
 const router = express.Router();
@@ -25,6 +26,12 @@ router.get(
   protect,
   // allowRoles("doctor"),
   getDoctorPrescriptions
+);
+
+router.get(
+  "/:doctorId/prescriptions/today",
+  // allowRoles("doctor"),
+  getTodayPrescriptionCount
 );
 
 export default router;
