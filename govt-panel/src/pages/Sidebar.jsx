@@ -16,34 +16,37 @@ import {
 function Sidebar() {
   const navigate = useNavigate();
   const [govtUser, setGovtUser] = useState(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  // 🔐 Check whether govt user is logged in
   useEffect(() => {
+    let mounted = true;
     const fetchGovt = async () => {
       try {
         const res = await axios.get("http://localhost:3030/api/govt/check", {
           withCredentials: true,
         });
-        setGovtUser(res.data.govt);
+        if (mounted) setGovtUser(res.data.govt);
       } catch (err) {
-        setGovtUser(null); // no redirect here
+        if (mounted) setGovtUser(null);
       }
     };
-
     fetchGovt();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // 🔐 Logout govt user
   const handleLogout = async () => {
     try {
       await axios.get("http://localhost:3030/api/govt/logout", {
         withCredentials: true,
       });
-
       setGovtUser(null);
+      setShowLogoutConfirm(false);
       navigate("/govt/login");
     } catch (err) {
-      console.log("Logout failed:", err);
+      console.error("Logout failed:", err);
+      setShowLogoutConfirm(false);
     }
   };
 
@@ -83,6 +86,22 @@ function Sidebar() {
     },
   ];
 
+  useEffect(() => {
+    const target = document.body;
+    const html = document.documentElement;
+    if (showLogoutConfirm) {
+      target.style.overflow = "hidden";
+      html.style.overflow = "hidden";
+    } else {
+      target.style.overflow = "";
+      html.style.overflow = "";
+    }
+    return () => {
+      target.style.overflow = "";
+      html.style.overflow = "";
+    };
+  }, [showLogoutConfirm]);
+
   return (
     <div className="w-64 bg-white shadow-lg h-screen fixed left-0 top-0 flex flex-col">
       <div className="p-6 border-b border-gray-200">
@@ -116,12 +135,9 @@ function Sidebar() {
       <div className="p-4 border-t border-gray-200">
         {govtUser ? (
           <>
-            {/* Govt Logged in */}
             <div className="flex items-center gap-3 px-4 py-3">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-blue-900 font-semibold">
-                  {govtUser.govtId.substring(0, 2).toUpperCase()}
-                </span>
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-900 font-semibold">
+                {govtUser.govtId.substring(0, 2).toUpperCase()}
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900">
@@ -130,9 +146,9 @@ function Sidebar() {
                 <p className="text-xs text-gray-600">ID: {govtUser.govtId}</p>
               </div>
             </div>
-
             <button
-              onClick={handleLogout}
+              type="button"
+              onClick={() => setShowLogoutConfirm(true)}
               className="w-full flex items-center gap-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
               <LogOut size={18} />
@@ -140,8 +156,8 @@ function Sidebar() {
             </button>
           </>
         ) : (
-          // If NOT logged in → Login button
           <button
+            type="button"
             onClick={() => navigate("/govt/login")}
             className="w-full flex items-center gap-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
@@ -150,6 +166,54 @@ function Sidebar() {
           </button>
         )}
       </div>
+
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logout-confirm-title"
+            className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl"
+          >
+            <div className="flex flex-col gap-4 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-red-600">
+                <LogOut size={24} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-500">
+                  Government Admin Panel
+                </p>
+                <h2
+                  id="logout-confirm-title"
+                  className="mt-2 text-2xl font-semibold text-slate-900"
+                >
+                  Confirm sign out
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  This will end your secure session. Confirm only if you intend
+                  to leave the admin console.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 text-[0.7rem] font-semibold uppercase tracking-[0.2em] sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="inline-flex flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="inline-flex flex-1 items-center justify-center rounded-2xl bg-gradient-to-r from-red-600 to-rose-500 px-4 py-2 text-white shadow-sm transition hover:brightness-90"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

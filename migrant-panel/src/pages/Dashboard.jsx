@@ -26,7 +26,6 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { usePatientData, usePatientReports } from "../context/PatientsContext";
 import { fetchHeroAnnouncements } from "../api/announcements";
-
 export default function Dashboard() {
   const { patient } = useAuth();
   const { t } = useTranslation();
@@ -50,12 +49,12 @@ export default function Dashboard() {
   const [announcementError, setAnnouncementError] = useState(null);
 
   const loadHeroAnnouncements = useCallback(
-    async ({ showLoading } = {}) => {
+    async ({ showLoading, district } = {}) => {
       if (showLoading) {
         setAnnouncementsStatus("loading");
       }
       try {
-        const data = await fetchHeroAnnouncements("Patients");
+        const data = await fetchHeroAnnouncements("Patients", { district });
         setHeroAnnouncements(data);
         setActiveAnnouncementIndex(0);
         setAnnouncementError(null);
@@ -81,12 +80,17 @@ export default function Dashboard() {
       if (cancelled) return;
       loadPrescriptions();
       loadLabReports();
-      loadHeroAnnouncements();
+      loadHeroAnnouncements({ district: patient?.district });
     });
     return () => {
       cancelled = true;
     };
-  }, [loadPrescriptions, loadLabReports, loadHeroAnnouncements]);
+  }, [
+    loadPrescriptions,
+    loadLabReports,
+    loadHeroAnnouncements,
+    patient?.district,
+  ]);
 
   useEffect(() => {
     if (heroAnnouncements.length <= 1) return undefined;
@@ -199,7 +203,12 @@ export default function Dashboard() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => loadHeroAnnouncements({ showLoading: true })}
+              onClick={() =>
+                loadHeroAnnouncements({
+                  showLoading: true,
+                  district: patient?.district,
+                })
+              }
               className="inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white hover:bg-white/10"
             >
               <RefreshCw
