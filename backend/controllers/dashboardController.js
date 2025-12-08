@@ -4,7 +4,7 @@ import Prescription from "../models/prescriptionModel.js";
 
 // Shared ranges so every widget talks about the same slice of time.
 const DEFAULT_LOOKBACK_DAYS = 7;
-const DEFAULT_RISK_LOOKBACK_DAYS = 7;
+const DEFAULT_RISK_LOOKBACK_DAYS = 10;
 const OUTBREAK_LOOKBACK_DAYS = 5;
 const TREND_WIDGET_DAYS = 7;
 const MAX_TREND_WEEK_OFFSET = 3;
@@ -128,40 +128,140 @@ const countPrescriptionsInWindow = async (match, rangeDays, offsetDays = 0) => {
   const windowMatch = { ...match, dateOfIssue: { $gte: start, $lte: end } };
   return Prescription.countDocuments(windowMatch);
 };
-
-// Use a unique village count as a proxy for how many camps are red-flagged.
-const countHighRiskCamps = async (match, rangeDays, offsetDays = 0) => {
+const countUniqueDiseasesInWindow = async (match, rangeDays, offsetDays = 0) => {
   if (hasEmptyPatientScope(match)) return 0;
+
   const { start, end } = buildDateWindow(rangeDays, offsetDays);
-  const pipeline = [
+
+  const result = await Prescription.aggregate([
     {
       $match: {
         ...match,
-        contagious: true,
         dateOfIssue: { $gte: start, $lte: end },
+        finalDiagnosis: { $exists: true, $ne: "" }, // ensure valid disease
       },
     },
+
+    // Sort by patient + latest date
+    {
+      $sort: { patient: 1, dateOfIssue: -1 },
+    },
+
+    // Pick only latest prescription per patient
+    {
+      $group: {
+        _id: "$patient",
+        latestDisease: { $first: "$finalDiagnosis" },
+      },
+    },
+
+    // Now group by DISEASE to make them unique
+    {
+      $group: {
+        _id: "$latestDisease",
+      },
+    },
+
+    // Count unique diseases
+    {
+      $count: "uniqueDiseaseCount",
+    },
+  ]);
+
+  return result[0]?.uniqueDiseaseCount || 0;
+};
+
+
+// Use a unique village count as a proxy for how many camps are red-flagged.
+// const countHighRiskCamps = async (match, rangeDays, offsetDays = 0) => {
+//   if (hasEmptyPatientScope(match)) return 0;
+//   const { start, end } = buildDateWindow(rangeDays, offsetDays);
+//   const pipeline = [
+//     {
+//       $match: {
+//         ...match,
+//         contagious: true,
+//         dateOfIssue: { $gte: start, $lte: end },
+//       },
+//     },
+//     {
+//       $lookup: {
+//         from: "patients",
+//         localField: "patient",
+//         foreignField: "_id",
+//         as: "patient",
+//       },
+//     },
+//     { $unwind: "$patient" },
+//     {
+//       $group: {
+//         _id: {
+//           district: "$patient.district",
+//           village: "$patient.village",
+//         },
+//       },
+//     },
+//   ];
+//   const villages = await Prescription.aggregate(pipeline);
+//   return villages.length;
+// };
+export const countHighRiskCamps = async (
+  match,
+  lookbackDays,
+  offsetDays = 0
+) => {
+  const now = new Date();
+
+  // Build correct date window
+  const startDate = new Date(now);
+  startDate.setDate(startDate.getDate() - (lookbackDays + offsetDays));
+
+  const endDate = new Date(now);
+  endDate.setDate(endDate.getDate() - offsetDays);
+
+  const results = await Prescription.aggregate([
+    {
+      $match: {
+        ...match,
+        dateOfIssue: { $gte: startDate, $lte: endDate } // 🔥 no contagious filter
+      }
+    },
+
+    // Attach patient details
     {
       $lookup: {
         from: "patients",
         localField: "patient",
         foreignField: "_id",
-        as: "patient",
-      },
+        as: "patient"
+      }
     },
     { $unwind: "$patient" },
+
+    // Group by district/taluk/village
     {
       $group: {
         _id: {
           district: "$patient.district",
-          village: "$patient.village",
+          taluk: "$patient.taluk",
+          village: "$patient.village"
         },
-      },
+        caseCount: { $sum: 1 }
+      }
     },
-  ];
-  const villages = await Prescription.aggregate(pipeline);
-  return villages.length;
+
+    // Only villages with ≥10 cases are high-risk
+    {
+      $match: { caseCount: { $gte: 10 } }
+    },
+
+    // Count how many such villages
+    { $count: "highRiskVillages" }
+  ]);
+
+  return results[0]?.highRiskVillages || 0;
 };
+
 
 const countContagiousAlerts = async (match, rangeDays, offsetDays = 0) => {
   if (hasEmptyPatientScope(match)) return 0;

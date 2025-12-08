@@ -66,18 +66,18 @@ function Sidebar() {
       path: "/disease",
     },
     { id: "camps", label: "Camps", icon: Tent, path: "/camps" },
-    {
-      id: "alerts",
-      label: "Outbreak Alerts",
-      icon: AlertTriangle,
-      path: "/alerts",
-    },
-    {
-      id: "hospitals",
-      label: "Hospitals",
-      icon: Building2,
-      path: "/hospitals",
-    },
+    // {
+    //   id: "alerts",
+    //   label: "Outbreak Alerts",
+    //   icon: AlertTriangle,
+    //   path: "/alerts",
+    // },
+    // {
+    //   id: "hospitals",
+    //   label: "Hospitals",
+    //   icon: Building2,
+    //   path: "/hospitals",
+    // },
     { id: "migrants", label: "Migrants", icon: Users, path: "/migrants" },
     {
       id: "settings",
