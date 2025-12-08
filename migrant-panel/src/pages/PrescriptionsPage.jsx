@@ -9,11 +9,31 @@ const TIME_SLOT_LABELS = {
   night: "Night",
 };
 
+const TIME_SLOT_KEYS = Object.keys(TIME_SLOT_LABELS);
+
 const MEAL_LABELS = {
   before: "Before food",
   after: "After food",
   any: "Any time",
 };
+
+const normalizeScheduleForDisplay = (schedule = {}) =>
+  TIME_SLOT_KEYS.reduce((acc, key) => {
+    const slotValue = schedule?.[key];
+    if (!slotValue) {
+      acc[key] = { active: Boolean(slotValue), mealTiming: "after" };
+      return acc;
+    }
+    if (typeof slotValue === "object") {
+      acc[key] = {
+        active: Boolean(slotValue.active),
+        mealTiming: slotValue.mealTiming || "after",
+      };
+      return acc;
+    }
+    acc[key] = { active: Boolean(slotValue), mealTiming: "after" };
+    return acc;
+  }, {});
 
 const normalizeMedicineItem = (medicine) => {
   if (!medicine) return null;
@@ -21,7 +41,7 @@ const normalizeMedicineItem = (medicine) => {
     return {
       name: medicine.trim(),
       dosage: "",
-      schedule: {},
+      schedule: normalizeScheduleForDisplay({}),
       mealTiming: "any",
     };
   }
@@ -29,10 +49,7 @@ const normalizeMedicineItem = (medicine) => {
   return {
     name: (medicine.name || "").trim(),
     dosage: medicine.dosage || "",
-    schedule:
-      medicine.schedule && typeof medicine.schedule === "object"
-        ? medicine.schedule
-        : {},
+    schedule: normalizeScheduleForDisplay(medicine.schedule),
     mealTiming: medicine.mealTiming || "any",
   };
 };
@@ -49,11 +66,15 @@ const getMedicineNames = (medicines) => {
 
 const describeSchedule = (schedule) => {
   if (!schedule) return null;
-  const slots = Object.entries(schedule)
-    .filter(([, active]) => Boolean(active))
-    .map(([key]) => TIME_SLOT_LABELS[key] || key);
-  if (!slots.length) return null;
-  return slots.join(", ");
+  const entries = TIME_SLOT_KEYS.reduce((acc, key) => {
+    const slotState = schedule[key];
+    if (!slotState?.active) return acc;
+    const slotLabel = TIME_SLOT_LABELS[key] || key;
+    const mealLabel = MEAL_LABELS[slotState.mealTiming] || MEAL_LABELS.after;
+    acc.push(`${slotLabel} (${mealLabel})`);
+    return acc;
+  }, []);
+  return entries.length ? entries.join(" • ") : null;
 };
 
 const PrescriptionDetailPanel = ({ rx }) => {
@@ -73,6 +94,16 @@ const PrescriptionDetailPanel = ({ rx }) => {
   const normalizedMedicines = (rx.medicinesIssued || [])
     .map(normalizeMedicineItem)
     .filter(Boolean);
+
+  const formatSlotLabel = (key, slotState) => {
+    const slotLabel = TIME_SLOT_LABELS[key] || key;
+    if (!slotState?.active) return null;
+    const mealLabel = MEAL_LABELS[slotState.mealTiming] || MEAL_LABELS.after;
+    return `${slotLabel} (${mealLabel})`;
+  };
+
+  const hasActiveSlots = (schedule) =>
+    TIME_SLOT_KEYS.some((key) => schedule?.[key]?.active);
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-sky-100 bg-sky-50/40 p-5">
@@ -133,12 +164,31 @@ const PrescriptionDetailPanel = ({ rx }) => {
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
-                    {scheduleLabel && <span>Times: {scheduleLabel}</span>}
-                    <span>
-                      Food:{" "}
-                      {MEAL_LABELS[medicine.mealTiming] || MEAL_LABELS.after}
-                    </span>
+                  <div className="mt-3 space-y-2 text-xs text-slate-500">
+                    {scheduleLabel ? (
+                      <div className="flex flex-wrap gap-2">
+                        {TIME_SLOT_KEYS.map((key) => {
+                          const slotState = medicine.schedule?.[key];
+                          const label = formatSlotLabel(key, slotState);
+                          if (!label) return null;
+                          return (
+                            <span
+                              key={key}
+                              className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-slate-600"
+                            >
+                              {label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <span>Times not specified</span>
+                    )}
+                    {!hasActiveSlots(medicine.schedule) && (
+                      <span className="text-slate-400">
+                        Tap a time slot in the doctor view to record timing
+                      </span>
+                    )}
                   </div>
                 </div>
               );

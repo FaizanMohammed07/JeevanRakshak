@@ -1,11 +1,29 @@
 import mongoose from "mongoose";
 
-const medicineScheduleSchema = new mongoose.Schema(
+const DEFAULT_MEAL_TIMING = "after";
+const VALID_MEAL_TIMINGS = ["before", "after", "any"];
+const TIME_SLOT_KEYS = ["morning", "afternoon", "night"];
+
+const slotSchema = new mongoose.Schema(
   {
-    morning: { type: Boolean, default: false },
-    afternoon: { type: Boolean, default: false },
-    night: { type: Boolean, default: false },
+    active: { type: Boolean, default: false },
+    mealTiming: {
+      type: String,
+      enum: VALID_MEAL_TIMINGS,
+      default: DEFAULT_MEAL_TIMING,
+    },
   },
+  { _id: false }
+);
+
+const medicineScheduleSchema = new mongoose.Schema(
+  TIME_SLOT_KEYS.reduce((acc, key) => {
+    acc[key] = {
+      type: slotSchema,
+      default: () => ({}),
+    };
+    return acc;
+  }, {}),
   { _id: false }
 );
 
@@ -15,12 +33,16 @@ const medicineSchema = new mongoose.Schema(
     dosage: { type: String, trim: true },
     schedule: {
       type: medicineScheduleSchema,
-      default: () => ({ morning: false, afternoon: false, night: false }),
+      default: () =>
+        TIME_SLOT_KEYS.reduce((acc, key) => {
+          acc[key] = { active: false, mealTiming: DEFAULT_MEAL_TIMING };
+          return acc;
+        }, {}),
     },
     mealTiming: {
       type: String,
-      enum: ["before", "after", "any"],
-      default: "after",
+      enum: VALID_MEAL_TIMINGS,
+      default: DEFAULT_MEAL_TIMING,
     },
   },
   { _id: false }

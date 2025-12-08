@@ -5,6 +5,26 @@ import { uploadCompressedImages } from "../utils/uploadS3.js";
 
 const DEFAULT_MEAL_TIMING = "after";
 const VALID_MEAL_OPTIONS = ["before", "after", "any"];
+const TIME_SLOT_KEYS = ["morning", "afternoon", "night"];
+
+const normalizeSchedule = (schedule = {}) =>
+  TIME_SLOT_KEYS.reduce((acc, key) => {
+    const value = schedule[key];
+    if (value && typeof value === "object") {
+      acc[key] = {
+        active: Boolean(value.active),
+        mealTiming: VALID_MEAL_OPTIONS.includes(value.mealTiming)
+          ? value.mealTiming
+          : DEFAULT_MEAL_TIMING,
+      };
+      return acc;
+    }
+    acc[key] = {
+      active: Boolean(value),
+      mealTiming: DEFAULT_MEAL_TIMING,
+    };
+    return acc;
+  }, {});
 
 const normalizeMedicineEntry = (entry) => {
   if (!entry) return null;
@@ -14,17 +34,10 @@ const normalizeMedicineEntry = (entry) => {
     return {
       name: trimmed,
       dosage: "",
-      schedule: { morning: false, afternoon: false, night: false },
+      schedule: normalizeSchedule({}),
       mealTiming: DEFAULT_MEAL_TIMING,
     };
   }
-
-  const schedule = entry.schedule || {};
-  const normalizedSchedule = {
-    morning: Boolean(schedule.morning),
-    afternoon: Boolean(schedule.afternoon),
-    night: Boolean(schedule.night),
-  };
 
   const name = (entry.name || entry.medicineName || "").trim();
   if (!name) return null;
@@ -36,7 +49,7 @@ const normalizeMedicineEntry = (entry) => {
   return {
     name,
     dosage: (entry.dosage || "").trim(),
-    schedule: normalizedSchedule,
+    schedule: normalizeSchedule(entry.schedule),
     mealTiming,
   };
 };
@@ -115,6 +128,8 @@ export const addPrescription = async (req, res) => {
       followUpDate,
       notes,
     });
+
+    // console.log(prescription + prescription.medicinesIssued.schedule);
 
     res.status(201).json({
       msg: "Prescription added successfully",
