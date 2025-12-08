@@ -1,5 +1,31 @@
 import mongoose from "mongoose";
 
+const medicineScheduleSchema = new mongoose.Schema(
+  {
+    morning: { type: Boolean, default: false },
+    afternoon: { type: Boolean, default: false },
+    night: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+const medicineSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    dosage: { type: String, trim: true },
+    schedule: {
+      type: medicineScheduleSchema,
+      default: () => ({ morning: false, afternoon: false, night: false }),
+    },
+    mealTiming: {
+      type: String,
+      enum: ["before", "after", "any"],
+      default: "after",
+    },
+  },
+  { _id: false }
+);
+
 const prescriptionSchema = new mongoose.Schema(
   {
     patient: {
@@ -30,8 +56,8 @@ const prescriptionSchema = new mongoose.Schema(
     },
 
     medicinesIssued: {
-      type: [String],
-      // required: [true, "Please list the medicines issued"],
+      type: [medicineSchema],
+      default: [],
     },
 
     suspectedDisease: {

@@ -11,6 +11,24 @@ import {
 } from "lucide-react";
 import { usePatients, useFetchPatient } from "../context/PatientsContext";
 
+const TIME_SLOTS = [
+  { key: "morning", label: "Morning" },
+  { key: "afternoon", label: "Afternoon" },
+  { key: "night", label: "Night" },
+];
+
+const MEAL_OPTIONS = [
+  { key: "before", label: "Before food" },
+  { key: "after", label: "After food" },
+];
+
+const createMedicineEntry = () => ({
+  name: "",
+  dosage: "",
+  schedule: { morning: false, afternoon: false, night: false },
+  mealTiming: "after",
+});
+
 function AddPrescriptionPage() {
   const navigate = useNavigate();
   const { patientId } = useParams();
@@ -42,7 +60,7 @@ function AddPrescriptionPage() {
   const mustConfirm = formData.contagious && !formData.confirmedDisease.trim();
 
   // Medicines State (Array of Strings)
-  const [medicines, setMedicines] = useState([""]);
+  const [medicines, setMedicines] = useState([createMedicineEntry()]);
 
   if (fetchLoading) return <div className="p-6">Loading patient data...</div>;
   if (!patient) return <div className="p-6">Patient not found</div>;
@@ -55,14 +73,38 @@ function AddPrescriptionPage() {
     }));
   };
 
-  const handleMedicineChange = (index, value) => {
-    const updated = [...medicines];
-    updated[index] = value;
-    setMedicines(updated);
+  const updateMedicine = (index, changes) => {
+    setMedicines((prev) => {
+      const next = [...prev];
+      const current = { ...next[index] };
+      next[index] = { ...current, ...changes };
+      return next;
+    });
+  };
+
+  const handleMedicineFieldChange = (index, field, value) => {
+    updateMedicine(index, { [field]: value });
+  };
+
+  const toggleMedicineTimeSlot = (index, slot) => {
+    setMedicines((prev) => {
+      const next = [...prev];
+      const current = next[index];
+      const schedule = {
+        ...current.schedule,
+        [slot]: !current.schedule?.[slot],
+      };
+      next[index] = { ...current, schedule };
+      return next;
+    });
+  };
+
+  const setMedicineMealTiming = (index, timing) => {
+    updateMedicine(index, { mealTiming: timing });
   };
 
   const addMedicineField = () => {
-    setMedicines((prev) => [...prev, ""]);
+    setMedicines((prev) => [...prev, createMedicineEntry()]);
   };
 
   const removeMedicineField = (index) => {
@@ -135,8 +177,13 @@ function AddPrescriptionPage() {
     }
 
     const validMedicines = medicines
-      .map((med) => med.trim())
-      .filter((med) => med.length > 0);
+      .map((medicine) => ({
+        name: medicine.name.trim(),
+        dosage: medicine.dosage.trim(),
+        schedule: medicine.schedule,
+        mealTiming: medicine.mealTiming,
+      }))
+      .filter((medicine) => medicine.name);
 
     if (validMedicines.length === 0) {
       setError("Please list at least one medicine");
@@ -443,7 +490,9 @@ function AddPrescriptionPage() {
               {/* Section 2: Diagnosis */}
               <div
                 className={`grid gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100 
-            ${formData.contagious ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}
+            ${
+              formData.contagious ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
+            }`}
               >
                 {/* Suspected Disease */}
                 <div
@@ -495,27 +544,102 @@ function AddPrescriptionPage() {
                   </button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {medicines.map((medicine, index) => (
-                    <div key={index} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={medicine}
-                        onChange={(e) =>
-                          handleMedicineChange(index, e.target.value)
-                        }
-                        placeholder={`Medicine ${index + 1} (Name & Dosage)`}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                      {medicines.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeMedicineField(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      )}
+                    <div
+                      key={index}
+                      className="rounded-2xl border border-gray-100 p-4 space-y-3 shadow-sm bg-white"
+                    >
+                      <div className="grid gap-3 md:grid-cols-[2fr,1fr,auto]">
+                        <input
+                          type="text"
+                          value={medicine.name}
+                          onChange={(e) =>
+                            handleMedicineFieldChange(
+                              index,
+                              "name",
+                              e.target.value
+                            )
+                          }
+                          placeholder={`Medicine ${index + 1} (Name)`}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        <input
+                          type="text"
+                          value={medicine.dosage}
+                          onChange={(e) =>
+                            handleMedicineFieldChange(
+                              index,
+                              "dosage",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Dosage / Strength"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        {medicines.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeMedicineField(index)}
+                            className="text-red-600 hover:text-red-800 rounded-full p-2 border border-red-100 hover:bg-red-50"
+                            aria-label={`Remove medicine ${index + 1}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-gray-400 mb-2">
+                          Timing
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {TIME_SLOTS.map((slot) => {
+                            const active = medicine.schedule?.[slot.key];
+                            return (
+                              <button
+                                key={slot.key}
+                                type="button"
+                                onClick={() =>
+                                  toggleMedicineTimeSlot(index, slot.key)
+                                }
+                                className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${
+                                  active
+                                    ? "bg-blue-600 text-white border-transparent"
+                                    : "bg-white text-gray-600 border-gray-200 hover:border-blue-200"
+                                }`}
+                              >
+                                {slot.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.3em] text-gray-400 mb-2">
+                          With food
+                        </p>
+                        <div className="flex gap-2">
+                          {MEAL_OPTIONS.map((option) => {
+                            const active = medicine.mealTiming === option.key;
+                            return (
+                              <button
+                                key={option.key}
+                                type="button"
+                                onClick={() =>
+                                  setMedicineMealTiming(index, option.key)
+                                }
+                                className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${
+                                  active
+                                    ? "bg-emerald-600 text-white border-transparent"
+                                    : "bg-white text-gray-600 border-gray-200 hover:border-emerald-200"
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
