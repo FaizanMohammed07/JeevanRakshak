@@ -3,6 +3,59 @@ import { useTranslation } from "react-i18next";
 import { ClipboardList } from "lucide-react";
 import { usePatientData } from "../context/PatientsContext";
 
+const TIME_SLOT_LABELS = {
+  morning: "Morning",
+  afternoon: "Afternoon",
+  night: "Night",
+};
+
+const MEAL_LABELS = {
+  before: "Before food",
+  after: "After food",
+  any: "Any time",
+};
+
+const normalizeMedicineItem = (medicine) => {
+  if (!medicine) return null;
+  if (typeof medicine === "string") {
+    return {
+      name: medicine.trim(),
+      dosage: "",
+      schedule: {},
+      mealTiming: "any",
+    };
+  }
+
+  return {
+    name: (medicine.name || "").trim(),
+    dosage: medicine.dosage || "",
+    schedule:
+      medicine.schedule && typeof medicine.schedule === "object"
+        ? medicine.schedule
+        : {},
+    mealTiming: medicine.mealTiming || "any",
+  };
+};
+
+const getMedicineNames = (medicines) => {
+  if (!medicines?.length) return "—";
+  const names = medicines
+    .map(normalizeMedicineItem)
+    .filter((item) => item?.name)
+    .map((item) => item.name);
+  if (!names.length) return "—";
+  return names.join(", ");
+};
+
+const describeSchedule = (schedule) => {
+  if (!schedule) return null;
+  const slots = Object.entries(schedule)
+    .filter(([, active]) => Boolean(active))
+    .map(([key]) => TIME_SLOT_LABELS[key] || key);
+  if (!slots.length) return null;
+  return slots.join(", ");
+};
+
 const PrescriptionDetailPanel = ({ rx }) => {
   const { t } = useTranslation();
   if (!rx) {
@@ -17,7 +70,9 @@ const PrescriptionDetailPanel = ({ rx }) => {
     );
   }
 
-  const medicines = rx.medicinesIssued?.length ? rx.medicinesIssued : null;
+  const normalizedMedicines = (rx.medicinesIssued || [])
+    .map(normalizeMedicineItem)
+    .filter(Boolean);
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-sky-100 bg-sky-50/40 p-5">
@@ -55,16 +110,40 @@ const PrescriptionDetailPanel = ({ rx }) => {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
           {t("prescriptions.detail.medicines") /* Medicines */}
         </p>
-        {medicines ? (
-          <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-slate-800">
-            {medicines.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        ) : (
+        {normalizedMedicines.length === 0 ? (
           <p className="text-sm text-slate-500">
             {t("common.noMedicines") /* No medicines recorded */}
           </p>
+        ) : (
+          <div className="space-y-3 mt-3">
+            {normalizedMedicines.map((medicine, index) => {
+              const scheduleLabel = describeSchedule(medicine.schedule);
+              return (
+                <div
+                  key={`${medicine.name}-${index}`}
+                  className="rounded-xl border border-slate-100 bg-white/90 px-4 py-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {medicine.name}
+                    </p>
+                    {medicine.dosage && (
+                      <span className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-500">
+                        {medicine.dosage}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
+                    {scheduleLabel && <span>Times: {scheduleLabel}</span>}
+                    <span>
+                      Food:{" "}
+                      {MEAL_LABELS[medicine.mealTiming] || MEAL_LABELS.after}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
@@ -290,7 +369,7 @@ function PrescriptionTable({ rows, onSelect, activeId }) {
                 <td className="px-4 py-3">{rx.symptoms || "—"}</td>
 
                 <td className="px-4 py-3">
-                  {(rx.medicinesIssued || []).join(", ") || "—"}
+                  {getMedicineNames(rx.medicinesIssued)}
                 </td>
 
                 {/* --- NEW FILES COLUMN --- */}

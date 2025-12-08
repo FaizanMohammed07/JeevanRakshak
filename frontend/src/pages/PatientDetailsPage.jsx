@@ -106,6 +106,14 @@ function PatientDetailsPage() {
     });
   };
 
+  const formatMedicineLabel = (medicine) => {
+    if (!medicine) return "";
+    if (typeof medicine === "string") return medicine;
+    const name = medicine.name || medicine.medicationName || "";
+    const dosage = medicine.dosage ? ` (${medicine.dosage})` : "";
+    return `${name}${dosage}`.trim();
+  };
+
   const totalPrescriptions = prescriptions.length;
 
   return (
@@ -343,7 +351,7 @@ function PatientDetailsPage() {
                           </p>
                           {rx.medicinesIssued.map((med, idx) => (
                             <p key={idx} className="text-sm text-gray-700">
-                              {/* • {med.name} – {med.dosage} */}• {med}
+                              • {formatMedicineLabel(med)}
                             </p>
                           ))}
                         </div>
@@ -365,11 +373,11 @@ function PatientDetailsPage() {
 
                       {/* Doctor Name */}
                       {rx.doctor && (
-                        <p className="text-sm text-gray-600 mt-2">
+                        <div className="text-sm text-gray-600 mt-2">
                           <h4 className="font-semibold text-gray-800">
                             Doctor: {rx.doctor.name}
                           </h4>
-                        </p>
+                        </div>
                       )}
 
                       {/* Images (Uploaded prescription files) */}

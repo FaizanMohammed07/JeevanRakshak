@@ -3,6 +3,58 @@ import Prescription from "../models/prescriptionModel.js";
 import Patient from "../models/patientModel.js";
 import { uploadCompressedImages } from "../utils/uploadS3.js";
 
+const DEFAULT_MEAL_TIMING = "after";
+const VALID_MEAL_OPTIONS = ["before", "after", "any"];
+
+const normalizeMedicineEntry = (entry) => {
+  if (!entry) return null;
+  if (typeof entry === "string") {
+    const trimmed = entry.trim();
+    if (!trimmed) return null;
+    return {
+      name: trimmed,
+      dosage: "",
+      schedule: { morning: false, afternoon: false, night: false },
+      mealTiming: DEFAULT_MEAL_TIMING,
+    };
+  }
+
+  const schedule = entry.schedule || {};
+  const normalizedSchedule = {
+    morning: Boolean(schedule.morning),
+    afternoon: Boolean(schedule.afternoon),
+    night: Boolean(schedule.night),
+  };
+
+  const name = (entry.name || entry.medicineName || "").trim();
+  if (!name) return null;
+
+  const mealTiming = VALID_MEAL_OPTIONS.includes(entry.mealTiming)
+    ? entry.mealTiming
+    : DEFAULT_MEAL_TIMING;
+
+  return {
+    name,
+    dosage: (entry.dosage || "").trim(),
+    schedule: normalizedSchedule,
+    mealTiming,
+  };
+};
+
+const normalizeMedicineList = (list) => {
+  if (!Array.isArray(list)) return [];
+  return list.map(normalizeMedicineEntry).filter(Boolean);
+};
+
+const sanitizePrescriptionForResponse = (prescription) => {
+  if (!prescription) return null;
+  const doc = prescription.toObject
+    ? prescription.toObject({ getters: true })
+    : { ...prescription };
+  doc.medicinesIssued = normalizeMedicineList(doc.medicinesIssued);
+  return doc;
+};
+
 export const addPrescription = async (req, res) => {
   try {
     const {
@@ -17,8 +69,13 @@ export const addPrescription = async (req, res) => {
       notes,
     } = req.body;
 
-    // Basic validation
-    if (!patientId || !symptoms || !durationOfSymptoms || !medicinesIssued) {
+    const normalizedMedicines = normalizeMedicineList(medicinesIssued);
+    if (
+      !patientId ||
+      !symptoms ||
+      !durationOfSymptoms ||
+      !normalizedMedicines.length
+    ) {
       return res.status(400).json({ msg: "Missing required fields" });
     }
 
@@ -52,7 +109,7 @@ export const addPrescription = async (req, res) => {
       symptoms,
       durationOfSymptoms,
       contagious,
-      medicinesIssued,
+      medicinesIssued: normalizedMedicines,
       suspectedDisease,
       confirmedDisease,
       followUpDate,
@@ -61,7 +118,7 @@ export const addPrescription = async (req, res) => {
 
     res.status(201).json({
       msg: "Prescription added successfully",
-      prescription,
+      prescription: sanitizePrescriptionForResponse(prescription),
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -76,9 +133,10 @@ export const getMyPrescriptions = async (req, res) => {
       .populate("doctor", "name")
       .sort({ dateOfIssue: -1 });
 
+    const normalized = prescriptions.map(sanitizePrescriptionForResponse);
     res.status(200).json({
-      count: prescriptions.length,
-      prescriptions,
+      count: normalized.length,
+      prescriptions: normalized,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -118,7 +176,7 @@ export const getDoctorPrescriptions = async (req, res) => {
       totalPrescriptions: totalCount,
       todaysPrescriptions: todaysCount,
       // recentPrescriptions: recent10,
-      allPrescriptions: allPrescriptions,
+      allPrescriptions: allPrescriptions.map(sanitizePrescriptionForResponse),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -145,7 +203,7 @@ export const getPrescriptionsForPatient = async (req, res) => {
 
     return res.status(200).json({
       count: prescriptions.length,
-      prescriptions,
+      prescriptions: prescriptions.map(sanitizePrescriptionForResponse),
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });

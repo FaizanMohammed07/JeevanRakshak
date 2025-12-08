@@ -369,13 +369,13 @@ export default function NearbyHospitals() {
 
                 {preparedHospitals.map((hospital) => (
                   <Marker
-                    key={hospital.place_id}
+                    key={hospital.id ?? hospital.place_id}
                     position={[hospital.lat, hospital.lon]}
                   >
                     <Popup>
                       <p className="font-semibold">{hospital.shortName}</p>
                       <p className="text-xs text-slate-500">
-                        {hospital.display_name}
+                        {hospital.address}
                       </p>
                       <p className="mt-1 text-xs text-slate-600">
                         ~{hospital.distance.toFixed(1)} km away
@@ -417,15 +417,13 @@ export default function NearbyHospitals() {
             >
               {preparedHospitals.map((hospital) => (
                 <article
-                  key={hospital.place_id}
+                  key={hospital.id ?? hospital.place_id}
                   className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4"
                 >
                   <p className="text-sm font-semibold text-slate-900">
                     {hospital.shortName}
                   </p>
-                  <p className="text-xs text-slate-500">
-                    {hospital.display_name}
-                  </p>
+                  <p className="text-xs text-slate-500">{hospital.address}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
                     <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1">
                       <MapPin className="h-3 w-3 text-sky-500" />
