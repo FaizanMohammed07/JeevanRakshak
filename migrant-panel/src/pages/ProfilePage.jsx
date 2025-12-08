@@ -10,9 +10,14 @@ import {
   QrCode,
   X,
 } from "lucide-react";
+
 import { useAuth } from "../context/AuthContext";
 import { usePatientData } from "../context/PatientsContext";
-import useTranslateData from "../hooks/useTranslateData"; // ⭐ IMPORTANT import
+import useTranslateData from "../hooks/useTranslateData";
+
+// ======================================================
+//              FULLY FIXED PROFILE PAGE
+// ======================================================
 
 export default function ProfilePage() {
   const { patient } = useAuth();
@@ -21,19 +26,28 @@ export default function ProfilePage() {
   const currentLang = (i18n.language || "en").split("-")[0];
   const [showQR, setShowQR] = useState(false);
 
+  // ---------------- FETCH PROFILE ----------------
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
 
   useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === "Escape") setShowQR(false);
-    };
+    const handleEsc = (e) => e.key === "Escape" && setShowQR(false);
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
-  // ---------------- TRANSLATION HOOKS ----------------
+  // ---------------- TRANSLATION HELPERS ----------------
+
+  // Helper: translate arrays of simple strings
+  const translateStringList = (list) =>
+    useTranslateData(
+      (list || []).map((v) => ({ text: v })),
+      currentLang === "en" ? [] : ["text"],
+      currentLang
+    ).map((obj) => obj.text);
+
+  // 1) Translate LOCATION fields (object)
   const locationTranslated = useTranslateData(
     patient
       ? [
@@ -49,38 +63,27 @@ export default function ProfilePage() {
     currentLang
   );
 
-  const translatedAllergies = useTranslateData(
-    patient?.allergies || [],
-    currentLang === "en" ? [] : [""],
-    currentLang
-  );
-
-  const translatedChronic = useTranslateData(
-    patient?.chronicDiseases || [],
-    currentLang === "en" ? [] : [""],
-    currentLang
-  );
-
-  const translatedMedication = useTranslateData(
-    patient?.currentMedication || [],
-    currentLang === "en" ? [] : [""],
-    currentLang
-  );
-
-  const translatedVaccinations = useTranslateData(
-    patient?.vaccinations || [],
-    currentLang === "en" ? [] : ["vaccine_name"],
-    currentLang
-  );
-
-  // Extract translated location safely
   const translatedLoc =
     locationTranslated && locationTranslated.length > 0
       ? locationTranslated[0]
       : {};
 
-  // ---------------------------------------------------
+  // 2) Translate arrays of strings
+  const translatedAllergies = translateStringList(patient?.allergies);
+  const translatedChronic = translateStringList(patient?.chronicDiseases);
+  const translatedMedication = translateStringList(patient?.currentMedication);
 
+  // 3) Translate vaccinations (object list)
+  const translatedVaccinations = useTranslateData(
+    (patient?.vaccinations || []).map((v) => ({
+      vaccine_name: v.vaccine_name,
+      date_administered: v.date_administered,
+    })),
+    currentLang === "en" ? [] : ["vaccine_name"],
+    currentLang
+  );
+
+  // ---------------- QUICK FACTS ----------------
   const quickFacts = useMemo(() => {
     if (!patient) return [];
     return [
@@ -92,9 +95,7 @@ export default function ProfilePage() {
       {
         label: t("profile.quickFacts.age"),
         value: patient.age
-          ? t("profile.quickFacts.ageValue", {
-              value: patient.age,
-            })
+          ? t("profile.quickFacts.ageValue", { value: patient.age })
           : "—",
         icon: ShieldCheck,
       },
@@ -111,6 +112,7 @@ export default function ProfilePage() {
     ];
   }, [patient, t]);
 
+  // ---------------- LOCATION DETAILS ----------------
   const locationDetails = patient
     ? [
         {
@@ -133,6 +135,7 @@ export default function ProfilePage() {
       ]
     : [];
 
+  // ---------------- LOADING + ERROR STATES ----------------
   if (status.profile === "loading" && !patient) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-white/80 p-6 text-slate-500">
@@ -154,8 +157,13 @@ export default function ProfilePage() {
     );
   }
 
+  // ======================================================
+  //                    MAIN UI
+  // ======================================================
+
   return (
     <section className="w-full space-y-8">
+      {/* HEADER */}
       <header className="relative rounded-3xl border border-sky-100 bg-white/95 px-6 py-5 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
           {t("profile.headerLabel")}
@@ -175,7 +183,9 @@ export default function ProfilePage() {
         </div>
       </header>
 
+      {/* TOP GRID */}
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        {/* LEFT CARD */}
         <article className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-600 text-white">
@@ -225,6 +235,7 @@ export default function ProfilePage() {
           </dl>
         </article>
 
+        {/* RIGHT CARD */}
         <article className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-3">
             <IdCard className="h-10 w-10 rounded-2xl bg-sky-50 p-2 text-sky-600" />
@@ -257,6 +268,7 @@ export default function ProfilePage() {
         </article>
       </div>
 
+      {/* LISTS */}
       <div className="grid gap-6 lg:grid-cols-2">
         <InfoList
           title={t("profile.lists.allergies.title")}
@@ -278,17 +290,16 @@ export default function ProfilePage() {
 
         <InfoList
           title={t("profile.lists.vaccinations.title")}
-          items={
-            translatedVaccinations.map((item) =>
-              item?.vaccine_name
-                ? `${item.vaccine_name} • ${formatDate(item.date_administered)}`
-                : ""
-            ) || []
-          }
+          items={translatedVaccinations.map((v) =>
+            v?.vaccine_name
+              ? `${v.vaccine_name} • ${formatDate(v.date_administered)}`
+              : ""
+          )}
           empty={t("profile.lists.vaccinations.empty")}
         />
       </div>
 
+      {/* QR MODAL */}
       {showQR && (
         <div
           className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
@@ -316,6 +327,10 @@ export default function ProfilePage() {
     </section>
   );
 }
+
+// ======================================================
+// SMALL COMPONENTS
+// ======================================================
 
 function InfoList({ title, items = [], empty }) {
   const { t } = useTranslation();
