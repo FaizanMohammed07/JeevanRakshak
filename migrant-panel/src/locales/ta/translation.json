@@ -3,7 +3,8 @@
     "name": "JeevanRakshak",
     "tagline": "வெளிநாட்டு தொழிலாளர் சுகாதார பலகம்",
     "locationFallback": "குடிமகன்",
-    "idLabel": "அடையாள எண்"
+    "idLabel": "அடையாள எண்",
+    "idDemoVideo": "டெமோ வீடியோ"
   },
   "nav": {
     "dashboard": "டாஷ்போர்ட்",

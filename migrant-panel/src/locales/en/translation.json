@@ -3,7 +3,8 @@
     "name": "JeevanRakshak",
     "tagline": "Migrant Health Panel",
     "locationFallback": "Citizen",
-    "idLabel": "ID"
+    "idLabel": "ID",
+    "idDemoVideo":"DemoVideo"
   },
   "nav": {
     "dashboard": "Dashboard",

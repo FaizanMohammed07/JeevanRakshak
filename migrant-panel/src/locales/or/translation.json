@@ -3,7 +3,8 @@
     "name": "JeevanRakshak",
     "tagline": "ପ୍ରବାସୀ ସ୍ୱାସ୍ଥ୍ୟ ପ୍ୟାନେଲ",
     "locationFallback": "ନାଗରିକ",
-    "idLabel": "ଆଇଡି"
+    "idLabel": "ଆଇଡି",
+    "idDemoVideo": "ଡେମୋ ଭିଡିଓ"
   },
   "nav": {
     "dashboard": "ଡ୍ୟାଶବୋର୍ଡ",
