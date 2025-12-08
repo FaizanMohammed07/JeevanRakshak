@@ -79,6 +79,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
   const [customRangeOpen, setCustomRangeOpen] = useState(false);
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
+  const [mapLayer, setMapLayer] = useState("district");
 
   const rangeConfig = useMemo(
     () =>
@@ -291,6 +292,23 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
           )}
         </div>
       )}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <span className="text-xs text-gray-500">Map</span>
+
+        {["district", "taluk"].map((layer) => (
+          <button
+            key={layer}
+            onClick={() => setMapLayer(layer)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+              mapLayer === layer
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-gray-700 border-gray-200"
+            }`}
+          >
+            {layer === "district" ? "Districts" : "Taluks"}
+          </button>
+        ))}
+      </div>
 
       {error && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -302,15 +320,6 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
         <div
           className={`relative ${mapHeight} rounded-2xl border border-slate-100 shadow-inner overflow-hidden bg-slate-950/5`}
         >
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-30"
-            style={{
-              backgroundImage:
-                "url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Kerala_outline_map.svg/1024px-Kerala_outline_map.svg.png')",
-              backgroundSize: "180%",
-              filter: "grayscale(1) brightness(0.8)",
-            }}
-          />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/80 to-white" />
           <div className="relative flex h-full flex-col p-4">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
@@ -335,38 +344,33 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
             <div className="relative flex-1 min-h-[220px]">
               <ComposableMap
                 projection="geoMercator"
-                projectionConfig={{ scale: 5200, center: [76.5, 10.2] }}
+                projectionConfig={{ scale: 9000, center: [76.5, 10.2] }}
                 style={{ width: "100%", height: "100%" }}
               >
-                <Geographies geography={geoUrl}>
+                <Geographies
+                  geography={
+                    mapLayer === "district"
+                      ? "https://raw.githubusercontent.com/geohacker/kerala/master/geojsons/district.geojson"
+                      : "https://raw.githubusercontent.com/geohacker/kerala/master/geojsons/taluk.geojson"
+                  }
+                >
                   {({ geographies }) =>
-                    geographies
-                      .filter((geo) => {
-                        const name =
-                          geo.properties?.st_nm ||
-                          geo.properties?.name ||
-                          geo.properties?.NAME_1;
-                        return name === "Kerala";
-                      })
-                      .map((geo) => (
-                        <Geography
-                          key={geo.rsmKey}
-                          geography={geo}
-                          fill="transparent"
-                          stroke="#0f172a"
-                          strokeWidth={0.75}
-                          style={{
-                            default: { outline: "none" },
-                            hover: {
-                              outline: "none",
-                              fill: "rgba(14,165,233,0.15)",
-                            },
-                            pressed: { outline: "none" },
-                          }}
-                        />
-                      ))
+                    geographies.map((geo) => (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        fill="none"
+                        stroke="#0f172a"
+                        strokeWidth={1.2}
+                        style={{
+                          default: { opacity: 0.15 },
+                          hover: { opacity: 0.2 },
+                        }}
+                      />
+                    ))
                   }
                 </Geographies>
+
                 {riskProfile.map((district) => {
                   const style = riskStyles[district.risk] || riskStyles.observe;
                   return (
