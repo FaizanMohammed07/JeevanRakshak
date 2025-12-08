@@ -172,7 +172,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="mt-10 border-t border-slate-100 pt-6 text-center">
+          {/* <div className="mt-10 border-t border-slate-100 pt-6 text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
               {t("language.prompt")}
             </p>
@@ -182,7 +182,7 @@ export default function LoginPage() {
                 className="bg-slate-100 text-slate-900"
               />
             </div>
-          </div>
+          </div> */}
         </form>
       </div>
     </div>

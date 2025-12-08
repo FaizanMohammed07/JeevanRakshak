@@ -69,7 +69,7 @@
     "stats": {
       "totalPrescriptions": "Total Prescriptions",
       "vaccinations": "Vaccinations Completed",
-      "visits": "Recorded Visits",
+      "visits": "Total Lab Reports",
       "labs": "Lab Reports"
     },
     "sections": {

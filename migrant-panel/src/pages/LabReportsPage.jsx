@@ -14,12 +14,12 @@ export default function LabReportsPage() {
   }, [loadLabReports]);
 
   // console.log(patient?.id);
-  const {
+  let {
     reports,
     loading: reportsLoading,
     error: reportsError,
   } = usePatientReports(patient?._id);
-
+  reports = [];
   const summaryCards = useMemo(
     () => [
       {

@@ -175,14 +175,14 @@ function SearchPage() {
               >
                 Clear
               </button>
-              <button
+              {/* <button
                 type="button"
                 onClick={() => setScannerOpen(true)}
                 className="px-4 py-3 bg-gray-100 text-gray-800 font-semibold rounded-lg hover:bg-gray-200 transition flex items-center gap-2"
               >
                 <QrCode className="h-5 w-5" />
                 Scan QR
-              </button>
+              </button> */}
             </div>
           </form>
 

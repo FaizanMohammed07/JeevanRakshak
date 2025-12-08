@@ -694,610 +694,610 @@ function DiseaseMonitoring() {
     };
   }, [selectedDistrict, timelineRange, refreshTick]);
 
-  return (
-    <div className="p-6 space-y-8 min-h-screen bg-gray-50">
-      {dataSyncError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="text-red-600" size={20} />
-            <p className="text-sm text-red-800">
-              Data sync issue: {dataSyncError}
-            </p>
-          </div>
-        </div>
-      )}
+  // return (
+  // <div className="p-6 space-y-8 min-h-screen bg-gray-50">
+  //   {dataSyncError && (
+  //     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+  //       <div className="flex items-center gap-2">
+  //         <AlertTriangle className="text-red-600" size={20} />
+  //         <p className="text-sm text-red-800">
+  //           Data sync issue: {dataSyncError}
+  //         </p>
+  //       </div>
+  //     </div>
+  //   )}
 
-      <div className="space-y-8 mb-12">
-        {/* District-wise Cases Chart */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-600 rounded-xl shadow">
-                <BarChart3 className="text-white" size={26} />
-              </div>
-              <div>
-                <h3 className="text-3xl font-semibold text-gray-900 mb-0">
-                  District-wise Cases
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Horizontal overview with disease contributions ranked by
-                  impact.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
-              <div className="flex flex-wrap gap-3">
-                {districtCasesRangeOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setDistrictCasesRangeKey(option.value)}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold border border-gray-300 transition ${
-                      districtCasesRangeKey === option.value
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-700 hover:border-blue-500 hover:text-blue-700"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5 mt-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex-1">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  District Hits
-                </p>
-                <h3 className="text-2xl font-bold text-slate-900">
-                  District impact view
-                </h3>
-              </div>
-              <div className="flex flex-wrap gap-3 text-slate-700 w-full sm:w-auto">
-                <div className="bg-slate-50 rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-1">
-                  <span className="text-[11px] uppercase tracking-wider text-slate-500">
-                    Total hits
-                  </span>
-                  <span className="text-lg font-semibold text-slate-900">
-                    {formatNumber(horizontalChartSummary.totalCases)}
-                  </span>
-                </div>
-                <div className="bg-slate-50 rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-1">
-                  <span className="text-[11px] uppercase tracking-wider text-slate-500">
-                    Top district
-                  </span>
-                  <span className="text-lg font-semibold text-slate-900">
-                    {horizontalChartSummary.highestDistrict}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {formatNumber(horizontalChartSummary.highestCases)} cases
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="relative mt-6 h-[460px] rounded-xl bg-gradient-to-b from-white to-slate-50 border border-gray-100 shadow-inner">
-              {horizontalChartData.length ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartBarChart
-                    data={horizontalChartData}
-                    margin={{ top: 24, right: 30, left: 24, bottom: 60 }}
-                  >
-                    <defs>
-                      <linearGradient id="barFade" x1="0" y1="0" x2="0" y2="1">
-                        <stop
-                          offset="0%"
-                          stopColor="#0f172a"
-                          stopOpacity={0.2}
-                        />
-                        <stop
-                          offset="90%"
-                          stopColor="#0f172a"
-                          stopOpacity={0.01}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#e0f2fe"
-                      horizontal
-                    />
-                    <XAxis
-                      type="category"
-                      dataKey="district"
-                      stroke="#0f172a"
-                      tick={{ fontSize: 11, fontWeight: 600 }}
-                      interval={0}
-                      angle={-45}
-                      textAnchor="end"
-                      height={60}
-                    />
-                    <YAxis
-                      type="number"
-                      stroke="#0f172a"
-                      tick={{ fontSize: 11 }}
-                      tickFormatter={(value) => value.toLocaleString()}
-                    />
-                    <Tooltip
-                      cursor={{ fill: "rgba(15,23,42,0.04)" }}
-                      content={renderDistrictTooltip}
-                    />
-                    <Legend
-                      formatter={(value) => (
-                        <span className="text-sm font-semibold text-slate-600">
-                          {value}
-                        </span>
-                      )}
-                      wrapperStyle={{ top: 6, right: 12 }}
-                    />
-                    {chartDiseaseKeys.map((entry, index) => (
-                      <Bar
-                        key={entry.key}
-                        dataKey={entry.key}
-                        name={entry.label}
-                        fill={barPalette[index % barPalette.length]}
-                        radius={[4, 4, 0, 0]}
-                        stroke={barPalette[index % barPalette.length]}
-                        strokeWidth={1}
-                        stackId="disease-stack"
-                        barSize={30}
-                        animationDuration={600}
-                      />
-                    ))}
-                  </RechartBarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center gap-3 text-slate-500">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-                    <BarChart3 className="w-8 h-8 text-slate-400" />
-                  </div>
-                  <p className="text-base font-semibold">
-                    Awaiting district data
-                  </p>
-                  <p className="text-xs text-slate-400 text-center px-4">
-                    Data will appear once the server delivers the latest
-                    breakdowns.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+  //   <div className="space-y-8 mb-12">
+  //     {/* District-wise Cases Chart */}
+  //     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+  //       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+  //         <div className="flex items-center gap-4">
+  //           <div className="p-3 bg-blue-600 rounded-xl shadow">
+  //             <BarChart3 className="text-white" size={26} />
+  //           </div>
+  //           <div>
+  //             <h3 className="text-3xl font-semibold text-gray-900 mb-0">
+  //               District-wise Cases
+  //             </h3>
+  //             <p className="text-sm text-gray-500">
+  //               Horizontal overview with disease contributions ranked by
+  //               impact.
+  //             </p>
+  //           </div>
+  //         </div>
+  //         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
+  //           <div className="flex flex-wrap gap-3">
+  //             {districtCasesRangeOptions.map((option) => (
+  //               <button
+  //                 key={option.value}
+  //                 type="button"
+  //                 onClick={() => setDistrictCasesRangeKey(option.value)}
+  //                 className={`px-4 py-2 rounded-lg text-sm font-semibold border border-gray-300 transition ${
+  //                   districtCasesRangeKey === option.value
+  //                     ? "bg-blue-600 text-white border-blue-600"
+  //                     : "bg-white text-gray-700 hover:border-blue-500 hover:text-blue-700"
+  //                 }`}
+  //               >
+  //                 {option.label}
+  //               </button>
+  //             ))}
+  //           </div>
+  //         </div>
+  //       </div>
+  //       <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5 mt-6">
+  //         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+  //           <div className="flex-1">
+  //             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+  //               District Hits
+  //             </p>
+  //             <h3 className="text-2xl font-bold text-slate-900">
+  //               District impact view
+  //             </h3>
+  //           </div>
+  //           <div className="flex flex-wrap gap-3 text-slate-700 w-full sm:w-auto">
+  //             <div className="bg-slate-50 rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-1">
+  //               <span className="text-[11px] uppercase tracking-wider text-slate-500">
+  //                 Total hits
+  //               </span>
+  //               <span className="text-lg font-semibold text-slate-900">
+  //                 {formatNumber(horizontalChartSummary.totalCases)}
+  //               </span>
+  //             </div>
+  //             <div className="bg-slate-50 rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-1">
+  //               <span className="text-[11px] uppercase tracking-wider text-slate-500">
+  //                 Top district
+  //               </span>
+  //               <span className="text-lg font-semibold text-slate-900">
+  //                 {horizontalChartSummary.highestDistrict}
+  //               </span>
+  //               <span className="text-xs text-slate-500">
+  //                 {formatNumber(horizontalChartSummary.highestCases)} cases
+  //               </span>
+  //             </div>
+  //           </div>
+  //         </div>
+  //         <div className="relative mt-6 h-[460px] rounded-xl bg-gradient-to-b from-white to-slate-50 border border-gray-100 shadow-inner">
+  //           {horizontalChartData.length ? (
+  //             <ResponsiveContainer width="100%" height="100%">
+  //               <RechartBarChart
+  //                 data={horizontalChartData}
+  //                 margin={{ top: 24, right: 30, left: 24, bottom: 60 }}
+  //               >
+  //                 <defs>
+  //                   <linearGradient id="barFade" x1="0" y1="0" x2="0" y2="1">
+  //                     <stop
+  //                       offset="0%"
+  //                       stopColor="#0f172a"
+  //                       stopOpacity={0.2}
+  //                     />
+  //                     <stop
+  //                       offset="90%"
+  //                       stopColor="#0f172a"
+  //                       stopOpacity={0.01}
+  //                     />
+  //                   </linearGradient>
+  //                 </defs>
+  //                 <CartesianGrid
+  //                   strokeDasharray="3 3"
+  //                   stroke="#e0f2fe"
+  //                   horizontal
+  //                 />
+  //                 <XAxis
+  //                   type="category"
+  //                   dataKey="district"
+  //                   stroke="#0f172a"
+  //                   tick={{ fontSize: 11, fontWeight: 600 }}
+  //                   interval={0}
+  //                   angle={-45}
+  //                   textAnchor="end"
+  //                   height={60}
+  //                 />
+  //                 <YAxis
+  //                   type="number"
+  //                   stroke="#0f172a"
+  //                   tick={{ fontSize: 11 }}
+  //                   tickFormatter={(value) => value.toLocaleString()}
+  //                 />
+  //                 <Tooltip
+  //                   cursor={{ fill: "rgba(15,23,42,0.04)" }}
+  //                   content={renderDistrictTooltip}
+  //                 />
+  //                 <Legend
+  //                   formatter={(value) => (
+  //                     <span className="text-sm font-semibold text-slate-600">
+  //                       {value}
+  //                     </span>
+  //                   )}
+  //                   wrapperStyle={{ top: 6, right: 12 }}
+  //                 />
+  //                 {chartDiseaseKeys.map((entry, index) => (
+  //                   <Bar
+  //                     key={entry.key}
+  //                     dataKey={entry.key}
+  //                     name={entry.label}
+  //                     fill={barPalette[index % barPalette.length]}
+  //                     radius={[4, 4, 0, 0]}
+  //                     stroke={barPalette[index % barPalette.length]}
+  //                     strokeWidth={1}
+  //                     stackId="disease-stack"
+  //                     barSize={30}
+  //                     animationDuration={600}
+  //                   />
+  //                 ))}
+  //               </RechartBarChart>
+  //             </ResponsiveContainer>
+  //           ) : (
+  //             <div className="h-full flex flex-col items-center justify-center gap-3 text-slate-500">
+  //               <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+  //                 <BarChart3 className="w-8 h-8 text-slate-400" />
+  //               </div>
+  //               <p className="text-base font-semibold">
+  //                 Awaiting district data
+  //               </p>
+  //               <p className="text-xs text-slate-400 text-center px-4">
+  //                 Data will appear once the server delivers the latest
+  //                 breakdowns.
+  //               </p>
+  //             </div>
+  //           )}
+  //         </div>
+  //       </div>
+  //     </div>
 
-        {/* Disease Trend Chart */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-600 rounded-lg shadow">
-                  <TrendingUp className="text-white" size={22} />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-semibold text-gray-900">
-                    Disease Trend
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Progression across the selected window
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-3 text-sm">
-                {trendRangeOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setTrendRange(option.value)}
-                    className={`px-3 py-1.5 rounded-md font-semibold border ${
-                      trendRange === option.value
-                        ? "bg-emerald-600 text-white border-emerald-600"
-                        : "bg-white text-gray-700 border-gray-300 hover:border-emerald-400"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  {customRangeActive ? "Custom window" : trendRangeConfig.label}
-                </span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCustomRangeOpen((prev) => !prev)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition ${
-                    customRangeOpen
-                      ? "bg-emerald-600 text-white border-emerald-600"
-                      : "bg-white text-gray-700 border-gray-300 hover:border-emerald-400"
-                  }`}
-                >
-                  {customRangeOpen ? "Hide range" : "Custom range"}
-                </button>
-                {customRangeOpen && (
-                  <div className="flex flex-wrap gap-2 text-[11px]">
-                    <label className="flex flex-col text-gray-600">
-                      Start
-                      <input
-                        type="date"
-                        value={customStartDate}
-                        onChange={(event) =>
-                          setCustomStartDate(event.target.value)
-                        }
-                        className="mt-1 h-8 w-32 rounded-lg border border-gray-300 px-2 text-xs focus:border-emerald-400 focus:ring-0"
-                      />
-                    </label>
-                    <label className="flex flex-col text-gray-600">
-                      End
-                      <input
-                        type="date"
-                        value={customEndDate}
-                        onChange={(event) =>
-                          setCustomEndDate(event.target.value)
-                        }
-                        className="mt-1 h-8 w-32 rounded-lg border border-gray-300 px-2 text-xs focus:border-emerald-400 focus:ring-0"
-                      />
-                    </label>
-                  </div>
-                )}
-              </div>
-            </div>
-            {customRangeActive && (
-              <p className="text-[12px] text-gray-500">
-                Viewing custom snapshot from {formatShortDate(customStartDate)}{" "}
-                to {formatShortDate(customEndDate)}
-              </p>
-            )}
-          </div>
-          <div className="h-[420px] bg-gray-50 rounded-xl shadow-inner p-4 border border-gray-100">
-            {trendData.length && normalizedTrendKeys.length ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={trendData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#d1fae5" />
-                  <XAxis
-                    dataKey="day"
-                    stroke="#6b7280"
-                    tick={{ fontSize: 12 }}
-                    tickMargin={6}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis stroke="#6b7280" />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: "none",
-                      boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
-                      backgroundColor: "rgba(255,255,255,0.95)",
-                    }}
-                    labelStyle={{ fontWeight: "bold", color: "#1f2937" }}
-                  />
-                  <Legend />
-                  {normalizedTrendKeys.map((entry, index) => (
-                    <Line
-                      key={entry.key}
-                      type="monotone"
-                      dataKey={entry.key}
-                      name={entry.label}
-                      stroke={linePalette[index % linePalette.length]}
-                      strokeWidth={3}
-                      dot={{ r: 4, strokeWidth: 2, fill: "white" }}
-                      activeDot={{ r: 6, strokeWidth: 2 }}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <TrendingUp className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <p className="text-sm text-gray-500 font-medium">
-                    Not enough data for selected range
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Try selecting a different time period
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+  //     {/* Disease Trend Chart */}
+  //     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+  //       <div className="flex flex-col gap-3">
+  //         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  //           <div className="flex items-center gap-3">
+  //             <div className="p-2 bg-emerald-600 rounded-lg shadow">
+  //               <TrendingUp className="text-white" size={22} />
+  //             </div>
+  //             <div>
+  //               <h3 className="text-2xl font-semibold text-gray-900">
+  //                 Disease Trend
+  //               </h3>
+  //               <p className="text-sm text-gray-500">
+  //                 Progression across the selected window
+  //               </p>
+  //             </div>
+  //           </div>
+  //           <div className="flex flex-wrap gap-3 text-sm">
+  //             {trendRangeOptions.map((option) => (
+  //               <button
+  //                 key={option.value}
+  //                 type="button"
+  //                 onClick={() => setTrendRange(option.value)}
+  //                 className={`px-3 py-1.5 rounded-md font-semibold border ${
+  //                   trendRange === option.value
+  //                     ? "bg-emerald-600 text-white border-emerald-600"
+  //                     : "bg-white text-gray-700 border-gray-300 hover:border-emerald-400"
+  //                 }`}
+  //               >
+  //                 {option.label}
+  //               </button>
+  //             ))}
+  //           </div>
+  //         </div>
+  //         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2">
+  //           <div className="flex items-center gap-3">
+  //             <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+  //               {customRangeActive ? "Custom window" : trendRangeConfig.label}
+  //             </span>
+  //           </div>
+  //           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+  //             <button
+  //               type="button"
+  //               onClick={() => setCustomRangeOpen((prev) => !prev)}
+  //               className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition ${
+  //                 customRangeOpen
+  //                   ? "bg-emerald-600 text-white border-emerald-600"
+  //                   : "bg-white text-gray-700 border-gray-300 hover:border-emerald-400"
+  //               }`}
+  //             >
+  //               {customRangeOpen ? "Hide range" : "Custom range"}
+  //             </button>
+  //             {customRangeOpen && (
+  //               <div className="flex flex-wrap gap-2 text-[11px]">
+  //                 <label className="flex flex-col text-gray-600">
+  //                   Start
+  //                   <input
+  //                     type="date"
+  //                     value={customStartDate}
+  //                     onChange={(event) =>
+  //                       setCustomStartDate(event.target.value)
+  //                     }
+  //                     className="mt-1 h-8 w-32 rounded-lg border border-gray-300 px-2 text-xs focus:border-emerald-400 focus:ring-0"
+  //                   />
+  //                 </label>
+  //                 <label className="flex flex-col text-gray-600">
+  //                   End
+  //                   <input
+  //                     type="date"
+  //                     value={customEndDate}
+  //                     onChange={(event) =>
+  //                       setCustomEndDate(event.target.value)
+  //                     }
+  //                     className="mt-1 h-8 w-32 rounded-lg border border-gray-300 px-2 text-xs focus:border-emerald-400 focus:ring-0"
+  //                   />
+  //                 </label>
+  //               </div>
+  //             )}
+  //           </div>
+  //         </div>
+  //         {customRangeActive && (
+  //           <p className="text-[12px] text-gray-500">
+  //             Viewing custom snapshot from {formatShortDate(customStartDate)}{" "}
+  //             to {formatShortDate(customEndDate)}
+  //           </p>
+  //         )}
+  //       </div>
+  //       <div className="h-[420px] bg-gray-50 rounded-xl shadow-inner p-4 border border-gray-100">
+  //         {trendData.length && normalizedTrendKeys.length ? (
+  //           <ResponsiveContainer width="100%" height="100%">
+  //             <LineChart
+  //               data={trendData}
+  //               margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+  //             >
+  //               <CartesianGrid strokeDasharray="3 3" stroke="#d1fae5" />
+  //               <XAxis
+  //                 dataKey="day"
+  //                 stroke="#6b7280"
+  //                 tick={{ fontSize: 12 }}
+  //                 tickMargin={6}
+  //                 interval="preserveStartEnd"
+  //               />
+  //               <YAxis stroke="#6b7280" />
+  //               <Tooltip
+  //                 contentStyle={{
+  //                   borderRadius: 12,
+  //                   border: "none",
+  //                   boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+  //                   backgroundColor: "rgba(255,255,255,0.95)",
+  //                 }}
+  //                 labelStyle={{ fontWeight: "bold", color: "#1f2937" }}
+  //               />
+  //               <Legend />
+  //               {normalizedTrendKeys.map((entry, index) => (
+  //                 <Line
+  //                   key={entry.key}
+  //                   type="monotone"
+  //                   dataKey={entry.key}
+  //                   name={entry.label}
+  //                   stroke={linePalette[index % linePalette.length]}
+  //                   strokeWidth={3}
+  //                   dot={{ r: 4, strokeWidth: 2, fill: "white" }}
+  //                   activeDot={{ r: 6, strokeWidth: 2 }}
+  //                 />
+  //               ))}
+  //             </LineChart>
+  //           </ResponsiveContainer>
+  //         ) : (
+  //           <div className="h-full flex items-center justify-center">
+  //             <div className="text-center">
+  //               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+  //                 <TrendingUp className="w-8 h-8 text-gray-400" />
+  //               </div>
+  //               <p className="text-sm text-gray-500 font-medium">
+  //                 Not enough data for selected range
+  //               </p>
+  //               <p className="text-xs text-gray-400 mt-1">
+  //                 Try selecting a different time period
+  //               </p>
+  //             </div>
+  //           </div>
+  //         )}
+  //       </div>
+  //     </div>
+  //   </div>
 
-      {/* Heat Map */}
-      <div className="mb-12">
-        <KeralaHeatMap refreshKey={refreshTick} />
-      </div>
+  //   {/* Heat Map */}
+  //   <div className="mb-12">
+  //     <KeralaHeatMap refreshKey={refreshTick} />
+  //   </div>
 
-      {/* Active Disease Cases Table */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Activity className="text-blue-600" size={24} />
-              <h3 className="text-xl font-bold text-gray-900">
-                Active Disease Cases
-              </h3>
-            </div>
-            <div className="flex flex-col items-end gap-1 text-right">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-gray-500">Window</span>
-                {activeCaseRangeOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setActiveCasesRangeKey(option.value)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${
-                      activeCasesRangeKey === option.value
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-gray-700 border-gray-200"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-              <span className="text-[11px] text-gray-400">
-                As of {todayLabel}
-              </span>
-            </div>
-          </div>
-        </div>
+  //   {/* Active Disease Cases Table */}
+  //   <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+  //     <div className="p-6 border-b border-gray-200">
+  //       <div className="flex flex-wrap items-center justify-between gap-3">
+  //         <div className="flex items-center gap-2">
+  //           <Activity className="text-blue-600" size={24} />
+  //           <h3 className="text-xl font-bold text-gray-900">
+  //             Active Disease Cases
+  //           </h3>
+  //         </div>
+  //         <div className="flex flex-col items-end gap-1 text-right">
+  //           <div className="flex flex-wrap items-center gap-2">
+  //             <span className="text-xs text-gray-500">Window</span>
+  //             {activeCaseRangeOptions.map((option) => (
+  //               <button
+  //                 key={option.value}
+  //                 type="button"
+  //                 onClick={() => setActiveCasesRangeKey(option.value)}
+  //                 className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${
+  //                   activeCasesRangeKey === option.value
+  //                     ? "bg-blue-600 text-white border-blue-600"
+  //                     : "bg-white text-gray-700 border-gray-200"
+  //                 }`}
+  //               >
+  //                 {option.label}
+  //               </button>
+  //             ))}
+  //           </div>
+  //           <span className="text-[11px] text-gray-400">
+  //             As of {todayLabel}
+  //           </span>
+  //         </div>
+  //       </div>
+  //     </div>
 
-        {/* Summary Cards */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-gray-100">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl bg-white/80 border border-gray-100 p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-gray-500">
-                Active districts
-              </p>
-              <p className="text-3xl font-bold text-gray-900">
-                {activeCasesSummary.totalDistricts}
-              </p>
-              <p className="text-xs text-gray-500">
-                {activeCasesSummary.coverageRate}% of synced districts
-              </p>
-            </div>
-            <div className="rounded-2xl bg-white/80 border border-gray-100 p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-gray-500">
-                Total active cases
-              </p>
-              <p className="text-3xl font-bold text-gray-900">
-                {activeCasesSummary.totalCases}
-              </p>
-              <p className="text-xs text-gray-500">Auto-refresh every 30s</p>
-            </div>
-            <div className="rounded-2xl bg-white/80 border border-gray-100 p-4 shadow-sm">
-              <p className="text-xs uppercase tracking-wide text-gray-500">
-                Peak district load
-              </p>
-              <p className="text-xl font-bold text-gray-900">
-                {activeCasesSummary.highestDistrict}
-              </p>
-              <p className="text-xs text-gray-500">
-                {activeCasesSummary.highestCases} total cases
-              </p>
-            </div>
-          </div>
-        </div>
+  //     {/* Summary Cards */}
+  //     <div className="px-6 py-4 bg-slate-50 border-t border-gray-100">
+  //       <div className="grid gap-4 md:grid-cols-3">
+  //         <div className="rounded-2xl bg-white/80 border border-gray-100 p-4 shadow-sm">
+  //           <p className="text-xs uppercase tracking-wide text-gray-500">
+  //             Active districts
+  //           </p>
+  //           <p className="text-3xl font-bold text-gray-900">
+  //             {activeCasesSummary.totalDistricts}
+  //           </p>
+  //           <p className="text-xs text-gray-500">
+  //             {activeCasesSummary.coverageRate}% of synced districts
+  //           </p>
+  //         </div>
+  //         <div className="rounded-2xl bg-white/80 border border-gray-100 p-4 shadow-sm">
+  //           <p className="text-xs uppercase tracking-wide text-gray-500">
+  //             Total active cases
+  //           </p>
+  //           <p className="text-3xl font-bold text-gray-900">
+  //             {activeCasesSummary.totalCases}
+  //           </p>
+  //           <p className="text-xs text-gray-500">Auto-refresh every 30s</p>
+  //         </div>
+  //         <div className="rounded-2xl bg-white/80 border border-gray-100 p-4 shadow-sm">
+  //           <p className="text-xs uppercase tracking-wide text-gray-500">
+  //             Peak district load
+  //           </p>
+  //           <p className="text-xl font-bold text-gray-900">
+  //             {activeCasesSummary.highestDistrict}
+  //           </p>
+  //           <p className="text-xs text-gray-500">
+  //             {activeCasesSummary.highestCases} total cases
+  //           </p>
+  //         </div>
+  //       </div>
+  //     </div>
 
-        {/* Cases Table */}
-        <div className="overflow-x-auto">
-          <div className="min-w-full inline-block align-middle">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                    District
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                    Primary Disease
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                    Total Cases
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
-                    Last Updated
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {cases.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-6 py-8 text-center text-sm text-gray-500"
-                    >
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                          <Activity className="w-6 h-6 text-gray-400" />
-                        </div>
-                        <p className="font-medium">No Active Cases</p>
-                        <p className="text-xs">
-                          No active case alerts for the selected district in the{" "}
-                          {activeCasesRangeConfig.label} window.
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  cases.map((row, index) => {
-                    const status = getStatusFromCases(row.totalCases ?? 0);
+  //     {/* Cases Table */}
+  //     <div className="overflow-x-auto">
+  //       <div className="min-w-full inline-block align-middle">
+  //         <table className="min-w-full divide-y divide-gray-200">
+  //           <thead className="bg-gray-50">
+  //             <tr>
+  //               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+  //                 District
+  //               </th>
+  //               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+  //                 Primary Disease
+  //               </th>
+  //               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+  //                 Total Cases
+  //               </th>
+  //               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+  //                 Status
+  //               </th>
+  //               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+  //                 Last Updated
+  //               </th>
+  //             </tr>
+  //           </thead>
+  //           <tbody className="bg-white divide-y divide-gray-200">
+  //             {cases.length === 0 ? (
+  //               <tr>
+  //                 <td
+  //                   colSpan={5}
+  //                   className="px-6 py-8 text-center text-sm text-gray-500"
+  //                 >
+  //                   <div className="flex flex-col items-center justify-center space-y-2">
+  //                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+  //                       <Activity className="w-6 h-6 text-gray-400" />
+  //                     </div>
+  //                     <p className="font-medium">No Active Cases</p>
+  //                     <p className="text-xs">
+  //                       No active case alerts for the selected district in the{" "}
+  //                       {activeCasesRangeConfig.label} window.
+  //                     </p>
+  //                   </div>
+  //                 </td>
+  //               </tr>
+  //             ) : (
+  //               cases.map((row, index) => {
+  //                 const status = getStatusFromCases(row.totalCases ?? 0);
 
-                    return (
-                      <tr
-                        key={row.district || index}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        {/* District */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="text-sm font-semibold text-gray-900">
-                              {row.district || "Unknown District"}
-                            </div>
-                          </div>
-                        </td>
+  //                 return (
+  //                   <tr
+  //                     key={row.district || index}
+  //                     className="hover:bg-gray-50 transition-colors"
+  //                   >
+  //                     {/* District */}
+  //                     <td className="px-4 py-4 whitespace-nowrap">
+  //                       <div className="flex items-center">
+  //                         <div className="text-sm font-semibold text-gray-900">
+  //                           {row.district || "Unknown District"}
+  //                         </div>
+  //                       </div>
+  //                     </td>
 
-                        {/* Primary Disease */}
-                        <td className="px-4 py-4">
-                          <div className="text-sm text-gray-900">
-                            <p className="font-semibold">
-                              {row.topDisease || "Not specified"}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {row.topDiseaseCount ?? 0} cases
-                            </p>
-                            {row.secondaryDiseases &&
-                              row.secondaryDiseases.length > 0 && (
-                                <p className="text-xs text-blue-600 mt-1">
-                                  +{row.secondaryDiseases.length} other diseases
-                                </p>
-                              )}
-                          </div>
-                        </td>
+  //                     {/* Primary Disease */}
+  //                     <td className="px-4 py-4">
+  //                       <div className="text-sm text-gray-900">
+  //                         <p className="font-semibold">
+  //                           {row.topDisease || "Not specified"}
+  //                         </p>
+  //                         <p className="text-xs text-gray-500">
+  //                           {row.topDiseaseCount ?? 0} cases
+  //                         </p>
+  //                         {row.secondaryDiseases &&
+  //                           row.secondaryDiseases.length > 0 && (
+  //                             <p className="text-xs text-blue-600 mt-1">
+  //                               +{row.secondaryDiseases.length} other diseases
+  //                             </p>
+  //                           )}
+  //                       </div>
+  //                     </td>
 
-                        {/* Total Cases */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <span className="text-lg font-bold text-gray-900">
-                            {row.totalCases ?? "—"}
-                          </span>
-                        </td>
+  //                     {/* Total Cases */}
+  //                     <td className="px-4 py-4 whitespace-nowrap">
+  //                       <span className="text-lg font-bold text-gray-900">
+  //                         {row.totalCases ?? "—"}
+  //                       </span>
+  //                     </td>
 
-                        {/* Status */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            <span
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                status === "Critical"
-                                  ? "bg-red-100 text-red-800"
-                                  : status === "Moderate"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : status === "Normal"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {status}
-                            </span>
-                            {row.activeCamps && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {row.activeCamps} active camps
-                              </p>
-                            )}
-                          </div>
-                        </td>
+  //                     {/* Status */}
+  //                     <td className="px-4 py-4 whitespace-nowrap">
+  //                       <div className="text-sm text-gray-900">
+  //                         <span
+  //                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+  //                             status === "Critical"
+  //                               ? "bg-red-100 text-red-800"
+  //                               : status === "Moderate"
+  //                               ? "bg-yellow-100 text-yellow-800"
+  //                               : status === "Normal"
+  //                               ? "bg-green-100 text-green-800"
+  //                               : "bg-gray-100 text-gray-800"
+  //                           }`}
+  //                         >
+  //                           {status}
+  //                         </span>
+  //                         {row.activeCamps && (
+  //                           <p className="text-xs text-gray-500 mt-1">
+  //                             {row.activeCamps} active camps
+  //                           </p>
+  //                         )}
+  //                       </div>
+  //                     </td>
 
-                        {/* Last Updated */}
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {row.lastUpdated ? (
-                            <div>
-                              <p>{formatIssuedDate(row.lastUpdated)}</p>
-                              <p className="text-xs text-gray-500">
-                                {Math.floor(
-                                  (Date.now() - new Date(row.lastUpdated)) /
-                                    (1000 * 60 * 60)
-                                )}
-                                h ago
-                              </p>
-                            </div>
-                          ) : (
-                            <div>
-                              <p>{formatIssuedDate(new Date())}</p>
-                              <p className="text-xs text-gray-500">Today</p>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+  //                     {/* Last Updated */}
+  //                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+  //                       {row.lastUpdated ? (
+  //                         <div>
+  //                           <p>{formatIssuedDate(row.lastUpdated)}</p>
+  //                           <p className="text-xs text-gray-500">
+  //                             {Math.floor(
+  //                               (Date.now() - new Date(row.lastUpdated)) /
+  //                                 (1000 * 60 * 60)
+  //                             )}
+  //                             h ago
+  //                           </p>
+  //                         </div>
+  //                       ) : (
+  //                         <div>
+  //                           <p>{formatIssuedDate(new Date())}</p>
+  //                           <p className="text-xs text-gray-500">Today</p>
+  //                         </div>
+  //                       )}
+  //                     </td>
+  //                   </tr>
+  //                 );
+  //               })
+  //             )}
+  //           </tbody>
+  //         </table>
+  //       </div>
+  //     </div>
+  //   </div>
 
-      {/* Village Modal */}
-      {selectedVillage && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl">
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-              <div>
-                <p className="text-xs uppercase text-gray-500 tracking-wide">
-                  {selectedVillage.district} • {selectedVillage.taluk}
-                </p>
-                <h4 className="text-xl font-bold text-gray-900">
-                  {selectedVillage.name} village patients
-                </h4>
-              </div>
-              <button
-                type="button"
-                onClick={closeVillageModal}
-                className="text-sm font-semibold px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50"
-              >
-                Close
-              </button>
-            </div>
-            <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">
-              <p className="text-sm text-gray-600 mb-4">
-                {selectedVillage.patients?.length || 0} recent case
-                {selectedVillage.patients?.length === 1 ? "" : "s"} submitted by
-                field teams.
-              </p>
-              <div className="space-y-3">
-                {selectedVillage.patients?.map((patient, index) => (
-                  <div
-                    key={`${patient.patientId ?? patient.name}-${index}`}
-                    className="border border-gray-100 rounded-xl p-4 bg-gray-50"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {patient.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {patient.disease} • {patient.camp}
-                        </p>
-                      </div>
-                      <span className="text-xs text-gray-500">
-                        {formatIssuedDate(patient.dateOfIssue)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Doctor: {patient.doctor}
-                    </p>
-                    {patient.notes && (
-                      <p className="text-xs text-gray-500 mt-2 italic">
-                        "{patient.notes}"
-                      </p>
-                    )}
-                    {patient.contagious && (
-                      <span className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                        Contagious case
-                      </span>
-                    )}
-                  </div>
-                )) || (
-                  <p className="text-sm text-gray-500">
-                    No patient data available.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  //   {/* Village Modal */}
+  //   {selectedVillage && (
+  //     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-40">
+  //       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl">
+  //         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+  //           <div>
+  //             <p className="text-xs uppercase text-gray-500 tracking-wide">
+  //               {selectedVillage.district} • {selectedVillage.taluk}
+  //             </p>
+  //             <h4 className="text-xl font-bold text-gray-900">
+  //               {selectedVillage.name} village patients
+  //             </h4>
+  //           </div>
+  //           <button
+  //             type="button"
+  //             onClick={closeVillageModal}
+  //             className="text-sm font-semibold px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50"
+  //           >
+  //             Close
+  //           </button>
+  //         </div>
+  //         <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">
+  //           <p className="text-sm text-gray-600 mb-4">
+  //             {selectedVillage.patients?.length || 0} recent case
+  //             {selectedVillage.patients?.length === 1 ? "" : "s"} submitted by
+  //             field teams.
+  //           </p>
+  //           <div className="space-y-3">
+  //             {selectedVillage.patients?.map((patient, index) => (
+  //               <div
+  //                 key={`${patient.patientId ?? patient.name}-${index}`}
+  //                 className="border border-gray-100 rounded-xl p-4 bg-gray-50"
+  //               >
+  //                 <div className="flex items-center justify-between gap-3">
+  //                   <div>
+  //                     <p className="text-sm font-semibold text-gray-900">
+  //                       {patient.name}
+  //                     </p>
+  //                     <p className="text-xs text-gray-500">
+  //                       {patient.disease} • {patient.camp}
+  //                     </p>
+  //                   </div>
+  //                   <span className="text-xs text-gray-500">
+  //                     {formatIssuedDate(patient.dateOfIssue)}
+  //                   </span>
+  //                 </div>
+  //                 <p className="text-xs text-gray-500 mt-1">
+  //                   Doctor: {patient.doctor}
+  //                 </p>
+  //                 {patient.notes && (
+  //                   <p className="text-xs text-gray-500 mt-2 italic">
+  //                     "{patient.notes}"
+  //                   </p>
+  //                 )}
+  //                 {patient.contagious && (
+  //                   <span className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+  //                     Contagious case
+  //                   </span>
+  //                 )}
+  //               </div>
+  //             )) || (
+  //               <p className="text-sm text-gray-500">
+  //                 No patient data available.
+  //               </p>
+  //             )}
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   )}
+  // </div>
+  // );
 }
 
 export default DiseaseMonitoring;

@@ -45,11 +45,11 @@ const navItems = [
     to: "/prescriptions",
     icon: FileText,
   },
-  // {
-  //   labelKey: "nav.labReports",
-  //   to: "/lab-reports",
-  //   icon: FlaskConical,
-  // },
+  {
+    labelKey: "nav.labReports",
+    to: "/lab-reports",
+    icon: FlaskConical,
+  },
   // {
   //   labelKey: "nav.nearbyHospitals",
   //   to: "/nearby-hospitals",
