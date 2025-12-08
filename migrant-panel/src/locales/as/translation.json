@@ -3,7 +3,9 @@
     "name": "JeevanRakshak",
     "tagline": "প্ৰৱাসী স্বাস্থ্য পেনেল",
     "locationFallback": "নাগৰিক",
-    "idLabel": "আইডি"
+    "idLabel": "আইডি",
+    "idDemoVideo": "ডেমো ভিডিঅ’"
+    
   },
   "nav": {
     "dashboard": "ডেশ্ববʼৰ্ড",

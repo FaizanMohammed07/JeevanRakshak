@@ -26,9 +26,13 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { usePatientData, usePatientReports } from "../context/PatientsContext";
 import { fetchHeroAnnouncements } from "../api/announcements";
+import useTranslateData from "../hooks/useTranslateData";
+
 export default function Dashboard() {
   const { patient } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang = (i18n?.language || "en").split("-")[0];
+
   const {
     prescriptions,
     labReports,
@@ -37,12 +41,13 @@ export default function Dashboard() {
     status,
     errors,
   } = usePatientData();
+
   const {
     reports,
     loading: reportsLoading,
     error: reportsError,
   } = usePatientReports(patient?._id);
-  // console.log(reports);
+
   const [heroAnnouncements, setHeroAnnouncements] = useState([]);
   const [activeAnnouncementIndex, setActiveAnnouncementIndex] = useState(0);
   const [announcementsStatus, setAnnouncementsStatus] = useState("loading");
@@ -50,22 +55,18 @@ export default function Dashboard() {
 
   const loadHeroAnnouncements = useCallback(
     async ({ showLoading, district } = {}) => {
-      if (showLoading) {
-        setAnnouncementsStatus("loading");
-      }
+      if (showLoading) setAnnouncementsStatus("loading");
       try {
         const data = await fetchHeroAnnouncements("Patients", { district });
-        setHeroAnnouncements(data);
+        setHeroAnnouncements(Array.isArray(data) ? data : []);
         setActiveAnnouncementIndex(0);
         setAnnouncementError(null);
         setAnnouncementsStatus("success");
       } catch (error) {
         const message =
-          error.response?.data?.message ||
-          error.message ||
-          t(
-            "dashboard.errors.announcements"
-          ); /* Unable to load announcements */
+          error?.response?.data?.message ||
+          error?.message ||
+          t("dashboard.errors.announcements");
         setHeroAnnouncements([]);
         setAnnouncementError(message);
         setAnnouncementsStatus("error");
@@ -93,83 +94,118 @@ export default function Dashboard() {
   ]);
 
   useEffect(() => {
-    if (heroAnnouncements.length <= 1) return undefined;
+    if ((heroAnnouncements || []).length <= 1) return undefined;
     const interval = setInterval(() => {
       setActiveAnnouncementIndex(
-        (prev) => (prev + 1) % heroAnnouncements.length
+        (prev) => (prev + 1) % (heroAnnouncements.length || 1)
       );
     }, 8000);
     return () => clearInterval(interval);
   }, [heroAnnouncements]);
 
   const handleAnnouncementNav = (direction) => {
-    if (heroAnnouncements.length <= 1) return;
+    if ((heroAnnouncements || []).length <= 1) return;
     setActiveAnnouncementIndex((prev) => {
-      const total = heroAnnouncements.length;
+      const total = heroAnnouncements.length || 1;
       return (prev + direction + total) % total;
     });
   };
 
+  // ---------------- TRANSLATION HOOKS ----------------
+  // Hook short-circuits when currentLang === 'en' (no translation calls)
+  const translatedAnnouncements = useTranslateData(
+    heroAnnouncements,
+    currentLang === "en" ? [] : ["title", "message", "audience", "priority"],
+    currentLang
+  );
+  console.log("RAW FIRST ANNOUNCEMENT:", heroAnnouncements[0]);
+  console.log("TRANSLATED FIRST ANNOUNCEMENT:", translatedAnnouncements[0]);
+
+  const translatedPrescriptions = useTranslateData(
+    prescriptions,
+    currentLang === "en"
+      ? []
+      : ["confirmedDisease", "suspectedDisease", "symptoms"],
+    currentLang
+  );
+
+  const translatedReports = useTranslateData(
+    reports,
+    currentLang === "en" ? [] : ["documentName"],
+    currentLang
+  );
+
+  const translatedVaccinations = useTranslateData(
+    patient?.vaccinations || [],
+    currentLang === "en"
+      ? []
+      : ["name", "location", "notes", "provider", "reason"],
+    currentLang
+  );
+
+  const translatedVisits = useTranslateData(
+    patient?.visits || [],
+    currentLang === "en" ? [] : ["name", "location", "notes", "reason"],
+    currentLang
+  );
+
+  // ALWAYS use translated arrays in the UI (prevents flicker)
+  const hasAnnouncements = (translatedAnnouncements || []).length > 0;
+  const activeAnnouncement = hasAnnouncements
+    ? translatedAnnouncements[activeAnnouncementIndex] ||
+      translatedAnnouncements[0]
+    : null;
+  const isAnnouncementsLoading = announcementsStatus === "loading";
+
   const statCards = useMemo(() => {
-    const vaccinations = patient?.vaccinations || [];
-    const visits = patient?.visits || [];
+    const vaccinations = translatedVaccinations || patient?.vaccinations || [];
+    const visits = translatedVisits || patient?.visits || [];
 
     return [
       {
-        // label: "Total Prescriptions",
         label: t("dashboard.stats.totalPrescriptions"),
-        value: prescriptions.length,
+        value: translatedPrescriptions.length,
         icon: FileText,
         accent: "bg-blue-50 text-blue-600",
       },
       {
-        // label: "Vaccinations Completed",
         label: t("dashboard.stats.vaccinations"),
         value: vaccinations.length,
         icon: Syringe,
         accent: "bg-emerald-50 text-emerald-600",
       },
       {
-        // label: "Recorded Visits",
         label: t("dashboard.stats.visits"),
         value: visits.length,
         icon: CalendarDays,
         accent: "bg-amber-50 text-amber-600",
       },
       {
-        // label: "Lab Reports",
         label: t("dashboard.stats.labs"),
-        value: reports.length,
+        value: translatedReports.length,
         icon: Activity,
         accent: "bg-purple-50 text-purple-600",
       },
     ];
-  }, [patient, prescriptions.length, reports.length, t]);
-
-  const hasAnnouncements = heroAnnouncements.length > 0;
-  const activeAnnouncement = hasAnnouncements
-    ? heroAnnouncements[activeAnnouncementIndex]
-    : null;
-  const isAnnouncementsLoading = announcementsStatus === "loading";
+  }, [
+    patient,
+    translatedPrescriptions.length,
+    translatedReports.length,
+    translatedVaccinations,
+    translatedVisits,
+    t,
+  ]);
 
   return (
     <section className="w-full space-y-8">
       <header className="rounded-3xl bg-white px-6 py-5 shadow-sm ring-1 ring-slate-100">
-        {/* <p className="text-sm font-medium uppercase tracking-widest text-slate-400">Overview</p> */}
         <p className="text-sm font-medium uppercase tracking-widest text-slate-400">
           {t("common.overview")}
         </p>
-        {/* <h2 className="text-3xl font-semibold text-slate-900">Dashboard</h2> */}
         <h2 className="text-3xl font-semibold text-slate-900">
           {t("common.dashboard")}
         </h2>
-        <p className="text-sm text-slate-500">
-          {
-            t(
-              "dashboard.subtitle"
-            ) /* Track prescriptions, vaccinations, visits and diagnostics in one place. */
-          }
-        </p>
+        <p className="text-sm text-slate-500">{t("dashboard.subtitle")}</p>
       </header>
 
       <section className="rounded-3xl bg-gradient-to-r from-slate-900 via-blue-900 to-sky-700 px-6 py-6 text-white shadow-lg">
@@ -177,29 +213,24 @@ export default function Dashboard() {
           <div className="space-y-2">
             <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.4em] text-white/70">
               <Megaphone className="h-4 w-4 text-white" />
-              {
-                hasAnnouncements
-                  ? t("dashboard.broadcast") /* Broadcast */
-                  : t("dashboard.noBroadcast") /* No Broadcast */
-              }
+              {hasAnnouncements
+                ? t("dashboard.broadcast")
+                : t("dashboard.noBroadcast")}
             </p>
+
             <h3 className="text-2xl font-semibold">
-              {
-                hasAnnouncements
-                  ? activeAnnouncement.title
-                  : t("dashboard.upToDate") /* You're up to date */
-              }
+              {hasAnnouncements
+                ? activeAnnouncement?.title
+                : t("dashboard.upToDate")}
             </h3>
+
             <p className="text-sm text-white/80">
-              {
-                hasAnnouncements
-                  ? activeAnnouncement.message
-                  : t(
-                      "dashboard.defaultMessage"
-                    ) /* We will surface government advisories and healthcare alerts here as soon as they are issued. */
-              }
+              {hasAnnouncements
+                ? activeAnnouncement?.message
+                : t("dashboard.defaultMessage")}
             </p>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -216,61 +247,69 @@ export default function Dashboard() {
                   isAnnouncementsLoading ? "animate-spin" : ""
                 }`}
               />
-              {t("common.refresh") /* Refresh */}
+              {t("common.refresh")}
             </button>
+
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => handleAnnouncementNav(-1)}
                 className="rounded-full border border-white/30 p-2 text-white hover:bg-white/10 disabled:opacity-40"
-                disabled={heroAnnouncements.length <= 1}
+                disabled={(translatedAnnouncements || []).length <= 1}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
+
               <button
                 type="button"
                 onClick={() => handleAnnouncementNav(1)}
                 className="rounded-full border border-white/30 p-2 text-white hover:bg-white/10 disabled:opacity-40"
-                disabled={heroAnnouncements.length <= 1}
+                disabled={(translatedAnnouncements || []).length <= 1}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>
         </div>
+
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-xs text-white/80">
           <span>
-            {t("common.priority") /* Priority */}:{" "}
+            {t("common.priority")}:{" "}
             {activeAnnouncement?.priority?.toUpperCase() || "--"}
           </span>
+
           <span>
-            {
-              activeAnnouncement
-                ? formatAnnouncementTime(activeAnnouncement.timestamp)
-                : t("common.awaiting") /* Awaiting broadcast */
-            }
+            {activeAnnouncement
+              ? formatAnnouncementTime(activeAnnouncement.timestamp)
+              : t("common.awaiting")}
           </span>
+
           <span className="rounded-full bg-white/15 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.3em]">
-            {activeAnnouncement?.audience || t("common.audienceAll") /* All */}
+            {activeAnnouncement?.audience || t("common.audienceAll")}
           </span>
+
           <span>
             {hasAnnouncements
-              ? `${activeAnnouncementIndex + 1} / ${heroAnnouncements.length}`
+              ? `${activeAnnouncementIndex + 1} / ${
+                  (translatedAnnouncements || []).length
+                }`
               : isAnnouncementsLoading
               ? t("common.syncing")
               : t("common.noBroadcasts")}
           </span>
         </div>
+
         <div className="mt-4 flex items-center gap-2">
-          {heroAnnouncements.map((announcement, index) => (
+          {(translatedAnnouncements || []).map((announcement, index) => (
             <span
               key={announcement.id || index}
               className={`h-1.5 flex-1 rounded-full transition ${
                 index === activeAnnouncementIndex ? "bg-white" : "bg-white/30"
               }`}
-            ></span>
+            />
           ))}
         </div>
+
         {announcementError && (
           <p className="mt-3 text-xs text-rose-200">{announcementError}</p>
         )}
@@ -286,42 +325,31 @@ export default function Dashboard() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <SectionCard
-          // title="Recent Prescriptions"
           title={t("dashboard.sections.recentPrescriptions.title")}
           status={status.prescriptions}
           error={errors.prescriptions}
-          count={prescriptions.length}
+          count={translatedPrescriptions.length}
           link={{
             to: "/prescriptions",
-            label: t("common.viewAll") /* View all */,
+            label: t("common.viewAll"),
           }}
         >
-          {prescriptions.length === 0 ? (
+          {translatedPrescriptions.length === 0 ? (
             <EmptyState
-              title={
-                t(
-                  "dashboard.sections.recentPrescriptions.emptyTitle"
-                ) /* No prescriptions yet */
-              }
-              message={
-                t(
-                  "dashboard.sections.recentPrescriptions.emptyMessage"
-                ) /* Your doctor has not issued a prescription. */
-              }
+              title={t("dashboard.sections.recentPrescriptions.emptyTitle")}
+              message={t("dashboard.sections.recentPrescriptions.emptyMessage")}
             />
           ) : (
             <ul className="space-y-4 overflow-y-auto pr-1 lg:max-h-80">
-              {prescriptions.slice(0, 4).map((item) => (
+              {translatedPrescriptions.slice(0, 4).map((item, idx) => (
                 <li
-                  key={item._id}
+                  key={item._id || `${idx}-${item.dateOfIssue}`}
                   className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4"
                 >
                   <p className="font-semibold text-slate-900">
-                    {
-                      item.confirmedDisease ||
-                        item.suspectedDisease ||
-                        t("common.diagnosisPending") /* Diagnosis pending */
-                    }
+                    {item.confirmedDisease ||
+                      item.suspectedDisease ||
+                      t("common.diagnosisPending")}
                   </p>
                   <p className="text-sm text-slate-500">{item.symptoms}</p>
                   <p className="text-xs text-slate-400">
@@ -334,41 +362,30 @@ export default function Dashboard() {
         </SectionCard>
 
         <SectionCard
-          // title="Lab Reports"
           title={t("dashboard.sections.labReports.title")}
-          // status={status.labs}
           error={reportsError}
-          count={reports.length}
+          count={translatedReports.length}
           link={{
             to: "/lab-reports",
-            label: t("common.viewAll") /* View all */,
+            label: t("common.viewAll"),
           }}
         >
-          {reports.length === 0 ? (
+          {translatedReports.length === 0 ? (
             <EmptyState
-              title={
-                t(
-                  "dashboard.sections.labReports.emptyTitle"
-                ) /* No lab reports */
-              }
-              message={
-                t(
-                  "dashboard.sections.labReports.emptyMessage"
-                ) /* Uploaded lab reports will appear here. */
-              }
+              title={t("dashboard.sections.labReports.emptyTitle")}
+              message={t("dashboard.sections.labReports.emptyMessage")}
             />
           ) : (
             <ul className="space-y-4 overflow-y-auto pr-1 lg:max-h-80">
-              {reports.slice(0, 4).map((report) => (
+              {translatedReports.slice(0, 4).map((report, idx) => (
                 <li
-                  key={`${report.documentName}-${report.uploaded_at}`}
+                  key={`${report.documentName || idx}-${
+                    report.uploaded_at || report.createdAt || idx
+                  }`}
                   className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4"
                 >
-                  {/* <p className="font-semibold text-slate-900">
-                    {report.documentName}
-                  </p> */}
                   <p className="font-semibold text-slate-900">
-                    {report.documentName || t("common.labReport") /* Report */}
+                    {report.documentName || t("common.labReport")}
                   </p>
                   <p className="text-xs text-slate-400">
                     {formatDate(report.createdAt)}
@@ -381,11 +398,11 @@ export default function Dashboard() {
                       className="inline-flex items-center gap-2 text-sky-600"
                     >
                       <Link2 className="h-4 w-4" />
-                      {t("labReports.report.view") /* View document */}
+                      {t("labReports.report.view")}
                     </a>
                   ) : (
                     <span className="text-slate-400">
-                      {t("common.fileNotProvided") /* File not provided */}
+                      {t("common.fileNotProvided")}
                     </span>
                   )}
                 </li>
@@ -427,7 +444,7 @@ function SectionCard({ title, status, error, children, count, link }) {
           )}
         </div>
         <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
-          {isLoading && <span>{t("common.loading") /* Loading */}</span>}
+          {isLoading && <span>{t("common.loading")}</span>}
           {link && (
             <Link
               to={link.to}
@@ -481,71 +498,7 @@ function NearbyHospitalsCTA() {
     },
   ];
 
-  // Nearly Hospitals CTA is currently disabled
-
-  // return (
-  //   <section className="grid gap-6 rounded-[32px] border border-sky-100 bg-gradient-to-br from-white via-sky-50 to-sky-100 p-6 shadow-sm lg:grid-cols-[1.1fr_0.9fr]">
-  //     <div className="space-y-4">
-  //       <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
-  //         <MapPin className="h-4 w-4 text-sky-600" />
-  //         Nearby Hospitals
-  //       </p>
-  //       <h3 className="text-2xl font-semibold text-slate-900">
-  //         One tap to locate the closest hospital
-  //       </h3>
-  //       <p className="text-sm text-slate-600">
-  //         Migrant workers often stay in unfamiliar towns. This guided flow
-  //         removes the language barrier by showing a map, address, and Google
-  //         Maps navigation link in seconds.
-  //       </p>
-  //       <div className="grid gap-3 md:grid-cols-2">
-  //         {steps.map((step) => (
-  //           <div
-  //             key={step.title}
-  //             className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm"
-  //           >
-  //             <p className="text-xs font-semibold uppercase tracking-widest text-sky-500">
-  //               {step.title}
-  //             </p>
-  //             <p className="mt-2 text-sm text-slate-600">{step.body}</p>
-  //           </div>
-  //         ))}
-  //       </div>
-  //       <Link to="/nearby-hospitals" className="inline-flex">
-  //         <button className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-500 md:w-auto">
-  //           <Navigation className="h-5 w-5" />
-  //           Launch Nearby Hospitals
-  //         </button>
-  //       </Link>
-  //       <p className="text-xs text-slate-500">
-  //         We never store your live location. Permission is requested each time
-  //         you tap the feature, so migrants always understand why GPS is
-  //         required.
-  //       </p>
-  //     </div>
-  //     <div className="space-y-4 rounded-[28px] border border-sky-100 bg-white/80 p-5">
-  //       <h4 className="text-sm font-semibold uppercase tracking-[0.4em] text-slate-500">
-  //         What migrants see
-  //       </h4>
-  //       <div className="space-y-3">
-  //         {highlights.map(({ icon: Icon, title, body }) => (
-  //           <div
-  //             key={title}
-  //             className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
-  //           >
-  //             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
-  //               <Icon className="h-5 w-5" />
-  //             </div>
-  //             <div>
-  //               <p className="text-sm font-semibold text-slate-900">{title}</p>
-  //               <p className="text-xs text-slate-500">{body}</p>
-  //             </div>
-  //           </div>
-  //         ))}
-  //       </div>
-  //     </div>
-  //   </section>
-  // );
+  return null;
 }
 
 function EmptyState({ title, message }) {

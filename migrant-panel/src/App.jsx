@@ -7,6 +7,8 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
+
+
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
@@ -16,7 +18,7 @@ import {
   LogOut,
   Hospital,
   MapPin,
-  Languages,
+  Languages,PlayCircle
 } from "lucide-react";
 import { PatientsProvider } from "./context/PatientsContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -27,6 +29,7 @@ import LabReportsPage from "./pages/LabReportsPage";
 import LoginPage from "./pages/Login";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import NearbyHospitals from "./pages/NearbyHospitals";
+import DemoVideoPage from "./pages/DemoVideoPage";
 
 const navItems = [
   {
@@ -35,6 +38,12 @@ const navItems = [
     icon: LayoutDashboard,
     end: true,
   },
+  {
+  labelKey: "DemoVideo",
+  to: "/demo-video",
+  icon: PlayCircle,   // You can import any icon
+},
+
   {
     labelKey: "nav.profile",
     to: "/profile",
@@ -77,6 +86,7 @@ function App() {
               <Route path="prescriptions" element={<PrescriptionsPage />} />
               <Route path="lab-reports" element={<LabReportsPage />} />
               <Route path="nearby-hospitals" element={<NearbyHospitals />} />
+              <Route path="demo-video" element={<DemoVideoPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -87,19 +97,21 @@ function App() {
 }
 
 export default App;
+import { useNavigate } from "react-router-dom";
 
 function ShellLayout() {
+  const navigate = useNavigate();
   const { patient, logout } = useAuth();
   const { t } = useTranslation();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
+  
   const handleLogoutClick = () => setShowLogoutConfirm(true);
   const handleCancelLogout = () => setShowLogoutConfirm(false);
   const handleConfirmLogout = () => {
     setShowLogoutConfirm(false);
     logout();
   };
-
+  
   return (
     <div className="min-h-screen bg-sky-50/70">
       <header className="sticky top-0 z-30 border-b border-sky-100/70 bg-white/95 shadow-sm backdrop-blur">
@@ -119,6 +131,14 @@ function ShellLayout() {
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-3 text-right">
+            <button
+  onClick={() => navigate("/demo-video")}
+  className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-sky-50 transition"
+>
+  <PlayCircle className="h-4 w-4 text-sky-600" />
+  {t("app.idDemoVideo")}
+</button>
+
             <span className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800">
               <UserRound className="h-4 w-4 text-sky-500" />
               {patient?.name || "Guest"}

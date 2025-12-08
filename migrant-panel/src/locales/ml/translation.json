@@ -3,7 +3,8 @@
     "name": "JeevanRakshak",
     "tagline": "പ്രവാസി ഹെൽത്ത് പാനൽ",
     "locationFallback": "പൗരൻ",
-    "idLabel": "ഐഡി"
+    "idLabel": "ഐഡി",
+    "idDemoVideo": "ഡെമോ വീഡിയോ"
   },
   "nav": {
     "dashboard": "ഡാഷ്ബോർഡ്",
@@ -15,6 +16,7 @@
   "language": {
     "prompt": "നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കൂ",
     "navbarLabel": "ഭാഷ"
+    
   },
   "logout": {
     "button": "ലോഗ്ഔട്ട്",
