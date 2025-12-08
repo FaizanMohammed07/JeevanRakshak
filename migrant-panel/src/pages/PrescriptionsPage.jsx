@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Volume2 } from "lucide-react";
 import { usePatientData } from "../context/PatientsContext";
+import { requestPrescriptionSpeech } from "../api/prescriptions";
 
 const TIME_SLOT_LABELS = {
   morning: "Morning",
@@ -16,6 +17,17 @@ const MEAL_LABELS = {
   after: "After food",
   any: "Any time",
 };
+
+const SPEECH_LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "hi", label: "Hindi" },
+  { code: "ml", label: "Malayalam" },
+  { code: "ta", label: "Tamil" },
+];
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3030/api";
+const AUDIO_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
 
 const normalizeScheduleForDisplay = (schedule = {}) =>
   TIME_SLOT_KEYS.reduce((acc, key) => {
@@ -78,7 +90,15 @@ const describeSchedule = (schedule) => {
 };
 
 const PrescriptionDetailPanel = ({ rx }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [selectedLanguage, setSelectedLanguage] = useState(
+    SPEECH_LANGUAGES[0].code
+  );
+  const [speechState, setSpeechState] = useState({
+    loading: false,
+    error: "",
+    preview: "",
+  });
   if (!rx) {
     return (
       <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5 text-center text-sm text-slate-500">
@@ -94,6 +114,90 @@ const PrescriptionDetailPanel = ({ rx }) => {
   const normalizedMedicines = (rx.medicinesIssued || [])
     .map(normalizeMedicineItem)
     .filter(Boolean);
+  const rxId = rx?._id;
+
+  useEffect(() => {
+    const primary = i18n.language?.split("-")[0];
+    if (
+      primary &&
+      SPEECH_LANGUAGES.some((lang) => lang.code === primary)
+    ) {
+      setSelectedLanguage(primary);
+    }
+  }, [i18n.language]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!rxId) {
+      setSpeechState((prev) => ({ ...prev, preview: "", error: "" }));
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setSpeechState((prev) => ({ ...prev, preview: "", error: "" }));
+
+    const loadPreview = async () => {
+      try {
+        const data = await requestPrescriptionSpeech(rxId, selectedLanguage, {
+          previewOnly: true,
+        });
+        if (cancelled) return;
+        const speechEntry = data.requestedSpeech;
+        setSpeechState((prev) => ({
+          ...prev,
+          preview: speechEntry?.text || data.narration || "",
+          error: speechEntry?.translationError || "",
+        }));
+      } catch (err) {
+        if (cancelled) return;
+        setSpeechState((prev) => ({
+          ...prev,
+          preview: "",
+          error: err?.message || "Unable to load speech preview",
+        }));
+      }
+    };
+
+    loadPreview();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rxId, selectedLanguage]);
+
+  const handleSpeak = async () => {
+    if (!rxId) return;
+    setSpeechState((prev) => ({ ...prev, loading: true, error: "" }));
+    try {
+      const data = await requestPrescriptionSpeech(rxId, selectedLanguage);
+      const speechEntry =
+        data.requestedSpeech ||
+        (data.speechFiles || []).find(
+          (entry) => entry.code === selectedLanguage
+        ) ||
+        data.speechFiles?.[0];
+      const previewText = speechEntry?.text || data.narration || "";
+      const audioRelative = speechEntry?.audioUrl;
+      const audioUrl = audioRelative
+        ? `${AUDIO_BASE_URL}${audioRelative}`
+        : null;
+      setSpeechState((prev) => ({ ...prev, preview: previewText, error: "" }));
+      if (!audioUrl) {
+        throw new Error("Audio not available for this language");
+      }
+      const audio = new Audio(audioUrl);
+      await audio.play();
+    } catch (err) {
+      setSpeechState((prev) => ({
+        ...prev,
+        loading: false,
+        error: err?.message || "Unable to play speech",
+      }));
+      return;
+    }
+    setSpeechState((prev) => ({ ...prev, loading: false, error: "" }));
+  };
 
   const formatSlotLabel = (key, slotState) => {
     const slotLabel = TIME_SLOT_LABELS[key] || key;
@@ -122,6 +226,43 @@ const PrescriptionDetailPanel = ({ rx }) => {
         <p className="text-sm text-slate-500">
           {t("common.issued") /* Issued */} {formatDate(rx.dateOfIssue)}
         </p>
+      </div>
+
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 p-4 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+          Speak prescription
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <label className="flex items-center gap-2 text-xs text-slate-500">
+            Language
+            <select
+              value={selectedLanguage}
+              onChange={(event) => setSelectedLanguage(event.target.value)}
+              className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700 focus:border-sky-400 focus:ring-2 focus:ring-sky-200"
+            >
+              {SPEECH_LANGUAGES.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            onClick={handleSpeak}
+            className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+            disabled={speechState.loading}
+          >
+            <Volume2 className="h-4 w-4" />
+            {speechState.loading ? "Generating…" : "Speak"}
+          </button>
+        </div>
+        {speechState.error && (
+          <p className="mt-2 text-xs text-red-600">{speechState.error}</p>
+        )}
+        {speechState.preview && (
+          <p className="mt-2 text-xs text-slate-500">{speechState.preview}</p>
+        )}
       </div>
 
       <div className="rounded-xl bg-white/80 p-4 shadow-sm">

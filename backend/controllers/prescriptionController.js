@@ -1,11 +1,39 @@
 import mongoose from "mongoose";
+import path from "path";
+import fs from "fs/promises";
+import { fileURLToPath } from "url";
 import Prescription from "../models/prescriptionModel.js";
 import Patient from "../models/patientModel.js";
 import { uploadCompressedImages } from "../utils/uploadS3.js";
+import translate from "@vitalets/google-translate-api";
+import Gtts from "gtts";
 
 const DEFAULT_MEAL_TIMING = "after";
 const VALID_MEAL_OPTIONS = ["before", "after", "any"];
 const TIME_SLOT_KEYS = ["morning", "afternoon", "night"];
+const TIME_SLOT_LABELS = {
+  morning: "Morning",
+  afternoon: "Afternoon",
+  night: "Night",
+};
+const MEAL_SPEECH_LABELS = {
+  before: "before meals",
+  after: "after meals",
+  any: "any time",
+};
+
+const TTS_OUTPUT_BASE = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "tts-files"
+);
+const TTS_WEB_ROUTE = "/tts-files";
+const SUPPORTED_SPEECH_LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "hi", label: "Hindi" },
+  { code: "ml", label: "Malayalam" },
+  { code: "ta", label: "Tamil" },
+];
 
 const normalizeSchedule = (schedule = {}) =>
   TIME_SLOT_KEYS.reduce((acc, key) => {
@@ -59,6 +87,152 @@ const normalizeMedicineList = (list) => {
   return list.map(normalizeMedicineEntry).filter(Boolean);
 };
 
+const ensureDirectoryExists = async (dirPath) => {
+  try {
+    await fs.mkdir(dirPath, { recursive: true });
+  } catch (err) {
+    console.error("ensureDirectoryExists error:", err);
+    throw err;
+  }
+};
+
+const joinWithCommaAndAnd = (items) => {
+  if (!items.length) return "";
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+};
+
+const medicineToSpeech = (medicine) => {
+  if (!medicine || !medicine.name) {
+    return "";
+  }
+  const base = `${medicine.name}${
+    medicine.dosage ? ` ${medicine.dosage}` : ""
+  }`;
+  const slotDescriptions = TIME_SLOT_KEYS.reduce((acc, key) => {
+    const slot = medicine.schedule?.[key];
+    if (!slot?.active) return acc;
+    const timeLabel = (TIME_SLOT_LABELS[key] || key).toLowerCase();
+    const mealLabel =
+      MEAL_SPEECH_LABELS[slot.mealTiming] || MEAL_SPEECH_LABELS.after;
+    acc.push(`${timeLabel} (${mealLabel})`);
+    return acc;
+  }, []);
+
+  if (!slotDescriptions.length) {
+    return `Take ${base} as directed.`;
+  }
+
+  const slotText = joinWithCommaAndAnd(slotDescriptions);
+  return `Take ${base} in the ${slotText}.`;
+};
+
+const formatDateForSpeech = (value) => {
+  if (!value) return null;
+  try {
+    return new Date(value).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch (err) {
+    return null;
+  }
+};
+
+const buildPrescriptionNarrative = (prescription) => {
+  const normalized = normalizeMedicineList(prescription.medicinesIssued);
+  const lines = [];
+  if (prescription.symptoms) {
+    lines.push(`Symptoms: ${prescription.symptoms}.`);
+  }
+  if (prescription.durationOfSymptoms) {
+    lines.push(`Duration of symptoms: ${prescription.durationOfSymptoms}.`);
+  }
+  if (normalized.length) {
+    lines.push(...normalized.map(medicineToSpeech).filter(Boolean));
+  } else {
+    lines.push("No medicines recorded yet.");
+  }
+  if (prescription.followUpDate) {
+    const followUpText = formatDateForSpeech(prescription.followUpDate);
+    if (followUpText) {
+      lines.push(`Follow-up appointment is on ${followUpText}.`);
+    }
+  }
+  return lines.join(" ");
+};
+
+const translateText = async (text, targetLang) => {
+  if (!text) return "";
+  try {
+    const result = await translate(text, { to: targetLang });
+    return result.text || "";
+  } catch (err) {
+    console.error(`translateText error for ${targetLang}:`, err);
+    throw err;
+  }
+};
+
+const generateAudio = (text, langCode, destination) =>
+  new Promise((resolve, reject) => {
+    const speech = new Gtts(text, langCode);
+    speech.save(destination, (err) => {
+      if (err) return reject(err);
+      resolve(destination);
+    });
+  });
+
+const findLanguageLabel = (code) =>
+  SUPPORTED_SPEECH_LANGUAGES.find((lang) => lang.code === code)?.label ||
+  code;
+
+const buildSpeechEntry = async ({
+  langCode,
+  englishNarrative,
+  prescriptionId,
+  prescriptionDir,
+  needAudio,
+}) => {
+  let textContent = englishNarrative;
+  let translationError = null;
+  if (langCode !== "en") {
+    try {
+      textContent = await translateText(englishNarrative, langCode);
+    } catch (err) {
+      translationError = err?.message || "Translation failed";
+      textContent = englishNarrative;
+    }
+  }
+
+  const textFileName = `prescription_${langCode}.txt`;
+  const textFilePath = path.join(prescriptionDir, textFileName);
+  await fs.writeFile(textFilePath, textContent, "utf-8");
+
+  const entry = {
+    code: langCode,
+    label: findLanguageLabel(langCode),
+    text: textContent,
+    textUrl: `${TTS_WEB_ROUTE}/${prescriptionId}/${textFileName}`,
+    translationError,
+  };
+
+  if (needAudio) {
+    const audioFileName = `prescription_${langCode}.mp3`;
+    const audioFilePath = path.join(prescriptionDir, audioFileName);
+    try {
+      await generateAudio(textContent, langCode, audioFilePath);
+      entry.audioUrl = `${TTS_WEB_ROUTE}/${prescriptionId}/${audioFileName}`;
+    } catch (err) {
+      entry.audioError = err?.message || "Audio generation failed";
+      console.error(`gtts save failed for ${langCode}:`, err);
+    }
+  }
+
+  return entry;
+};
+
 const sanitizePrescriptionForResponse = (prescription) => {
   if (!prescription) return null;
   const doc = prescription.toObject
@@ -66,6 +240,88 @@ const sanitizePrescriptionForResponse = (prescription) => {
     : { ...prescription };
   doc.medicinesIssued = normalizeMedicineList(doc.medicinesIssued);
   return doc;
+};
+
+export const generatePrescriptionSpeech = async (req, res) => {
+  try {
+    const { prescriptionId } = req.params;
+    if (!prescriptionId) {
+      return res.status(400).json({ msg: "Prescription ID is required" });
+    }
+
+    const prescription = await Prescription.findById(prescriptionId);
+    if (!prescription) {
+      return res.status(404).json({ msg: "Prescription not found" });
+    }
+
+    let storedPatientId = null;
+    if (prescription.patient) {
+      if (prescription.patient._id) {
+        storedPatientId = prescription.patient._id.toString();
+      } else if (typeof prescription.patient.toString === "function") {
+        storedPatientId = prescription.patient.toString();
+      }
+    }
+
+    if (!storedPatientId) {
+      return res.status(403).json({ msg: "Cannot verify patient ownership" });
+    }
+
+    if (storedPatientId !== req.user._id.toString()) {
+      return res.status(403).json({ msg: "Access denied" });
+    }
+
+    const englishNarrative = buildPrescriptionNarrative(prescription);
+    await ensureDirectoryExists(TTS_OUTPUT_BASE);
+    const prescriptionDir = path.join(TTS_OUTPUT_BASE, prescriptionId);
+    await ensureDirectoryExists(prescriptionDir);
+
+    const previewOnly = req.query.previewOnly === "true";
+    const requestedCode = (req.query.lang || "en").toLowerCase();
+
+    if (previewOnly) {
+      const requestedSpeech = await buildSpeechEntry({
+        langCode: requestedCode,
+        englishNarrative,
+        prescriptionId,
+        prescriptionDir,
+        needAudio: false,
+      });
+
+      return res.status(200).json({
+        prescriptionId,
+        narration: englishNarrative,
+        requestedSpeech,
+        speechFiles: [],
+      });
+    }
+
+    const speechRecords = [];
+    for (const lang of SUPPORTED_SPEECH_LANGUAGES) {
+      const entry = await buildSpeechEntry({
+        langCode: lang.code,
+        englishNarrative,
+        prescriptionId,
+        prescriptionDir,
+        needAudio: true,
+      });
+      speechRecords.push(entry);
+    }
+
+    const requestedSpeech =
+      speechRecords.find((entry) => entry.code === requestedCode) ||
+      speechRecords[0];
+
+    return res.status(200).json({
+      prescriptionId,
+      narration: englishNarrative,
+      requestedSpeech,
+      speechFiles: speechRecords,
+    });
+  } catch (err) {
+    console.error("generatePrescriptionSpeech error:", err);
+    return res.status(500).json({ error: err.message });
+  }
 };
 
 export const addPrescription = async (req, res) => {
