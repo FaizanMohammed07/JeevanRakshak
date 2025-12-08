@@ -22,11 +22,34 @@ const MEAL_OPTIONS = [
   { key: "after", label: "After food" },
 ];
 
+const DEFAULT_MEAL_TIMING = "after";
+const TIME_SLOT_KEYS = TIME_SLOTS.map((slot) => slot.key);
+
+const buildDefaultSchedule = () =>
+  TIME_SLOT_KEYS.reduce((acc, key) => {
+    acc[key] = { active: false, mealTiming: DEFAULT_MEAL_TIMING };
+    return acc;
+  }, {});
+
+const MEAL_KEYS = new Set(MEAL_OPTIONS.map((option) => option.key));
+
+const sanitizeScheduleForPayload = (schedule = {}) =>
+  TIME_SLOT_KEYS.reduce((acc, key) => {
+    const slotState = schedule[key] || {};
+    const mealTiming = MEAL_KEYS.has(slotState.mealTiming)
+      ? slotState.mealTiming
+      : DEFAULT_MEAL_TIMING;
+    acc[key] = {
+      active: Boolean(slotState.active),
+      mealTiming,
+    };
+    return acc;
+  }, {});
+
 const createMedicineEntry = () => ({
   name: "",
   dosage: "",
-  schedule: { morning: false, afternoon: false, night: false },
-  mealTiming: "after",
+  schedule: buildDefaultSchedule(),
 });
 
 function AddPrescriptionPage() {
@@ -90,17 +113,46 @@ function AddPrescriptionPage() {
     setMedicines((prev) => {
       const next = [...prev];
       const current = next[index];
-      const schedule = {
-        ...current.schedule,
-        [slot]: !current.schedule?.[slot],
+      const slotState = current.schedule?.[slot] || {
+        active: false,
+        mealTiming: DEFAULT_MEAL_TIMING,
       };
-      next[index] = { ...current, schedule };
+      const updatedSlot = {
+        ...slotState,
+        active: !slotState.active,
+      };
+      next[index] = {
+        ...current,
+        schedule: {
+          ...current.schedule,
+          [slot]: updatedSlot,
+        },
+      };
       return next;
     });
   };
 
-  const setMedicineMealTiming = (index, timing) => {
-    updateMedicine(index, { mealTiming: timing });
+  const setMedicineMealTiming = (index, slot, timing) => {
+    setMedicines((prev) => {
+      const next = [...prev];
+      const current = next[index];
+      const slotState = current.schedule?.[slot] || {
+        active: false,
+        mealTiming: DEFAULT_MEAL_TIMING,
+      };
+      next[index] = {
+        ...current,
+        schedule: {
+          ...current.schedule,
+          [slot]: {
+            ...slotState,
+            mealTiming: timing,
+            active: slotState.active || true,
+          },
+        },
+      };
+      return next;
+    });
   };
 
   const addMedicineField = () => {
@@ -180,8 +232,8 @@ function AddPrescriptionPage() {
       .map((medicine) => ({
         name: medicine.name.trim(),
         dosage: medicine.dosage.trim(),
-        schedule: medicine.schedule,
-        mealTiming: medicine.mealTiming,
+        schedule: sanitizeScheduleForPayload(medicine.schedule),
+        mealTiming: DEFAULT_MEAL_TIMING,
       }))
       .filter((medicine) => medicine.name);
 
@@ -590,52 +642,74 @@ function AddPrescriptionPage() {
                       </div>
                       <div>
                         <p className="text-xs uppercase tracking-[0.3em] text-gray-400 mb-2">
-                          Timing
+                          Schedule & food timing
                         </p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid gap-3 md:grid-cols-3">
                           {TIME_SLOTS.map((slot) => {
-                            const active = medicine.schedule?.[slot.key];
+                            const slotState = medicine.schedule?.[slot.key] || {
+                              active: false,
+                              mealTiming: DEFAULT_MEAL_TIMING,
+                            };
+                            const active = Boolean(slotState.active);
+                            const mealLabel =
+                              MEAL_OPTIONS.find(
+                                (option) => option.key === slotState.mealTiming
+                              )?.label || "After food";
                             return (
-                              <button
-                                key={slot.key}
-                                type="button"
-                                onClick={() =>
-                                  toggleMedicineTimeSlot(index, slot.key)
-                                }
-                                className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${
-                                  active
-                                    ? "bg-blue-600 text-white border-transparent"
-                                    : "bg-white text-gray-600 border-gray-200 hover:border-blue-200"
-                                }`}
-                              >
-                                {slot.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.3em] text-gray-400 mb-2">
-                          With food
-                        </p>
-                        <div className="flex gap-2">
-                          {MEAL_OPTIONS.map((option) => {
-                            const active = medicine.mealTiming === option.key;
-                            return (
-                              <button
-                                key={option.key}
-                                type="button"
-                                onClick={() =>
-                                  setMedicineMealTiming(index, option.key)
-                                }
-                                className={`px-3 py-1 rounded-full text-xs font-semibold border transition ${
-                                  active
-                                    ? "bg-emerald-600 text-white border-transparent"
-                                    : "bg-white text-gray-600 border-gray-200 hover:border-emerald-200"
-                                }`}
-                              >
-                                {option.label}
-                              </button>
+                              <div key={slot.key} className="space-y-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    toggleMedicineTimeSlot(index, slot.key)
+                                  }
+                                  className={`w-full rounded-2xl border px-3 py-2 text-xs font-semibold text-left shadow-sm transition ${
+                                    active
+                                      ? "border-blue-500 bg-blue-600 text-white"
+                                      : "border-gray-200 bg-white text-gray-600 hover:border-blue-300"
+                                  }`}
+                                >
+                                  <span className="block">{slot.label}</span>
+                                  {active && (
+                                    <span className="text-[10px] uppercase tracking-[0.4em] text-white/80">
+                                      {mealLabel}
+                                    </span>
+                                  )}
+                                  {!active && (
+                                    <span className="text-[10px] uppercase tracking-[0.4em] text-gray-400">
+                                      Tap to set food timing
+                                    </span>
+                                  )}
+                                </button>
+                                {active ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {MEAL_OPTIONS.map((option) => (
+                                      <button
+                                        key={option.key}
+                                        type="button"
+                                        onClick={() =>
+                                          setMedicineMealTiming(
+                                            index,
+                                            slot.key,
+                                            option.key
+                                          )
+                                        }
+                                        className={`px-2 py-1 text-[10px] font-semibold rounded-full border transition ${
+                                          slotState.mealTiming === option.key
+                                            ? "bg-emerald-600 border-transparent text-white"
+                                            : "bg-white border-gray-200 text-gray-600 hover:border-emerald-200"
+                                        }`}
+                                      >
+                                        {option.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-[10px] text-slate-400">
+                                    Enable the time slot to choose before/after
+                                    food
+                                  </p>
+                                )}
+                              </div>
                             );
                           })}
                         </div>
