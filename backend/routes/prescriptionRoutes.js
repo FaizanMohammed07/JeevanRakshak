@@ -6,6 +6,7 @@ import {
   getPrescriptionsForPatient,
   diseasesByArea,
   addPrescriptionImagesOnly,
+  generatePrescriptionSpeech,
 } from "../controllers/prescriptionController.js";
 import {
   allowDoctorsOnly,
@@ -36,6 +37,13 @@ router.get(
   protect,
   allowRoles("doctor", "patient"),
   getPrescriptionsForPatient
+);
+
+router.get(
+  "/:prescriptionId/tts",
+  protect,
+  allowRoles("patient"),
+  generatePrescriptionSpeech
 );
 
 router.get("/diseases", diseasesByArea);

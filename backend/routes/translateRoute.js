@@ -190,7 +190,10 @@ Rules:
     if (!resp.ok) {
       console.error("OpenAI error:", data);
       // fallback: return original texts to avoid breaking UI
-      return res.status(resp.status || 500).json({ translations: texts });
+      return res.status(200).json({
+        translations: texts,
+        warning: `OpenAI responded with ${resp.status}`,
+      });
     }
 
     // Extract assistant content
@@ -233,7 +236,7 @@ Rules:
       missingIndex.forEach((idx, i) => {
         resultsFromCache[idx] = missingTexts[i];
       });
-      return res.json({ translations: resultsFromCache });
+      return res.status(200).json({ translations: resultsFromCache });
     }
 
     // translations correspond to missingTexts
@@ -373,21 +376,22 @@ Rules:
           /* ignore cache save errors */
         }
 
-        return res.json({ translations: perItem });
+        return res.status(200).json({ translations: perItem });
       }
 
       // For large batches, avoid many calls; return originals
-      return res.json({ translations: texts });
+      return res.status(200).json({ translations: texts });
     }
 
     // Success - return the full translations array (in original order)
-    return res.json({ translations: fullTranslations });
+    return res.status(200).json({ translations: fullTranslations });
   } catch (err) {
     console.error("Translation route error:", err);
     // safe fallback so frontend continues to work
-    return res
-      .status(500)
-      .json({ error: "Translation failed", translations: texts });
+    return res.status(200).json({
+      error: "Translation failed",
+      translations: texts,
+    });
   }
 });
 
