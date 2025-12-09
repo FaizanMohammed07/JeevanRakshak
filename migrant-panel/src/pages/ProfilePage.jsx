@@ -330,7 +330,7 @@ export default function ProfilePage() {
             </button>
 
             <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://localhost:5174/patients/${patient.phoneNumber}`}
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://motorzan.com/patients/${patient.phoneNumber}`}
               alt="QR Code"
               className="rounded-xl"
             />
