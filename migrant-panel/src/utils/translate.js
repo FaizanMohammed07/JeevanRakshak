@@ -81,15 +81,27 @@ export async function translateBatch(texts = [], lang = "en") {
 
   try {
     // 2) Call backend
-    const response = await fetch("http://localhost:8080/api/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      // ⭐ IMPORTANT: Backend expects {texts, target}
-      body: JSON.stringify({
-        texts: missingTexts,
-        target: lang,
-      }),
-    });
+    // const response = await fetch("http://localhost:8080/api/translate", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   // ⭐ IMPORTANT: Backend expects {texts, target}
+    //   body: JSON.stringify({
+    //     texts: missingTexts,
+    //     target: lang,
+    //   }),
+    // });
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/translate`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // ⭐ IMPORTANT: Backend expects {texts, target}
+        body: JSON.stringify({
+          texts: missingTexts,
+          target: lang,
+        }),
+      }
+    );
 
     const json = await response.json();
 

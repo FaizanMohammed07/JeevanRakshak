@@ -43,9 +43,14 @@ export default function useTts() {
   }, []);
 
   const speakServer = useCallback(async (text, lang) => {
-    const url = `http://localhost:8080/api/tts?text=${encodeURIComponent(
-      text
-    )}&lang=${encodeURIComponent(lang)}`;
+    // const url = `http://localhost:8080/api/tts?text=${encodeURIComponent(
+    //   text
+    // )}&lang=${encodeURIComponent(lang)}`;
+    const url = `${
+      import.meta.env.VITE_API_URL
+    }/api/tts?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(
+      lang
+    )}`;
     const res = await fetch(url, {
       method: "GET",
       headers: { Accept: "application/json" },
@@ -57,9 +62,12 @@ export default function useTts() {
     const json = await res.json();
     if (!json.url) throw new Error("No audio url returned");
     // ensure absolute URL (backend returns relative path like '/tts-audio/<file>')
+    // const audioUrl = json.url.startsWith("http")
+    //   ? json.url
+    //   : `http://localhost:8080${json.url}`;
     const audioUrl = json.url.startsWith("http")
       ? json.url
-      : `http://localhost:8080${json.url}`;
+      : `${import.meta.env.VITE_API_URL}${json.url}`;
     // play
     return new Promise((resolve, reject) => {
       const audio = new Audio(audioUrl);
