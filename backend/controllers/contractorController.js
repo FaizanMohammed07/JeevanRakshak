@@ -278,6 +278,46 @@ export const getWorker = async (req, res) => {
   }
 };
 
+// Update an existing worker's location & address fields (contractor-scoped)
+export const updateWorker = async (req, res) => {
+  try {
+    const contractor = req.contractor;
+    const { workerId } = req.params;
+    if (!contractor)
+      return res.status(403).json({ msg: "Contractor credentials required" });
+    if (!workerId) return res.status(400).json({ msg: "Worker ID required" });
+
+    const { district, taluk, village, address } = req.body;
+
+    const update = {};
+    if (district !== undefined) update.district = district;
+    if (taluk !== undefined) update.taluk = taluk;
+    if (village !== undefined) update.village = village;
+    if (address !== undefined) update.address = address;
+
+    const worker = await Patient.findOneAndUpdate(
+      { _id: workerId, contractor: contractor._id },
+      { $set: update },
+      { new: true }
+    )
+      .select("-password -passwordConfirm")
+      .populate({
+        path: "contractor",
+        select: "name companyName phoneNumber employer",
+        populate: { path: "employer", select: "name companyName phoneNumber" },
+      });
+
+    if (!worker) {
+      return res.status(404).json({ msg: "Worker not found or not assigned to you" });
+    }
+
+    res.json({ msg: "Worker updated successfully", worker });
+  } catch (err) {
+    console.error("updateWorker error", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const removeWorker = async (req, res) => {
   try {
     const contractor = req.contractor;

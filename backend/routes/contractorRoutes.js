@@ -5,6 +5,7 @@ import {
   addWorker,
   listWorkers,
   getWorker,
+  updateWorker,
   removeWorker,
   fetchContractorProfile,
   linkWorkerByPhone,
@@ -29,6 +30,7 @@ router.post("/workers", addWorker);
 router.post("/workers/link", linkWorkerByPhone);
 router.get("/workers", listWorkers);
 router.get("/workers/:workerId", getWorker);
+router.put("/workers/:workerId", updateWorker);
 router.delete("/workers/:workerId", removeWorker);
 // Clear contagious alert on a worker
 router.post("/workers/:workerId/clear-alert", clearWorkerAlert);

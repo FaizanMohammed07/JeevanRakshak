@@ -115,6 +115,24 @@ export function PatientsProvider({ children }) {
       taluk: patient.taluk || "",
       village: patient.village || "",
       address: patient.address || "",
+      // Contractor / Employer metadata (populated by backend when available)
+      contractor:
+        patient.contractor && typeof patient.contractor === "object"
+          ? {
+              id: patient.contractor._id || patient.contractor.id,
+              name: patient.contractor.name,
+              companyName: patient.contractor.companyName || patient.contractor.contractorCompany,
+              phoneNumber: patient.contractor.phoneNumber,
+              employer:
+                patient.contractor.employer && typeof patient.contractor.employer === "object"
+                  ? {
+                      id: patient.contractor.employer._id || patient.contractor.employer.id,
+                      name: patient.contractor.employer.name,
+                      companyName: patient.contractor.employer.companyName,
+                    }
+                  : null,
+            }
+          : null,
     };
   }, []);
 

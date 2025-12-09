@@ -1,6 +1,8 @@
 import { performance } from "node:perf_hooks";
 import Prescription from "../models/prescriptionModel.js";
 import Patient from "../models/patientModel.js";
+import Contractor from "../models/contractorModel.js";
+import Employer from "../models/employerModel.js";
 
 // Central controller for disease analytics powering the government dashboards.
 // All business logic remains here so other routes can stay thin.....
@@ -1115,6 +1117,118 @@ const getKeralaRiskMap = async (req, res) => {
   }
 };
 
+/**
+ * Return list of employers (id + name) for govt UI selection
+ */
+const getEmployersList = async (req, res) => {
+  try {
+    const employers = await Employer.find({}, "name").lean();
+    res.json({ employers: employers.map((e) => ({ id: e._id.toString(), name: e.name })) });
+  } catch (err) {
+    console.error("getEmployersList error", err);
+    res.status(500).json({ message: "Unable to fetch employers" });
+  }
+};
+
+/**
+ * Employer-level analysis: diseases and districts for migrants under contractors linked to an employer.
+ * Route: GET /disease/employer/:employerId/analysis?rangeDays=30
+ */
+const getEmployerAnalysis = async (req, res) => {
+  const startedAt = performance.now();
+  try {
+    const { employerId } = req.params;
+    if (!employerId) return res.status(400).json({ message: "employerId is required" });
+
+    const rangeDays = sanitizeRangeDays(req.query.rangeDays, 30);
+    const { start, end } = getDateWindow(rangeDays, 0);
+
+    // Find contractors for employer
+    const contractors = await Contractor.find({ employer: employerId }).select("_id name").lean();
+    const contractorIds = contractors.map((c) => c._id);
+
+    // Find patients under these contractors
+    const patients = await Patient.find(
+      { contractor: { $in: contractorIds } },
+      "_id district name contractor contagiousAlert"
+    ).lean();
+
+    const patientIds = patients.map((p) => p._id);
+
+    // No patients => return empty structure
+    if (!patientIds.length) {
+      const payload = {
+        employerId,
+        rangeDays,
+        totalPatients: 0,
+        diseases: [],
+        districts: [],
+        contractors: contractors.map((c) => ({ id: c._id.toString(), name: c.name, patientsCount: 0, activeAlerts: 0 })),
+      };
+      return res.json(payload);
+    }
+
+    // Fetch prescriptions within window for these patients
+    const prescriptions = await Prescription.find(
+      { patient: { $in: patientIds }, dateOfIssue: { $gte: start, $lte: end } },
+      "patient confirmedDisease suspectedDisease contagious"
+    )
+      .populate({ path: "patient", select: "district name contractor" })
+      .lean();
+
+    // Aggregate diseases and districts
+    const diseaseMap = new Map();
+    const districtMap = new Map();
+
+    prescriptions.forEach((rec) => {
+      const meta = getDiseaseMeta(rec);
+      const diseaseLabel = meta.label || "Unspecified";
+      diseaseMap.set(diseaseLabel, (diseaseMap.get(diseaseLabel) || 0) + 1);
+
+      const district = toTitleCase(normalizeText(rec?.patient?.district, FALLBACK_STRINGS.district));
+      districtMap.set(district, (districtMap.get(district) || 0) + 1);
+    });
+
+    // Contractor level stats
+    const contractorStats = contractors.map((c) => ({ id: c._id.toString(), name: c.name, patientsCount: 0, activeAlerts: 0 }));
+    const contractorIndex = new Map(contractorStats.map((cs) => [cs.id, cs]));
+
+    patients.forEach((p) => {
+      const cid = p.contractor?.toString?.() || "";
+      const key = cid || "unknown";
+      const cs = contractorIndex.get(key);
+      if (cs) cs.patientsCount += 1;
+      if (p.contagiousAlert && p.contagiousAlert.active) {
+        if (cs) cs.activeAlerts += 1;
+      }
+    });
+
+    // Build sorted arrays
+    const diseases = Array.from(diseaseMap.entries())
+      .map(([disease, count]) => ({ disease, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const districts = Array.from(districtMap.entries())
+      .map(([district, count]) => ({ district, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const result = {
+      employerId,
+      rangeDays,
+      totalPatients: patientIds.length,
+      diseases,
+      districts,
+      contractors: contractorStats,
+    };
+
+    res.json(result);
+    logSlowController("getEmployerAnalysis", startedAt);
+  } catch (err) {
+    console.error("getEmployerAnalysis error", err);
+    res.status(500).json({ message: "Unable to compute employer analysis" });
+  }
+};
+
 export {
   getDiseaseDistricts,
   getDistrictTaluks,
@@ -1122,4 +1236,8 @@ export {
   getActiveDiseaseCases,
   getTimelineStats,
   getKeralaRiskMap,
+  // Employer analysis exports
+  getEmployersList,
+  getEmployerAnalysis,
 };
+

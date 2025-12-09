@@ -7,6 +7,9 @@ import {
   linkContractorByPhone,
   unlinkContractor,
   fetchEmployerProfile,
+  broadcastToContractors,
+  getContractorDetails,
+  pingContractor,
 } from "../controllers/employerController.js";
 import { protect, allowEmployersOnly } from "../middleware/protect.js";
 
@@ -31,6 +34,26 @@ router.delete(
   protect,
   allowEmployersOnly,
   unlinkContractor
+);
+router.post(
+  "/contractors/broadcast",
+  protect,
+  allowEmployersOnly,
+  broadcastToContractors
+);
+
+router.get(
+  "/contractors/:contractorId",
+  protect,
+  allowEmployersOnly,
+  getContractorDetails
+);
+
+router.post(
+  "/contractors/:contractorId/ping",
+  protect,
+  allowEmployersOnly,
+  pingContractor
 );
 
 export default router;

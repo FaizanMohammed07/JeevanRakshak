@@ -12,3 +12,9 @@ export async function fetchHeroAnnouncements(
   const { data } = await api.get(`/camps/announcements?${params.toString()}`);
   return data?.announcements ?? [];
 }
+
+export async function publishAnnouncement(payload = {}) {
+  // payload: { title, message, audience, priority, districts }
+  const { data } = await api.post(`/camps/announcements`, payload);
+  return data;
+}

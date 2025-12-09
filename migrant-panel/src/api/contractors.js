@@ -42,6 +42,12 @@ export const listWorkers = async () => {
   return data;
 };
 
+// Get a single worker by id
+export const getWorker = async (workerId) => {
+  const { data } = await api.get(`/contractors/workers/${workerId}`);
+  return data;
+};
+
 // Create a new worker under current contractor
 export const addWorker = async (worker) => {
   const { data } = await api.post("/contractors/workers", worker);
@@ -57,6 +63,12 @@ export const linkWorkerByPhone = async (phoneNumber) => {
 // Remove a worker by id
 export const removeWorker = async (workerId) => {
   const { data } = await api.delete(`/contractors/workers/${workerId}`);
+  return data;
+};
+
+// Update a worker's details (address/village/taluk/district)
+export const updateWorker = async (workerId, payload) => {
+  const { data } = await api.put(`/contractors/workers/${workerId}`, payload);
   return data;
 };
 

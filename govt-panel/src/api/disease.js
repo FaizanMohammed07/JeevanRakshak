@@ -32,3 +32,13 @@ export function fetchActiveDiseaseCases(params) {
 export function fetchKeralaRiskMap() {
   return apiClient("/disease/risk-map");
 }
+
+export function fetchEmployers() {
+  return apiClient('/disease/employers');
+}
+
+export function fetchEmployerAnalysis(employerId, params = {}) {
+  if (!employerId) throw new Error('employerId is required');
+  const qp = buildQuery(params);
+  return apiClient(`/disease/employer/${employerId}/analysis${qp}`);
+}

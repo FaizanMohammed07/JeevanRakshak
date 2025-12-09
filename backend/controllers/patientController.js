@@ -91,9 +91,14 @@ export const getPatientProfile = async (req, res) => {
       ? { _id: identifier }
       : { phoneNumber: identifier };
 
-    const patient = await Patient.findOne(query).select(
-      "-password -passwordConfirm"
-    );
+    // Populate contractor and contractor.employer so frontend can display employer/contractor metadata
+    const patient = await Patient.findOne(query)
+      .select("-password -passwordConfirm")
+      .populate({
+        path: "contractor",
+        select: "name companyName phoneNumber employer",
+        populate: { path: "employer", select: "name companyName phoneNumber" },
+      });
 
     if (!patient) {
       return res.status(404).json({ msg: "Patient not found" });

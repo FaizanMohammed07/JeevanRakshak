@@ -71,13 +71,19 @@ export default function EmployerContractors() {
                 <div className="font-semibold">{c.name}</div>
                 <div className="text-sm text-slate-600">{c.phoneNumber}</div>
               </div>
-              <div>
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => handleUnlink(c._id)}
                   className="text-red-600"
                 >
                   Unlink
                 </button>
+                <a
+                  href={`/employer/contractors/${c._id}`}
+                  className="text-sky-600 underline text-sm"
+                >
+                  View
+                </a>
               </div>
             </div>
           ))

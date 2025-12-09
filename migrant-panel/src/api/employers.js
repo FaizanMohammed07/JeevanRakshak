@@ -45,6 +45,24 @@ export const unlinkContractor = async (contractorId) => {
   return data;
 };
 
+export const broadcastToContractors = async ({ title, message }) => {
+  const { data } = await api.post(`/employers/contractors/broadcast`, {
+    title,
+    message,
+  });
+  return data;
+};
+
+export const fetchContractorDetails = async (contractorId) => {
+  const { data } = await api.get(`/employers/contractors/${contractorId}`);
+  return data;
+};
+
+export const pingContractorById = async (contractorId, message) => {
+  const { data } = await api.post(`/employers/contractors/${contractorId}/ping`, { message });
+  return data;
+};
+
 export default {
   loginEmployer,
   signupEmployer,

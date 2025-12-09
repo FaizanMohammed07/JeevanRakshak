@@ -206,6 +206,27 @@ function PatientDetailsPage() {
                 </h3>
               </div>
 
+              {/* Contractor / Employer info */}
+              {patient.contractor && (
+                <div className="mt-4 bg-gray-50 border border-gray-100 p-4 rounded-lg">
+                  <h4 className="text-sm font-semibold text-gray-800">Linked Partner</h4>
+                  <div className="text-sm text-gray-700 mt-2">
+                    Contractor: {patient.contractor.name || "—"}
+                    {patient.contractor.companyName && (
+                      <span className="ml-2 text-slate-500">({patient.contractor.companyName})</span>
+                    )}
+                  </div>
+                  {patient.contractor.employer && (
+                    <div className="text-sm text-gray-700 mt-1">
+                      Employer: {patient.contractor.employer.name || "—"}
+                      {patient.contractor.employer.companyName && (
+                        <span className="ml-2 text-slate-500">({patient.contractor.employer.companyName})</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {previousDiseases.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {previousDiseases.map((disease, index) => (
@@ -389,6 +410,7 @@ function PatientDetailsPage() {
                           <div className="flex gap-3 mt-2">
                             {rx.images.map((img, idx) => (
                               <button
+                          {/* Contractor / Employer info */}
                                 key={idx}
                                 onClick={() => {
                                   setSelectedFile(img);

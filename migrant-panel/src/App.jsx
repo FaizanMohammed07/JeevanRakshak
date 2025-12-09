@@ -37,10 +37,13 @@ import DemoVideoPage from "./pages/DemoVideoPage";
 import ContractorDashboard from "./pages/ContractorDashboard";
 import ContractorPatients from "./pages/ContractorPatients";
 import ContractorPatientStatus from "./pages/ContractorPatientStatus";
+import ManageWorkers from "./pages/ManageWorkers";
+import EditWorker from "./pages/EditWorker";
 import EmployerLogin from "./pages/EmployerLogin";
 import EmployerSignup from "./pages/EmployerSignup";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import EmployerContractors from "./pages/EmployerContractors";
+import EmployerContractorDetails from "./pages/EmployerContractorDetails";
 
 // --- Component Imports ---
 import LanguageSwitcher from "./components/LanguageSwitcher";
@@ -97,6 +100,8 @@ function App() {
             <Route index element={<ContractorDashboard />} />
             <Route path="patients" element={<ContractorPatients />} />
             <Route path="status" element={<ContractorPatientStatus />} />
+            <Route path="manage-workers" element={<ManageWorkers />} />
+            <Route path="manage-workers/:workerId" element={<EditWorker />} />
           </Route>
 
           {/* ================= EMPLOYER PORTAL ================= */}
@@ -128,6 +133,7 @@ function App() {
           >
             <Route index element={<EmployerDashboard />} />
             <Route path="contractors" element={<EmployerContractors />} />
+            <Route path="contractors/:contractorId" element={<EmployerContractorDetails />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -301,6 +307,18 @@ function ContractorLayout() {
                 }
               >
                 Patient Status
+              </NavLink>
+              <NavLink
+                to="/contractor/manage-workers"
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-2 text-sm font-semibold ${
+                    isActive
+                      ? "bg-sky-600 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`
+                }
+              >
+                Update Worker Info
               </NavLink>
             </nav>
           </div>
