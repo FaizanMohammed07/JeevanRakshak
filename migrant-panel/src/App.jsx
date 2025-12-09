@@ -27,10 +27,6 @@ import ProfilePage from "./pages/ProfilePage";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
 import LabReportsPage from "./pages/LabReportsPage";
 import LoginPage from "./pages/Login";
-import ContractorDashboard from "./pages/ContractorDashboard";
-import ContractorPatients from "./pages/ContractorPatients";
-import ContractorPatientStatus from "./pages/ContractorPatientStatus";
-import { ContractorProvider } from "./context/ContractorContext";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import NearbyHospitals from "./pages/NearbyHospitals";
 import DemoVideoPage from "./pages/DemoVideoPage";
@@ -78,21 +74,6 @@ function App() {
         <PatientsProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            {/* Contractor area */}
-            <Route
-              path="/contractor"
-              element={
-                <ProtectedRoute>
-                  <ContractorProvider>
-                    <ContractorLayout />
-                  </ContractorProvider>
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<ContractorDashboard />} />
-              <Route path="patients" element={<ContractorPatients />} />
-              <Route path="status" element={<ContractorPatientStatus />} />
-            </Route>
             <Route
               path="/"
               element={

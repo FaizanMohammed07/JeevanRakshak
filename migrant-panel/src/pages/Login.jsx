@@ -8,6 +8,8 @@ import {
   User,
   UserPlus,
 } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { ShieldCheck, LockKeyhole, Phone } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/LanguageSwitcher";
@@ -340,6 +342,12 @@ export default function LoginPage() {
                 ? "Sign In"
                 : t("login.signIn")}
             </button>
+            <p className="mt-4 text-center text-sm text-slate-500">
+              {t("login.createAccountPrompt")}{" "}
+              <Link className="font-semibold text-slate-900" to="/signup">
+                {t("login.signUpLink")}
+              </Link>
+            </p>
           </div>
 
           {/* Bottom Section: Footer Actions */}

@@ -15,10 +15,12 @@ function GovtLogin() {
     e.preventDefault();
 
     setErrorMsg("");
+    // console.log(import.meta.env.VITE_API_URL);
 
     try {
       await axios.post(
-        "http://localhost:3030/api/govt/login",
+        "http://localhost:8080/api/govt/login",
+        // `${import.meta.env.VITE_API_URL}/api/govt/login`,
         { govtId, password },
         { withCredentials: true }
       );

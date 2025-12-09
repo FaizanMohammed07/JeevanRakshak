@@ -9,6 +9,7 @@ import morgan from "morgan";
 
 import patientRoutes from "./routes/patientRoutes.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
+import employerRoutes from "./routes/employerRoutes.js";
 import reportAssistantRoutes from "./routes/reportAssistantRoutes.js";
 import prescriptionRoutes from "./routes/prescriptionRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
@@ -28,7 +29,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TTS_STATIC_DIR = path.join(__dirname, "tts-files");
 const app = express();
-const port = 3030;
+const port = process.env.PORT || 8080;
 
 // ---------------------------------------------
 // 2) CORS SETTINGS
@@ -37,6 +38,7 @@ const allowedOrigins = [
   "http://localhost:5174",
   "http://localhost:5173",
   "http://localhost:5175",
+  "https://motorzan.com",
 ];
 
 app.use(
@@ -53,6 +55,14 @@ app.use(
     credentials: true,
   })
 );
+// app.use(
+//   cors({
+//     origin: "*",
+//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     credentials: false,
+//   })
+// );
 
 // ---------------------------------------------
 // 3) MIDDLEWARE
@@ -105,6 +115,7 @@ app.use(
 // ---------------------------------------------
 app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
+app.use("/api/employers", employerRoutes);
 app.use("/api/report-assistant", reportAssistantRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/reports", reportRoutes);
