@@ -19,8 +19,8 @@ function GovtLogin() {
 
     try {
       await axios.post(
-        "http://localhost:8080/api/govt/login",
-        // `${import.meta.env.VITE_API_URL}/api/govt/login`,
+        // "http://localhost:8080/api/govt/login",
+        `${import.meta.env.VITE_API_URL}/api/govt/login`,
         { govtId, password },
         { withCredentials: true }
       );

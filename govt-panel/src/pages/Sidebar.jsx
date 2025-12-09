@@ -23,9 +23,15 @@ function Sidebar() {
     let mounted = true;
     const fetchGovt = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/govt/check", {
-          withCredentials: true,
-        });
+        // const res = await axios.get("http://localhost:8080/api/govt/check", {
+        //   withCredentials: true,
+        // });
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/govt/check`,
+          {
+            withCredentials: true,
+          }
+        );
         if (mounted) setGovtUser(res.data.govt);
       } catch (err) {
         if (mounted) setGovtUser(null);
@@ -39,7 +45,10 @@ function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      await axios.get("http://localhost:8080/api/govt/logout", {
+      // await axios.get("http://localhost:8080/api/govt/logout", {
+      //   withCredentials: true,
+      // });
+      await axios.get(`${import.meta.env.VITE_API_URL}/api/govt/logout`, {
         withCredentials: true,
       });
       setGovtUser(null);

@@ -30,6 +30,7 @@ export default function PreviousRecordsPage() {
         const data = res.data;
 
         setRecords(data.prescriptions || []);
+
         setTotalCount(data.count || 0);
         setUniquePatients(data.uniquePatients || 0);
       } catch (err) {
@@ -41,6 +42,7 @@ export default function PreviousRecordsPage() {
     };
 
     loadRecords();
+    // console.log("hi");
   }, [doctor]);
 
   return (
@@ -120,17 +122,13 @@ export default function PreviousRecordsPage() {
                   <div>
                     <div className="flex items-center gap-2 text-gray-900 font-semibold text-xl mb-1">
                       <User className="h-5 w-5 text-blue-600" />
-                      {rec.patient.name}
+                      {rec.patient?.name}
                     </div>
 
                     <p className="text-sm text-gray-500">
-                      Age: {rec.patient.age} • {rec.patient.district}
+                      Age: {rec.patient?.age}
                     </p>
                   </div>
-
-                  {/* <div className="text-xs text-gray-500 mt-4 md:mt-auto">
-                    Tap to open patient profile →
-                  </div> */}
                 </div>
 
                 {/* MIDDLE COLUMN — MEDICAL DETAILS */}
