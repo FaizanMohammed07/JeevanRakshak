@@ -39,6 +39,8 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5175",
   "https://motorzan.com",
+  "https://doctorpanel-jeevanrakshak.onrender.com",
+  "https://migrant-jeevanrakshak.onrender.com",
 ];
 
 app.use(
