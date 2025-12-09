@@ -9,6 +9,7 @@ import morgan from "morgan";
 
 import patientRoutes from "./routes/patientRoutes.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
+import employerRoutes from "./routes/employerRoutes.js";
 import reportAssistantRoutes from "./routes/reportAssistantRoutes.js";
 import prescriptionRoutes from "./routes/prescriptionRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
@@ -104,6 +105,7 @@ app.use(
 // ---------------------------------------------
 app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
+app.use("/api/employers", employerRoutes);
 app.use("/api/report-assistant", reportAssistantRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/reports", reportRoutes);
