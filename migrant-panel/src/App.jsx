@@ -6,8 +6,12 @@ import {
   Outlet,
   Route,
   Routes,
+  useNavigate,
 } from "react-router-dom";
-
+import { PatientsProvider } from "./context/PatientsContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ContractorProvider } from "./context/ContractorContext";
+import { EmployerProvider, useEmployer } from "./context/EmployerContext";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
@@ -20,94 +24,301 @@ import {
   Languages,
   PlayCircle,
 } from "lucide-react";
-import { PatientsProvider } from "./context/PatientsContext";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+
+// --- Page Imports ---
 import Dashboard from "./pages/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
 import LabReportsPage from "./pages/LabReportsPage";
 import LoginPage from "./pages/Login";
 import SignupPage from "./pages/Signup";
-import LanguageSwitcher from "./components/LanguageSwitcher";
 import NearbyHospitals from "./pages/NearbyHospitals";
 import DemoVideoPage from "./pages/DemoVideoPage";
+import ContractorDashboard from "./pages/ContractorDashboard";
+import ContractorPatients from "./pages/ContractorPatients";
+import ContractorPatientStatus from "./pages/ContractorPatientStatus";
+import EmployerLogin from "./pages/EmployerLogin";
+import EmployerSignup from "./pages/EmployerSignup";
+import EmployerDashboard from "./pages/EmployerDashboard";
+import EmployerContractors from "./pages/EmployerContractors";
+
+// --- Component Imports ---
+import LanguageSwitcher from "./components/LanguageSwitcher";
 import { translateLocationField } from "./utils/locationTranslations";
 
 const navItems = [
-  {
-    labelKey: "nav.dashboard",
-    to: "/",
-    icon: LayoutDashboard,
-    end: true,
-  },
-  {
-    labelKey: "DemoVideo",
-    to: "/demo-video",
-    icon: PlayCircle, // You can import any icon
-  },
-
-  {
-    labelKey: "nav.profile",
-    to: "/profile",
-    icon: UserRound,
-  },
-  {
-    labelKey: "nav.prescriptions",
-    to: "/prescriptions",
-    icon: FileText,
-  },
-  {
-    labelKey: "nav.labReports",
-    to: "/lab-reports",
-    icon: FlaskConical,
-  },
-  {
-    labelKey: "nav.nearbyHospitals",
-    to: "/nearby-hospitals",
-    icon: MapPin,
-  },
+  { labelKey: "nav.dashboard", to: "/", icon: LayoutDashboard, end: true },
+  { labelKey: "DemoVideo", to: "/demo-video", icon: PlayCircle },
+  { labelKey: "nav.profile", to: "/profile", icon: UserRound },
+  { labelKey: "nav.prescriptions", to: "/prescriptions", icon: FileText },
+  { labelKey: "nav.labReports", to: "/lab-reports", icon: FlaskConical },
+  { labelKey: "nav.nearbyHospitals", to: "/nearby-hospitals", icon: MapPin },
 ];
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <PatientsProvider>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+
+          {/* ================= PATIENT PORTAL ================= */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                {/* CRITICAL: PatientsProvider is now scoped only to patient routes */}
+                <PatientsProvider>
                   <ShellLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Dashboard />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="prescriptions" element={<PrescriptionsPage />} />
-              <Route path="lab-reports" element={<LabReportsPage />} />
-              <Route path="nearby-hospitals" element={<NearbyHospitals />} />
-              <Route path="demo-video" element={<DemoVideoPage />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </PatientsProvider>
+                </PatientsProvider>
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="prescriptions" element={<PrescriptionsPage />} />
+            <Route path="lab-reports" element={<LabReportsPage />} />
+            <Route path="nearby-hospitals" element={<NearbyHospitals />} />
+            <Route path="demo-video" element={<DemoVideoPage />} />
+          </Route>
+
+          {/* ================= CONTRACTOR PORTAL ================= */}
+          <Route
+            path="/contractor"
+            element={
+              <ContractorProtectedRoute>
+                <ContractorProvider>
+                  <ContractorLayout />
+                </ContractorProvider>
+              </ContractorProtectedRoute>
+            }
+          >
+            <Route index element={<ContractorDashboard />} />
+            <Route path="patients" element={<ContractorPatients />} />
+            <Route path="status" element={<ContractorPatientStatus />} />
+          </Route>
+
+          {/* ================= EMPLOYER PORTAL ================= */}
+          <Route
+            path="/employer/login"
+            element={
+              <EmployerProvider>
+                <EmployerLogin />
+              </EmployerProvider>
+            }
+          />
+          <Route
+            path="/employer/signup"
+            element={
+              <EmployerProvider>
+                <EmployerSignup />
+              </EmployerProvider>
+            }
+          />
+          <Route
+            path="/employer"
+            element={
+              <EmployerProvider>
+                <EmployerProtectedRoute>
+                  <EmployerLayout />
+                </EmployerProtectedRoute>
+              </EmployerProvider>
+            }
+          >
+            <Route index element={<EmployerDashboard />} />
+            <Route path="contractors" element={<EmployerContractors />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </AuthProvider>
     </BrowserRouter>
   );
 }
 
 export default App;
-import { useNavigate } from "react-router-dom";
+
+/* ========================================================================
+                            HELPER COMPONENTS
+   ======================================================================== */
+
+// --- 1. ROUTE GUARDS ---
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return children;
+}
+
+function ContractorProtectedRoute({ children }) {
+  const { isAuthenticated, loading, role } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (!isAuthenticated || role !== "contractor")
+    return <Navigate to="/login" replace />;
+  return children;
+}
+
+function EmployerProtectedRoute({ children }) {
+  const { loading, employer } = useEmployer();
+  if (loading) return <LoadingScreen />;
+  if (!employer) return <Navigate to="/employer/login" replace />;
+  return children;
+}
+
+function LoadingScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">
+      Checking session...
+    </div>
+  );
+}
+
+// --- 2. LAYOUTS ---
+
+function EmployerLayout() {
+  const { logout, employer } = useEmployer();
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="sticky top-0 z-30 border-b bg-white/95 p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Employer Portal</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium">
+              {employer?.name || "Employer"}
+            </span>
+            <button
+              onClick={() => logout()}
+              className="rounded-lg bg-red-600 px-3 py-1 text-white text-sm"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex w-full gap-6 p-6">
+        <aside className="w-60 hidden lg:block">
+          <div className="rounded-lg bg-white p-4 shadow-sm">
+            <nav className="flex flex-col gap-2">
+              <NavLink
+                to="/employer"
+                end
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-2 text-sm font-semibold ${
+                    isActive
+                      ? "bg-sky-600 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`
+                }
+              >
+                Dashboard
+              </NavLink>
+              <NavLink
+                to="/employer/contractors"
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-2 text-sm font-semibold ${
+                    isActive
+                      ? "bg-sky-600 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`
+                }
+              >
+                Contractors
+              </NavLink>
+            </nav>
+          </div>
+        </aside>
+        <main className="flex-1">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function ContractorLayout() {
+  const { logout, contractor } = useAuth();
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="sticky top-0 z-30 border-b bg-white/95 p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Contractor Portal</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium">
+              {contractor?.name || "Partner"}
+            </span>
+            <button
+              onClick={() => logout()}
+              className="rounded-lg bg-red-600 px-3 py-1 text-white text-sm"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex w-full gap-6 p-6">
+        <aside className="w-60 hidden lg:block">
+          <div className="rounded-lg bg-white p-4 shadow-sm">
+            <nav className="flex flex-col gap-2">
+              <NavLink
+                to="/contractor"
+                end
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-2 text-sm font-semibold ${
+                    isActive
+                      ? "bg-sky-600 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`
+                }
+              >
+                Dashboard
+              </NavLink>
+              <NavLink
+                to="/contractor/patients"
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-2 text-sm font-semibold ${
+                    isActive
+                      ? "bg-sky-600 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`
+                }
+              >
+                Manage Patients
+              </NavLink>
+              <NavLink
+                to="/contractor/status"
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-2 text-sm font-semibold ${
+                    isActive
+                      ? "bg-sky-600 text-white"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`
+                }
+              >
+                Patient Status
+              </NavLink>
+            </nav>
+          </div>
+        </aside>
+        <main className="flex-1">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
 
 function ShellLayout() {
   const navigate = useNavigate();
   const { patient, logout } = useAuth();
   const { t, i18n } = useTranslation();
   const currentLang = (i18n.language || "en").split("-")[0];
-  // prefer mapped village if available, otherwise fall back to taluk
+
   const mappedDistrictHeader = translateLocationField(
     currentLang,
     "district",
@@ -121,7 +332,6 @@ function ShellLayout() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogoutClick = () => setShowLogoutConfirm(true);
-  const handleCancelLogout = () => setShowLogoutConfirm(false);
   const handleConfirmLogout = () => {
     setShowLogoutConfirm(false);
     logout();
@@ -215,7 +425,6 @@ function ShellLayout() {
                       </span>
                       {t(item.labelKey)}
                     </span>
-                    <span className="text-xs text-slate-400">→</span>
                   </NavLink>
                 );
               })}
@@ -234,38 +443,21 @@ function ShellLayout() {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[28px] border border-sky-100 bg-white p-6 shadow-2xl">
             <div className="flex flex-col gap-4 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
-                <LogOut className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.4em] text-sky-500">
-                  {t("logout.confirmLabel")}
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-                  {
-                    t(
-                      "logout.confirmHeading"
-                    ) /* Ready to exit the Migrant Panel? */
-                  }
-                </h2>
-                <p className="mt-2 text-sm text-slate-600">
-                  {t("logout.confirmMessage")}
-                </p>
-              </div>
+              <h2 className="text-2xl font-semibold text-slate-900">
+                {t("logout.confirmHeading")}
+              </h2>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
-                  type="button"
                   onClick={handleConfirmLogout}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500"
+                  className="flex-1 rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white"
                 >
-                  {t("logout.confirmAccept") /* Yes, log me out */}
+                  {t("logout.confirmAccept")}
                 </button>
                 <button
-                  type="button"
-                  onClick={handleCancelLogout}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 rounded-2xl border bg-white px-4 py-2.5 text-sm font-semibold text-slate-700"
                 >
-                  {t("logout.confirmCancel") /* Stay signed in */}
+                  {t("logout.confirmCancel")}
                 </button>
               </div>
             </div>
@@ -274,22 +466,4 @@ function ShellLayout() {
       )}
     </div>
   );
-}
-
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">
-        Checking session...
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
 }

@@ -17,7 +17,9 @@ export const createAndSendToken = (user, statusCode, res) => {
   const serialized = serialize("jwt", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    // Allow cookies to be sent from dev servers (vite localhost). In production,
+    // set SameSite to 'none' and secure to true.
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 60 * 60 * 24 * 90,
     path: "/",
   });
