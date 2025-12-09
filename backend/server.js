@@ -41,6 +41,8 @@ const allowedOrigins = [
   "https://motorzan.com",
   "https://doctorpanel-jeevanrakshak.onrender.com",
   "https://migrant-jeevanrakshak.onrender.com",
+  "https://jeevanrakshak-govt.onrender.com",
+  "https://jeevanrakshak-doctorpanel.onrender.com",
 ];
 
 app.use(
