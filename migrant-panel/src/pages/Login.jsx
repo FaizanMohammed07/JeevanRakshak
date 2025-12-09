@@ -350,6 +350,25 @@ export default function LoginPage() {
                 </Link>
               </p>
             )}
+
+            <div className="mt-4 text-center">
+              <p className="text-sm text-slate-500">Are you an employer?</p>
+              <div className="mt-2 flex items-center justify-center gap-3">
+                <Link
+                  to="/employer/login"
+                  className="text-sm font-semibold text-slate-900"
+                >
+                  Employer Sign In
+                </Link>
+                <span className="text-slate-300">|</span>
+                <Link
+                  to="/employer/signup"
+                  className="text-sm font-semibold text-slate-900"
+                >
+                  Employer Sign Up
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Bottom Section: Footer Actions */}

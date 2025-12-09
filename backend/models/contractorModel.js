@@ -27,6 +27,11 @@ const contractorSchema = new mongoose.Schema(
     region: {
       type: String,
     },
+    employer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Employer",
+      default: null,
+    },
     password: {
       type: String,
       required: [true, "Password is required"],

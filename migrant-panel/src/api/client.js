@@ -6,7 +6,11 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("migrant-panel-token");
+  // Support multiple token keys used across panels (employer vs migrant-panel)
+  const token =
+    localStorage.getItem("migrant-panel-token") ||
+    localStorage.getItem("employer-token") ||
+    localStorage.getItem("govt-token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

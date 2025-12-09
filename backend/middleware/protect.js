@@ -183,6 +183,7 @@ import Doctor from "../models/doctorModel.js";
 import Patient from "../models/patientModel.js";
 import ReportAssistant from "../models/reportAssistantModel.js";
 import Contractor from "../models/contractorModel.js";
+import Employer from "../models/employerModel.js";
 import Govt from "../models/govtModel.js";
 
 export const protect = async (req, res, next) => {
@@ -257,6 +258,20 @@ export const protect = async (req, res, next) => {
       return next();
     }
 
+    // Employer check
+    user = await Employer.findById(userId);
+
+    if (user) {
+      req.user = user;
+      req.employer = user;
+      req.isDoctor = false;
+      req.isPatient = false;
+      req.isReportAssistant = false;
+      req.isContractor = false;
+      req.isEmployer = true;
+      return next();
+    }
+
     // If user not found in either collection
     return res.status(401).json({ msg: "User linked to token does not exist" });
   } catch (err) {
@@ -318,6 +333,15 @@ export const allowContractorsOnly = (req, res, next) => {
     return res
       .status(403)
       .json({ msg: "Only contractors can access this route" });
+
+  next();
+};
+
+export const allowEmployersOnly = (req, res, next) => {
+  if (!req.isEmployer)
+    return res
+      .status(403)
+      .json({ msg: "Only employers can access this route" });
 
   next();
 };
