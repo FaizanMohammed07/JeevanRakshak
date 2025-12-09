@@ -5,7 +5,6 @@ import { fileURLToPath } from "url";
 import Prescription from "../models/prescriptionModel.js";
 import Patient from "../models/patientModel.js";
 import { uploadCompressedImages } from "../utils/uploadS3.js";
-import translate from "@vitalets/google-translate-api";
 import Gtts from "gtts";
 
 const DEFAULT_MEAL_TIMING = "after";
@@ -165,14 +164,7 @@ const buildPrescriptionNarrative = (prescription) => {
 };
 
 const translateText = async (text, targetLang) => {
-  if (!text) return "";
-  try {
-    const result = await translate(text, { to: targetLang });
-    return result.text || "";
-  } catch (err) {
-    console.error(`translateText error for ${targetLang}:`, err);
-    throw err;
-  }
+  return text;
 };
 
 const generateAudio = (text, langCode, destination) =>
@@ -185,8 +177,7 @@ const generateAudio = (text, langCode, destination) =>
   });
 
 const findLanguageLabel = (code) =>
-  SUPPORTED_SPEECH_LANGUAGES.find((lang) => lang.code === code)?.label ||
-  code;
+  SUPPORTED_SPEECH_LANGUAGES.find((lang) => lang.code === code)?.label || code;
 
 const buildSpeechEntry = async ({
   langCode,
