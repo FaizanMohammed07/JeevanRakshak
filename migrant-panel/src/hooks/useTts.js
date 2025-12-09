@@ -43,7 +43,7 @@ export default function useTts() {
   }, []);
 
   const speakServer = useCallback(async (text, lang) => {
-    const url = `http://localhost:3030/api/tts?text=${encodeURIComponent(
+    const url = `http://localhost:8080/api/tts?text=${encodeURIComponent(
       text
     )}&lang=${encodeURIComponent(lang)}`;
     const res = await fetch(url, {
@@ -59,7 +59,7 @@ export default function useTts() {
     // ensure absolute URL (backend returns relative path like '/tts-audio/<file>')
     const audioUrl = json.url.startsWith("http")
       ? json.url
-      : `http://localhost:3030${json.url}`;
+      : `http://localhost:8080${json.url}`;
     // play
     return new Promise((resolve, reject) => {
       const audio = new Audio(audioUrl);

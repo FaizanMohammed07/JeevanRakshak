@@ -9,6 +9,7 @@ import morgan from "morgan";
 
 import patientRoutes from "./routes/patientRoutes.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
+import employerRoutes from "./routes/employerRoutes.js";
 import reportAssistantRoutes from "./routes/reportAssistantRoutes.js";
 import prescriptionRoutes from "./routes/prescriptionRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
@@ -27,7 +28,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TTS_STATIC_DIR = path.join(__dirname, "tts-files");
 const app = express();
-const port = 3030;
+const port = process.env.PORT || 8080;
 
 // ---------------------------------------------
 // 2) CORS SETTINGS
@@ -38,20 +39,29 @@ const allowedOrigins = [
   "http://localhost:5175",
 ];
 
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     credentials: true,
+//   })
+// );
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+    credentials: false,
   })
 );
+
 
 // ---------------------------------------------
 // 3) MIDDLEWARE
@@ -104,6 +114,7 @@ app.use(
 // ---------------------------------------------
 app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
+app.use("/api/employers", employerRoutes);
 app.use("/api/report-assistant", reportAssistantRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/reports", reportRoutes);

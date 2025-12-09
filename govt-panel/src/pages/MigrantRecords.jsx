@@ -22,7 +22,7 @@ function MigrantRecords() {
     const fetchLatest = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:3030/api/govt/latestPatients",
+          "http://localhost:8080/api/govt/latestPatients",
           {
             withCredentials: true,
           }
@@ -48,7 +48,7 @@ function MigrantRecords() {
 
   //   try {
   //     const res = await axios.get(
-  //       `http://localhost:3030/api/govt/patient?phoneNumber=${searchTerm}`,
+  //       `http://localhost:8080/api/govt/patient?phoneNumber=${searchTerm}`,
   //       { withCredentials: true }
   //     );
 
@@ -61,7 +61,7 @@ function MigrantRecords() {
   const openProfile = async (patient) => {
     try {
       const res = await axios.get(
-        `http://localhost:3030/api/govt/patient?phoneNumber=${patient.phoneNumber}`,
+        `http://localhost:8080/api/govt/patient?phoneNumber=${patient.phoneNumber}`,
         { withCredentials: true }
       );
 

@@ -11,7 +11,7 @@ const signToken = (id) => {
   });
 };
 
-const createAndSendToken = (user, statusCode, res) => {
+export const createAndSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
 
   const serialized = serialize("jwt", token, {

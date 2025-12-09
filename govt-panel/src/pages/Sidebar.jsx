@@ -23,7 +23,7 @@ function Sidebar() {
     let mounted = true;
     const fetchGovt = async () => {
       try {
-        const res = await axios.get("http://localhost:3030/api/govt/check", {
+        const res = await axios.get("http://localhost:8080/api/govt/check", {
           withCredentials: true,
         });
         if (mounted) setGovtUser(res.data.govt);
@@ -39,7 +39,7 @@ function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      await axios.get("http://localhost:3030/api/govt/logout", {
+      await axios.get("http://localhost:8080/api/govt/logout", {
         withCredentials: true,
       });
       setGovtUser(null);
@@ -179,7 +179,6 @@ function Sidebar() {
       {showLogoutConfirm && (
         // <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
         <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
-
           <div
             role="dialog"
             aria-modal="true"

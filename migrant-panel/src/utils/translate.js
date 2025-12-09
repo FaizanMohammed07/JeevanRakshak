@@ -81,7 +81,7 @@ export async function translateBatch(texts = [], lang = "en") {
 
   try {
     // 2) Call backend
-    const response = await fetch("http://localhost:3030/api/translate", {
+    const response = await fetch("http://localhost:8080/api/translate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       // ⭐ IMPORTANT: Backend expects {texts, target}

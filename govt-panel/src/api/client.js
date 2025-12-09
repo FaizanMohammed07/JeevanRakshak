@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.trim() || "http://localhost:3030/api";
+  import.meta.env.VITE_API_BASE_URL?.trim() || "http://localhost:8080/api";
 
 // Single axios instance keeps headers/baseURL aligned across the app.
 const api = axios.create({

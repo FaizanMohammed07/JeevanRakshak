@@ -1,5 +1,5 @@
 ### Create doctor (one-time)
-POST http://localhost:3030/api/doctors/signup
+POST http://localhost:8080/api/doctors/signup
 Content-Type: application/json
 
 {
@@ -11,7 +11,7 @@ Content-Type: application/json
 }
 
 ### Doctor login (grab jwt cookie from response)
-POST http://localhost:3030/api/doctors/login
+POST http://localhost:8080/api/doctors/login
 Content-Type: application/json
 
 {
@@ -20,7 +20,7 @@ Content-Type: application/json
 }
 
 ### Register a patient with district/taluk/village metadata
-POST http://localhost:3030/api/patients/signup
+POST http://localhost:8080/api/patients/signup
 Content-Type: application/json
 
 {
@@ -36,7 +36,7 @@ Content-Type: application/json
 }
 
 ### Register another patient in a different district
-POST http://localhost:3030/api/patients/signup
+POST http://localhost:8080/api/patients/signup
 Content-Type: application/json
 
 {
@@ -53,7 +53,7 @@ Content-Type: application/json
 
 ###
 //pateint login to get id
-POST http://localhost:3030/api/patients/login
+POST http://localhost:8080/api/patients/login
 Content-Type: application/json
 
 {
@@ -64,7 +64,7 @@ Content-Type: application/json
 ### Register a third patient in yet another district
 //nash_ID=692a92133e5932a3e7e62d56
 //rayan_id =692adedabaf00141bd56e018
-POST http://localhost:3030/api/patients/signup
+POST http://localhost:8080/api/patients/signup
 Content-Type: application/json
 
 {
@@ -80,7 +80,7 @@ Content-Type: application/json
 }
 
 ### Doctor issues a prescription (set Authorization header with doctor JWT if not using cookie)
-POST http://localhost:3030/api/prescriptions
+POST http://localhost:8080/api/prescriptions
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjgwZWI5N2JhYjNmMTAxMDIxMzkwNCIsImlhdCI6MTc2NDIzMjkyNCwiZXhwIjoxNzcyMDA4OTI0fQ.OK4nyYIPB69fBWaDM36bNf3yzFkWjWVMPjn8YozkqjQ
 Content-Type: application/json
 
@@ -97,7 +97,7 @@ Content-Type: application/json
 }
 
 ### Repeat prescription in another district for comparison
-POST http://localhost:3030/api/prescriptions
+POST http://localhost:8080/api/prescriptions
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjgwZWI5N2JhYjNmMTAxMDIxMzkwNCIsImlhdCI6MTc2NDIzMjkyNCwiZXhwIjoxNzcyMDA4OTI0fQ.OK4nyYIPB69fBWaDM36bNf3yzFkWjWVMPjn8YozkqjQ
 Content-Type: application/json
 
@@ -113,6 +113,6 @@ Content-Type: application/json
 }
 
 ### Fetch patient profile (id or phone) - requires doctor auth
-GET http://localhost:3030/api/patients/69280f127bab3f101021390c
+GET http://localhost:8080/api/patients/69280f127bab3f101021390c
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MjgwZWI5N2JhYjNmMTAxMDIxMzkwNCIsImlhdCI6MTc2NDIzMjkyNCwiZXhwIjoxNzcyMDA4OTI0fQ.OK4nyYIPB69fBWaDM36bNf3yzFkWjWVMPjn8YozkqjQ
 
