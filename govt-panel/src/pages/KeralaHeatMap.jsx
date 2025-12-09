@@ -45,7 +45,8 @@ const riskStyles = {
   },
 };
 
-const riskOrder = ["critical", "moderate", "observe", "stable"];
+// const riskOrder = ["critical", "moderate", "observe", "stable"];
+const riskOrder = ["stable", "observe", "moderate", "critical"];
 
 const changeBadge = (value) => {
   if (typeof value !== "number" || Number.isNaN(value)) {
@@ -61,11 +62,21 @@ const changeBadge = (value) => {
   return { label: formatted, badge: "bg-gray-100 text-gray-700" };
 };
 
+// const computeRiskLevel = (activeCases) => {
+//   const cases = Number(activeCases) || 0;
+//   if (cases >= 6) return "critical";
+//   if (cases >= 5) return "moderate";
+//   if (cases >= 1) return "observe";
+//   return "stable";
+// };
 const computeRiskLevel = (activeCases) => {
   const cases = Number(activeCases) || 0;
-  if (cases >= 6) return "critical";
-  if (cases >= 3) return "moderate";
-  if (cases >= 1) return "observe";
+
+  if (cases >= 6) return "critical"; // 6 or more
+  if (cases > 4 && cases < 6) return "moderate"; // 5
+  if (cases > 2 && cases <= 4) return "observe"; // 3 or 4
+  if (cases <= 1) return "stable"; // 0 or 1
+
   return "stable";
 };
 
@@ -180,10 +191,19 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
         }
         const response = await fetchKeralaRiskMap(heatmapQueryParams);
         if (ignore) return;
-        const districts = Array.isArray(response?.districts)
-          ? response.districts
+        // const districts = Array.isArray(response?.districts)
+        //   ? response.districts
+        //   : [];
+        // setRiskProfile(districts);
+        let districts = Array.isArray(response?.districts)
+          ? response.districts.map((d) => ({
+              ...d,
+              risk: computeRiskLevel(d.activeCases), // <-- FIXED
+            }))
           : [];
+
         setRiskProfile(districts);
+
         const persisted = activeDistrictSlug
           ? districts.find(
               (entry) => slugify(entry.name) === activeDistrictSlug
@@ -237,7 +257,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-gray-500">Window</span>
+          {/* <span className="text-xs text-gray-500">Window</span>
           {heatmapRangeOptions.map((option) => (
             <button
               key={option.value}
@@ -262,7 +282,22 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
             }`}
           >
             Custom range
-          </button>
+          </button> */}
+          <span className="text-xs text-gray-500">Map</span>
+
+          {["district", "taluk"].map((layer) => (
+            <button
+              key={layer}
+              onClick={() => setMapLayer(layer)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                mapLayer === layer
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-700 border-gray-200"
+              }`}
+            >
+              {layer === "district" ? "Districts" : "Taluks"}
+            </button>
+          ))}
         </div>
       </div>
       {customRangeOpen && (
@@ -293,7 +328,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        <span className="text-xs text-gray-500">Map</span>
+        {/* <span className="text-xs text-gray-500">Map</span>
 
         {["district", "taluk"].map((layer) => (
           <button
@@ -307,7 +342,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
           >
             {layer === "district" ? "Districts" : "Taluks"}
           </button>
-        ))}
+        ))} */}
       </div>
 
       {error && (
@@ -344,7 +379,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
             <div className="relative flex-1 min-h-[220px]">
               <ComposableMap
                 projection="geoMercator"
-                projectionConfig={{ scale: 9000, center: [76.5, 10.2] }}
+                projectionConfig={{ scale: 8000, center: [76.5, 10.7] }}
                 style={{ width: "100%", height: "100%" }}
               >
                 <Geographies
@@ -371,7 +406,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
                   }
                 </Geographies>
 
-                {riskProfile.map((district) => {
+                {/* {riskProfile.map((district) => {
                   const style = riskStyles[district.risk] || riskStyles.observe;
                   return (
                     <Marker
@@ -401,7 +436,57 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
                       </g>
                     </Marker>
                   );
-                })}
+                })} */}
+               {riskProfile.map((district) => {
+  const style = riskStyles[district.risk] || riskStyles.observe;
+  const radius = radiusScale(district.activeCases);
+
+  return (
+    <Marker
+      key={district.name}
+      coordinates={district.coordinates}
+      onMouseEnter={() => setActiveDistrict(district)}
+      onFocus={() => setActiveDistrict(district)}
+      onClick={() => handleDistrictClick(district)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          handleDistrictClick(district);
+        }
+      }}
+    >
+      <g>
+        {/* Circle Bubble */}
+        <circle
+          r={radius}
+          fill={style.color}
+          fillOpacity={0.35}
+          stroke={style.color}
+          strokeWidth={2}
+        />
+        <circle r={3.5} fill={style.color} />
+
+        {/* District Name (Right-aligned like screenshot) */}
+        <text
+          x={radius + 6}     // push text to right of bubble
+          y={4}              // small vertical alignment fix
+          style={{
+            fontFamily: "Inter, sans-serif",
+            fontSize: "11px",
+            fontWeight: 600,
+            fill: "#0f172a", // slate-900
+            pointerEvents: "none",
+          }}
+        >
+          {district.name}
+        </text>
+      </g>
+    </Marker>
+  );
+})}
+
               </ComposableMap>
             </div>
           </div>

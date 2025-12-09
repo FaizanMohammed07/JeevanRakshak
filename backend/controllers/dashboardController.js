@@ -323,7 +323,7 @@ const getDashboardSummary = async (req, res) => {
       Doctor.countDocuments(),
     ]);
 
-    const [activeCases, previousActiveCases, highRiskCamps, previousHighRisk] =
+    const [activeCases, previousActiveCases, highRiskCamps, previousHighRisk,contagiousPatientCount] =
       await Promise.all([
         countPrescriptionsInWindow(
           districtScope.prescriptionMatch,
@@ -344,6 +344,10 @@ const getDashboardSummary = async (req, res) => {
           DEFAULT_LOOKBACK_DAYS,
           DEFAULT_LOOKBACK_DAYS
         ),
+         countUniqueContagiousPatients(
+    districtScope.prescriptionMatch,
+    DEFAULT_LOOKBACK_DAYS
+  )
       ]);
 
     // We compute two contagious windows so trend percentages remain stable.
@@ -426,13 +430,14 @@ const getDashboardSummary = async (req, res) => {
         color: "orange",
         trend: formatPercentChange(activeCases, previousActiveCases),
       },
-      // {
-      //   label: "Vaccination Coverage",
-      //   value: `${coverage}%`,
-      //   iconKey: "vaccinations",
-      //   color: "green",
-      //   trend: formatPercentChange(coverage, previousCoverage),
-      // },
+      {
+  label: "Total Contiguous Disease Cases",
+  value: formatNumber(contagiousPatientCount),
+  iconKey: "migrants",
+  color: "blue",
+  trend: "+0%",
+},
+
       // {
       //   label: "Hospitals Reporting Today",
       //   value: formatNumber(doctorCount),
@@ -452,6 +457,32 @@ const getDashboardSummary = async (req, res) => {
 /**
  * Provides the Outbreak Alerts feed along with severity tags for the UI card.
  */
+const countUniqueContagiousPatients = async (match, rangeDays = 30) => {
+  if (hasEmptyPatientScope(match)) return 0;
+
+  const { start, end } = buildDateWindow(rangeDays);
+
+  const result = await Prescription.aggregate([
+    {
+      $match: {
+        ...match,
+        contagious: true,
+        dateOfIssue: { $gte: start, $lte: end }
+      }
+    },
+    {
+      $group: {
+        _id: "$patient"  // unique patient IDs
+      }
+    },
+    {
+      $count: "uniquePatients"
+    }
+  ]);
+
+  return result[0]?.uniquePatients || 0;
+};
+
 const getOutbreakAlerts = async (req, res) => {
   try {
     const districtScope = await collectDistrictScope(req.query.district);
