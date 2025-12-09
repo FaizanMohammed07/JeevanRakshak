@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { AlertTriangle, MapPin, Navigation, ShieldCheck } from "lucide-react";
 import "leaflet/dist/leaflet.css";
+import { useTranslation } from "react-i18next";
+import { translateBatch } from "../utils/translate";
 
 import L from "leaflet";
 const userLocationIcon = L.divIcon({
@@ -12,6 +14,7 @@ const userLocationIcon = L.divIcon({
 });
 
 export default function NearbyHospitals() {
+  const { t, i18n } = useTranslation();
   const [position, setPosition] = useState(null);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
@@ -20,7 +23,14 @@ export default function NearbyHospitals() {
   const [locationDetails, setLocationDetails] = useState(null);
   const [isResolvingAddress, setIsResolvingAddress] = useState(false);
   const [locationAccuracy, setLocationAccuracy] = useState(null);
+  // map of translated texts keyed by hospitalKey -> { shortName, address }
+  const [translatedMap, setTranslatedMap] = useState({});
   const hospitalFeedTimer = useRef(null);
+
+  const getTranslatedFor = (h) => {
+    const key = h.id ?? h.place_id ?? `${h.lat},${h.lon}`;
+    return translatedMap[key] || {};
+  };
 
   useEffect(() => {
     return () => {
@@ -219,6 +229,67 @@ export default function NearbyHospitals() {
       .sort((a, b) => a.distance - b.distance);
   }, [hospitals, position]);
 
+  // Translate hospital names & addresses for current UI language (client-side)
+  useEffect(() => {
+    let mounted = true;
+    const lang = (i18n?.language || "en").split("-")[0];
+    if (!preparedHospitals || preparedHospitals.length === 0) return;
+    if (lang === "en") {
+      // clear any previous translations when English selected
+      setTranslatedMap({});
+      return;
+    }
+
+    (async () => {
+      try {
+        // cap to avoid excessive tokens/cost
+        const items = preparedHospitals.slice(0, 40);
+        const allTexts = [];
+        const keys = [];
+
+        for (const h of items) {
+          const key = h.id ?? h.place_id ?? `${h.lat},${h.lon}`;
+          keys.push(key);
+          // push shortName and address (address may be hospital.address or display_name)
+          allTexts.push(h.shortName || h.name || "");
+          allTexts.push(h.address || h.display_name || "");
+        }
+
+        if (allTexts.length === 0) return;
+
+        const translations = await translateBatch(allTexts, lang);
+
+        if (!mounted || !Array.isArray(translations)) return;
+
+        const next = {};
+        for (let i = 0; i < keys.length; i++) {
+          const shortIdx = i * 2;
+          const addrIdx = shortIdx + 1;
+          const shortTranslated =
+            translations[shortIdx] || items[i].shortName || items[i].name || "";
+          const addrTranslated =
+            translations[addrIdx] ||
+            items[i].address ||
+            items[i].display_name ||
+            "";
+          next[keys[i]] = {
+            shortName: shortTranslated,
+            address: addrTranslated,
+          };
+        }
+
+        setTranslatedMap((prev) => ({ ...prev, ...next }));
+      } catch (e) {
+        // ignore translation failures — keep originals
+        console.warn("NearbyHospitals: translation failed", e);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [preparedHospitals, i18n?.language]);
+
   const assurances = [
     {
       icon: ShieldCheck,
@@ -236,17 +307,17 @@ export default function NearbyHospitals() {
     <section className="space-y-8">
       <header className="rounded-3xl border border-sky-100 bg-white px-6 py-6 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-500">
-          Nearby Hospitals
+          {t("nearby.header", "Nearby Hospitals")}
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-slate-900">
-          Instantly locate the closest clinic
+          {t("nearby.title", "Instantly locate the closest clinic")}
         </h1>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4 rounded-[32px] border border-sky-100 bg-white p-6">
           <h2 className="text-lg font-semibold text-slate-900">
-            Why we request location
+            {t("nearby.whyRequest.title", "Why we request location")}
           </h2>
 
           <button
@@ -256,8 +327,8 @@ export default function NearbyHospitals() {
             className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-emerald-300"
           >
             {status === "requesting"
-              ? "Detecting location..."
-              : "Allow secure location"}
+              ? t("nearby.actions.detecting", "Detecting location...")
+              : t("nearby.actions.allow", "Allow secure location")}
           </button>
           <div className="space-y-3">
             {assurances.map(({ icon: Icon, title, body }) => (
@@ -270,38 +341,49 @@ export default function NearbyHospitals() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">
-                    {title}
+                    {t(`nearby.assurances.${title}.title`, title)}
                   </p>
-                  <p className="text-xs text-slate-500">{body}</p>
+                  <p className="text-xs text-slate-500">
+                    {t(`nearby.assurances.${title}.body`, body)}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
           {error && (
-            <p className="text-sm font-semibold text-rose-600">{error}</p>
+            <p className="text-sm font-semibold text-rose-600">
+              {t(error) || error}
+            </p>
           )}
           {status === "success" && position && (
             <div className="space-y-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-sm text-emerald-700">
               <p className="text-sm font-semibold text-emerald-900">
-                Location locked
+                {t("nearby.locked", "Location locked")}
               </p>
               <p className="text-xs text-emerald-800">
-                Coordinates: {position[0].toFixed(6)}, {position[1].toFixed(6)}{" "}
-                (WGS84)
+                {t("nearby.coordinates", "Coordinates")}:{" "}
+                {position[0].toFixed(6)}, {position[1].toFixed(6)} (WGS84)
               </p>
               {locationAccuracy !== null && (
                 <p className="text-xs text-emerald-800">
-                  Accuracy: ±{formatAccuracy(locationAccuracy)}
+                  {t("nearby.accuracy", "Accuracy")} : ±
+                  {formatAccuracy(locationAccuracy)}
                 </p>
               )}
               <p className="text-xs text-emerald-800">
-                {isResolvingAddress && "Detected area: Resolving…"}
+                {isResolvingAddress &&
+                  t("nearby.detectingArea", "Detected area: Resolving…")}
                 {!isResolvingAddress &&
                   locationDetails &&
-                  `Detected area: ${locationDetails.displayName}`}
+                  t("nearby.detectedArea", {
+                    area: locationDetails.displayName,
+                  })}
                 {!isResolvingAddress &&
                   !locationDetails &&
-                  "Detected area: Not available, using raw coordinates"}
+                  t(
+                    "nearby.detectedAreaFallback",
+                    "Detected area: Not available, using raw coordinates"
+                  )}
               </p>
               <button
                 type="button"
@@ -313,7 +395,7 @@ export default function NearbyHospitals() {
                   )
                 }
               >
-                Verify on GPS-Coordinates.net
+                {t("nearby.verifyGps", "Verify on GPS-Coordinates.net")}
               </button>
             </div>
           )}
@@ -337,13 +419,17 @@ export default function NearbyHospitals() {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-400">
-                  Live Map
+                  {t("nearby.map.header", "Live Map")}
                 </p>
                 <h3 className="text-xl font-semibold text-slate-900">
-                  Current location & hospitals within ~15 km
+                  {t(
+                    "nearby.map.title",
+                    "Current location & hospitals within ~15 km"
+                  )}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Centered at {position[0].toFixed(4)}, {position[1].toFixed(4)}
+                  {t("nearby.map.centered", "Centered at")}{" "}
+                  {position[0].toFixed(4)}, {position[1].toFixed(4)}
                 </p>
               </div>
               <button
@@ -352,7 +438,9 @@ export default function NearbyHospitals() {
                 disabled={isFetchingHospitals}
                 className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isFetchingHospitals ? "Refreshing..." : "Refresh list"}
+                {isFetchingHospitals
+                  ? t("nearby.map.refreshing", "Refreshing...")
+                  : t("nearby.map.refresh", "Refresh list")}
               </button>
             </div>
 
@@ -364,7 +452,7 @@ export default function NearbyHospitals() {
               >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <Marker position={position} icon={userLocationIcon}>
-                  <Popup>You are here</Popup>
+                  <Popup>{t("nearby.map.youAreHere", "You are here")}</Popup>
                 </Marker>
 
                 {preparedHospitals.map((hospital) => (
@@ -373,12 +461,16 @@ export default function NearbyHospitals() {
                     position={[hospital.lat, hospital.lon]}
                   >
                     <Popup>
-                      <p className="font-semibold">{hospital.shortName}</p>
+                      <p className="font-semibold">
+                        {getTranslatedFor(hospital).shortName ||
+                          hospital.shortName}
+                      </p>
                       <p className="text-xs text-slate-500">
-                        {hospital.address}
+                        {getTranslatedFor(hospital).address || hospital.address}
                       </p>
                       <p className="mt-1 text-xs text-slate-600">
-                        ~{hospital.distance.toFixed(1)} km away
+                        ~{hospital.distance.toFixed(1)} km{" "}
+                        {t("nearby.map.away", "away")}
                       </p>
                       <button
                         type="button"
@@ -390,7 +482,7 @@ export default function NearbyHospitals() {
                           )
                         }
                       >
-                        Get Directions
+                        {t("nearby.map.getDirections", "Get Directions")}
                       </button>
                     </Popup>
                   </Marker>
@@ -401,10 +493,10 @@ export default function NearbyHospitals() {
           <div className="space-y-3 rounded-[32px] border border-slate-100 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">
-                Nearest facilities
+                {t("nearby.list.title", "Nearest facilities")}
               </h3>
               <span className="rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
-                {preparedHospitals.length} results
+                {preparedHospitals.length} {t("nearby.list.results", "results")}
               </span>
             </div>
             <p className="text-xs text-slate-500">
@@ -421,17 +513,19 @@ export default function NearbyHospitals() {
                   className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4"
                 >
                   <p className="text-sm font-semibold text-slate-900">
-                    {hospital.shortName}
+                    {getTranslatedFor(hospital).shortName || hospital.shortName}
                   </p>
-                  <p className="text-xs text-slate-500">{hospital.address}</p>
+                  <p className="text-xs text-slate-500">
+                    {getTranslatedFor(hospital).address || hospital.address}
+                  </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
                     <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1">
                       <MapPin className="h-3 w-3 text-sky-500" />
-                      {hospital.distance.toFixed(1)} km
+                      {hospital.distance.toFixed(1)} {t("nearby.list.km", "km")}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1">
                       <Navigation className="h-3 w-3 text-emerald-500" />
-                      Go in Google Maps
+                      {t("nearby.list.goInMaps", "Go in Google Maps")}
                     </span>
                   </div>
                   <button
@@ -444,14 +538,16 @@ export default function NearbyHospitals() {
                       )
                     }
                   >
-                    Get Directions
+                    {t("nearby.list.getDirections", "Get Directions")}
                   </button>
                 </article>
               ))}
               {preparedHospitals.length === 0 && (
                 <p className="text-sm text-slate-500">
-                  We could not find hospitals within 15 km. Try refreshing or
-                  expanding your search radius in Google Maps.
+                  {t(
+                    "nearby.list.empty",
+                    "We could not find hospitals within 15 km. Try refreshing or expanding your search radius in Google Maps."
+                  )}
                 </p>
               )}
             </div>

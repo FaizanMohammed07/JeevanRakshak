@@ -4,6 +4,7 @@ import { ClipboardList } from "lucide-react";
 import { usePatientData } from "../context/PatientsContext";
 import useTranslateData from "../hooks/useTranslateData";
 import { translateBatch } from "../utils/translate"; // used to translate static labels
+import useTts from "../hooks/useTts";
 
 /** STATIC LABELS (these will also be AI-translated when lang !== 'en') */
 const TIME_SLOT_LABELS = {
@@ -567,7 +568,9 @@ function PrescriptionCard({ rx, onSelect, isActive }) {
    DETAIL PANEL
 ----------------------------- */
 function PrescriptionDetailPanel({ rx, describeSchedule }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.language || "en").split("-")[0];
+  const { speak, speakSequence } = useTts();
 
   if (!rx) {
     return (
@@ -644,6 +647,36 @@ function PrescriptionDetailPanel({ rx, describeSchedule }) {
                         {t("prescriptions.detail.noSchedule")}
                       </span>
                     )}
+                  </div>
+                  {/* Listen button: speaks medicine name + dosage + schedule in selected language */}
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        // Build deterministic chunks: name, dosage, schedule
+                        const chunks = [];
+                        if (medicine.name) chunks.push(medicine.name);
+                        if (medicine.dosage) chunks.push(medicine.dosage);
+                        if (scheduleLabel) chunks.push(scheduleLabel);
+
+                        try {
+                          // play chunks sequentially (will prefer server TTS for non-English if needed)
+                          await speakSequence(chunks, lang, { pauseMs: 350 });
+                        } catch (e) {
+                          console.error("TTS sequence failed:", e);
+                          // final fallback: try single utterance
+                          try {
+                            const textToSpeak = chunks.join(". ");
+                            await speak(textToSpeak, lang);
+                          } catch (e2) {
+                            console.error("TTS fallback failed:", e2);
+                          }
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 rounded-md border border-sky-100 bg-white px-3 py-1 text-xs font-semibold text-sky-600 hover:bg-sky-50"
+                    >
+                      {t("prescriptions.detail.listen", "Listen")}
+                    </button>
                   </div>
                 </div>
               );

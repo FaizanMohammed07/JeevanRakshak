@@ -4,7 +4,7 @@
     "tagline": "Migrant Health Panel",
     "locationFallback": "Citizen",
     "idLabel": "ID",
-    "idDemoVideo":"DemoVideo"
+    "idDemoVideo": "DemoVideo"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -193,5 +193,70 @@
     "missingFields": "Please enter both phone number and password.",
     "signingIn": "Signing in...",
     "signIn": "Sign In"
+  },
+  "nearby": {
+    "header": "Nearby Hospitals",
+    "title": "Instantly locate the closest clinic",
+    "whyRequest": {
+      "title": "Why we request location"
+    },
+    "actions": {
+      "detecting": "Detecting location...",
+      "allow": "Allow secure location"
+    },
+    "assurances": {
+      "Privacy first": {
+        "title": "Privacy first",
+        "body": "Location access is session-based. We never store or share coordinates."
+      },
+      "Clear messaging": {
+        "title": "Clear messaging",
+        "body": "The consent card spells out why GPS is required so every migrant understands the benefit instantly."
+      }
+    },
+    "locked": "Location locked",
+    "coordinates": "Coordinates",
+    "accuracy": "Accuracy",
+    "detectingArea": "Detected area: Resolving…",
+    "detectedArea": "Detected area: {{area}}",
+    "detectedAreaFallback": "Detected area: Not available, using raw coordinates",
+    "verifyGps": "Verify on GPS-Coordinates.net",
+    "map": {
+      "header": "Live Map",
+      "title": "Current location & hospitals within ~15 km",
+      "centered": "Centered at",
+      "refreshing": "Refreshing...",
+      "refresh": "Refresh list",
+      "youAreHere": "You are here",
+      "away": "away",
+      "getDirections": "Get Directions"
+    },
+    "list": {
+      "title": "Nearest facilities",
+      "results": "results",
+      "km": "km",
+      "goInMaps": "Go in Google Maps",
+      "getDirections": "Get Directions",
+      "empty": "We could not find hospitals within 15 km. Try refreshing or expanding your search radius in Google Maps."
+    }
+  },
+  "locations": {
+    "districts": {
+      "Thiruvananthapuram": "Thiruvananthapuram",
+      "Kollam": "Kollam",
+      "Pathanamthitta": "Pathanamthitta",
+      "Alappuzha": "Alappuzha",
+      "Kottayam": "Kottayam",
+      "Idukki": "Idukki",
+      "Ernakulam": "Ernakulam",
+      "Thrissur": "Thrissur",
+      "Palakkad": "Palakkad",
+      "Malappuram": "Malappuram",
+      "Kozhikode": "Kozhikode",
+      "Wayanad": "Wayanad",
+      "Kannur": "Kannur",
+      "Kasaragod": "Kasaragod"
+    },
+    "villages": {}
   }
 }

@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { usePatientData } from "../context/PatientsContext";
 import useTranslateData from "../hooks/useTranslateData";
+import { translateLocationField } from "../utils/locationTranslations";
 
 // ======================================================
 //              FULLY FIXED PROFILE PAGE
@@ -68,6 +69,18 @@ export default function ProfilePage() {
       ? locationTranslated[0]
       : {};
 
+  // Prefer hard-coded translations for district/village when available
+  const mappedDistrict = translateLocationField(
+    currentLang,
+    "district",
+    translatedLoc.district || patient?.district
+  );
+  const mappedVillage = translateLocationField(
+    currentLang,
+    "village",
+    translatedLoc.village || patient?.village
+  );
+
   // 2) Translate arrays of strings
   const translatedAllergies = translateStringList(patient?.allergies);
   const translatedChronic = translateStringList(patient?.chronicDiseases);
@@ -117,7 +130,7 @@ export default function ProfilePage() {
     ? [
         {
           label: t("profile.location.district"),
-          value: translatedLoc.district || patient.district,
+          value: mappedDistrict || translatedLoc.district || patient.district,
         },
         {
           label: t("profile.location.taluk"),
@@ -125,7 +138,7 @@ export default function ProfilePage() {
         },
         {
           label: t("profile.location.village"),
-          value: translatedLoc.village || patient.village,
+          value: mappedVillage || translatedLoc.village || patient.village,
         },
         {
           label: t("profile.location.address"),
