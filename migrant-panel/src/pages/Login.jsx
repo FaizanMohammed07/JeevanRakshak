@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ShieldCheck, LockKeyhole, Phone } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -170,6 +170,12 @@ export default function LoginPage() {
             >
               {loading ? t("login.signingIn") : t("login.signIn")}
             </button>
+            <p className="mt-4 text-center text-sm text-slate-500">
+              {t("login.createAccountPrompt")}{" "}
+              <Link className="font-semibold text-slate-900" to="/signup">
+                {t("login.signUpLink")}
+              </Link>
+            </p>
           </div>
 
           <div className="mt-10 border-t border-slate-100 pt-6 text-center">

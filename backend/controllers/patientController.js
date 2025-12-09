@@ -71,6 +71,11 @@ export const signup = async (req, res) => {
       patient: newPatient,
     });
   } catch (err) {
+    if (err.code === 11000 && err.keyValue?.phoneNumber) {
+      return res.status(400).json({
+        msg: "Phone number already registered",
+      });
+    }
     res.status(500).json({ error: err.message });
   }
 };

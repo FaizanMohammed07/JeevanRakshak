@@ -27,6 +27,7 @@ import ProfilePage from "./pages/ProfilePage";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
 import LabReportsPage from "./pages/LabReportsPage";
 import LoginPage from "./pages/Login";
+import SignupPage from "./pages/Signup";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import NearbyHospitals from "./pages/NearbyHospitals";
 import DemoVideoPage from "./pages/DemoVideoPage";
@@ -74,6 +75,7 @@ function App() {
         <PatientsProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
             <Route
               path="/"
               element={
