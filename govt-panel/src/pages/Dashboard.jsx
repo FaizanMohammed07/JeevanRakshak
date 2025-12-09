@@ -97,6 +97,7 @@ function Dashboard() {
   const [oversightSummary, setOversightSummary] = useState(null);
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState(null);
+  const [dataSyncError, setDataSyncError] = useState(null);
   const [refreshTick, setRefreshTick] = useState(Date.now());
   const [districtInsights, setDistrictInsights] = useState([]);
   const [hotspotInsights, setHotspotInsights] = useState([]);

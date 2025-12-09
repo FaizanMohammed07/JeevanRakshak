@@ -46,7 +46,8 @@ export default function Dashboard() {
       setLoading(true);
       const res = await api.get(`/doctors/${doctor._id}/prescriptions/today`);
       setTodayCount(res.data.count);
-      const snapshot = await fetchDashboardSnapshot(doctor.id);
+  // backend doctor identifier is _id; use same field consistently
+  const snapshot = await fetchDashboardSnapshot(doctor._id);
       setStats(snapshot.stats);
       setRecentActivity(snapshot.recentActivity);
       setAlerts(snapshot.alerts);

@@ -2,6 +2,7 @@ import { apiClient, buildQuery } from "./client";
 
 export function fetchDashboardSummary(params = {}) {
   return apiClient(`/dashboard/summary${buildQuery(params)}`);
+
 }
 
 export function fetchOutbreakAlerts(params = {}) {
