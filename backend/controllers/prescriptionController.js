@@ -376,6 +376,24 @@ export const addPrescription = async (req, res) => {
       notes,
     });
 
+    // If prescription is contagious and patient is linked to contractor,
+    // set contagiousAlert on patient so contractor can see it.
+    try {
+      if (contagious && patient.contractor) {
+        patient.contagiousAlert = {
+          active: true,
+          disease: confirmedDisease || suspectedDisease || "unspecified",
+          prescription: prescription._id,
+          createdAt: new Date(),
+          createdBy: doctorId,
+        };
+        await patient.save();
+      }
+    } catch (err) {
+      console.error("Failed to set patient contagiousAlert:", err);
+      // don't fail the prescription creation because of alert failure
+    }
+
     // console.log(prescription + prescription.medicinesIssued.schedule);
 
     res.status(201).json({

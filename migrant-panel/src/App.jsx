@@ -27,6 +27,10 @@ import ProfilePage from "./pages/ProfilePage";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
 import LabReportsPage from "./pages/LabReportsPage";
 import LoginPage from "./pages/Login";
+import ContractorDashboard from "./pages/ContractorDashboard";
+import ContractorPatients from "./pages/ContractorPatients";
+import ContractorPatientStatus from "./pages/ContractorPatientStatus";
+import { ContractorProvider } from "./context/ContractorContext";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import NearbyHospitals from "./pages/NearbyHospitals";
 import DemoVideoPage from "./pages/DemoVideoPage";
@@ -74,6 +78,21 @@ function App() {
         <PatientsProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            {/* Contractor area */}
+            <Route
+              path="/contractor"
+              element={
+                <ProtectedRoute>
+                  <ContractorProvider>
+                    <ContractorLayout />
+                  </ContractorProvider>
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<ContractorDashboard />} />
+              <Route path="patients" element={<ContractorPatients />} />
+              <Route path="status" element={<ContractorPatientStatus />} />
+            </Route>
             <Route
               path="/"
               element={
@@ -99,6 +118,76 @@ function App() {
 
 export default App;
 import { useNavigate } from "react-router-dom";
+
+function ContractorLayout() {
+  const { logout, contractor } = useAuth();
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="sticky top-0 z-30 border-b bg-white/95 p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Contractor Portal</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium">
+              {contractor?.name || "Partner"}
+            </span>
+            <button
+              onClick={() => logout()}
+              className="rounded-lg bg-red-600 px-3 py-1 text-white text-sm"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex w-full gap-6 p-6">
+        <aside className="w-60">
+          <div className="rounded-lg bg-white p-4 shadow-sm">
+            <nav className="flex flex-col gap-2">
+              <NavLink
+                to="/contractor"
+                end
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-2 text-sm font-semibold ${
+                    isActive ? "bg-sky-600 text-white" : "text-slate-700"
+                  }`
+                }
+              >
+                Dashboard
+              </NavLink>
+              <NavLink
+                to="/contractor/patients"
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-2 text-sm font-semibold ${
+                    isActive ? "bg-sky-600 text-white" : "text-slate-700"
+                  }`
+                }
+              >
+                Add / Remove Patients
+              </NavLink>
+              <NavLink
+                to="/contractor/status"
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-2 text-sm font-semibold ${
+                    isActive ? "bg-sky-600 text-white" : "text-slate-700"
+                  }`
+                }
+              >
+                Patient Status
+              </NavLink>
+            </nav>
+          </div>
+        </aside>
+
+        <main className="flex-1">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}
 
 function ShellLayout() {
   const navigate = useNavigate();

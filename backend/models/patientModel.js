@@ -113,6 +113,28 @@ const patientSchema = new mongoose.Schema(
       type: [documentSchema],
       default: [],
     },
+    // Contractor linkage: a patient may be assigned to one contractor
+    contractor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Contractor",
+      default: null,
+    },
+    contractorCompany: {
+      type: String,
+    },
+    // If a contagious prescription is added while patient is linked to a contractor,
+    // this field stores the current alert for the contractor to act on.
+    contagiousAlert: {
+      active: { type: Boolean, default: false },
+      disease: { type: String },
+      prescription: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Prescription",
+      },
+      createdAt: { type: Date },
+      // optional: who created the alert (doctor id)
+      createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor" },
+    },
   },
   {
     timestamps: true,

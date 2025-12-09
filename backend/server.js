@@ -20,6 +20,7 @@ import govtRoutes from "./routes/govtRoutes.js";
 
 import translateRoute from "./routes/translateRoute.js"; // <-- NEW ROUTE
 import ttsRoute from "./routes/ttsRoute.js";
+import contractorRoutes from "./routes/contractorRoutes.js";
 
 dotenv.config();
 
@@ -112,6 +113,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/camps", campRoutes);
 app.use("/api/govt", govtRoutes);
+app.use("/api/contractors", contractorRoutes);
 
 // ---------------------------------------------
 // 8) START SERVER

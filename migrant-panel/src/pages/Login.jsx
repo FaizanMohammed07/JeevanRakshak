@@ -1,17 +1,43 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck, LockKeyhole, Phone } from "lucide-react";
+import {
+  ShieldCheck,
+  LockKeyhole,
+  Phone,
+  HardHat,
+  User,
+  UserPlus,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, loading, error, isAuthenticated } = useAuth();
-  const [formState, setFormState] = useState({ phoneNumber: "", password: "" });
+  const { login, register, loading, error, isAuthenticated } = useAuth(); // Assuming register exists in context
+
+  // State for toggling between User and Contractor
+  const [isContractor, setIsContractor] = useState(false);
+  // State for toggling between Login and Signup (only for Contractor)
+  const [isSignup, setIsSignup] = useState(false);
+
+  const [formState, setFormState] = useState({
+    fullName: "",
+    phoneNumber: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [localError, setLocalError] = useState(null);
 
-  const { t } = useTranslation(); // <-- translation hook
+  const { t } = useTranslation();
+
+  // Reset signup state if user switches back to Standard User mode
+  useEffect(() => {
+    if (!isContractor) {
+      setIsSignup(false);
+      setLocalError(null);
+    }
+  }, [isContractor]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -27,22 +53,81 @@ export default function LoginPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLocalError(null);
-    if (!formState.phoneNumber || !formState.password) {
-      setLocalError(t("login.missingFields"));
-      return;
+
+    // Validation Logic
+    if (isContractor && isSignup) {
+      // Contractor Registration Validation
+      if (
+        !formState.fullName ||
+        !formState.phoneNumber ||
+        !formState.password ||
+        !formState.confirmPassword
+      ) {
+        setLocalError("Please fill in all fields.");
+        return;
+      }
+      if (formState.password !== formState.confirmPassword) {
+        setLocalError("Passwords do not match.");
+        return;
+      }
+    } else {
+      // Login Validation
+      if (!formState.phoneNumber || !formState.password) {
+        setLocalError(
+          isContractor
+            ? "Please enter both phone and password."
+            : t("login.missingFields")
+        );
+        return;
+      }
     }
 
     try {
-      await login(formState);
-      navigate("/", { replace: true });
+      if (isContractor && isSignup) {
+        // Handle Registration
+        // Assuming register takes { fullName, phoneNumber, password, role }
+        if (register) {
+          await register({
+            name: formState.fullName,
+            phoneNumber: formState.phoneNumber,
+            password: formState.password,
+            passwordConfirm: formState.confirmPassword,
+            role: "contractor",
+          });
+        } else {
+          console.warn("Register function not found in AuthContext");
+        }
+      } else {
+        // Handle Login
+        await login({
+          phoneNumber: formState.phoneNumber,
+          password: formState.password,
+          role: isContractor ? "contractor" : "user",
+        });
+      }
+      // Redirect based on role
+      if (isContractor) {
+        navigate("/contractor", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err) {
-      console.error("Login failed", err);
+      console.error("Authentication failed", err);
+      setLocalError("Authentication failed. Please try again.");
     }
   };
 
   const featureList = [
-    { icon: Phone, label: t("login.featurePhone") },
-    { icon: LockKeyhole, label: t("login.featureSecure") },
+    {
+      icon: Phone,
+      label: isContractor
+        ? "Contractor Priority Support"
+        : t("login.featurePhone"),
+    },
+    {
+      icon: LockKeyhole,
+      label: isContractor ? "Secure Project Access" : t("login.featureSecure"),
+    },
   ];
 
   const showError = error || localError;
@@ -50,114 +135,190 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-4 py-10">
       <div className="mx-auto grid w-full max-w-6xl gap-6 rounded-[36px] bg-white/5 p-2 text-white shadow-2xl backdrop-blur-lg lg:grid-cols-2">
-        <section className="rounded-[28px] bg-white/10 p-8">
+        {/* Left Side: Branding / Info */}
+        <section className="rounded-[28px] bg-white/10 p-8 flex flex-col justify-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20">
-            <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+            {isContractor ? (
+              <HardHat className="h-6 w-6" />
+            ) : (
+              <ShieldCheck className="h-6 w-6" />
+            )}
           </div>
           <p className="mt-4 text-xs font-semibold uppercase tracking-[0.4em] text-white/70">
-            {t("app.name")}
+            {isContractor ? "CONTRACTOR PORTAL" : t("app.name")}
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">
-            {t("login.title")}
+            {isContractor
+              ? isSignup
+                ? "Join Our Network"
+                : "Partner Access"
+              : t("login.title")}
           </h1>
-          <p className="mt-3 text-sm text-white/80">{t("login.description")}</p>
+          <p className="mt-3 text-sm text-white/80">
+            {isContractor
+              ? "Log in to view active contracts, manage bids, and update project statuses."
+              : t("login.description")}
+          </p>
           <ul className="mt-6 space-y-3 text-sm text-white/85">
             {featureList.map((item) => (
               <li
                 key={item.label}
                 className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2"
               >
-                <item.icon
-                  className="h-4 w-4 text-emerald-300"
-                  aria-hidden="true"
-                />
+                <item.icon className="h-4 w-4 text-emerald-300" />
                 <span>{item.label}</span>
               </li>
             ))}
           </ul>
-          <div className="mt-8 rounded-2xl border border-white/20 bg-black/20 p-4 text-sm text-white/80">
-            <p className="font-semibold tracking-wide text-white">
-              {t("language.prompt")}
-            </p>
-            <p className="mt-1 text-white/70">{t("login.formSubtitle")}</p>
-          </div>
         </section>
 
+        {/* Right Side: Form */}
         <form
           onSubmit={handleSubmit}
           className="flex flex-col justify-between rounded-[28px] bg-white px-8 py-10 text-slate-900 shadow-xl"
         >
           <div>
+            {/* Toggle Switch (Disable or Hide during Signup to prevent state confusion) */}
+            {!isSignup && (
+              <div className="mb-8 flex rounded-2xl bg-slate-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => setIsContractor(false)}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-sm font-semibold transition-all ${
+                    !isContractor
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <User className="h-4 w-4" />
+                  <span>User</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsContractor(true)}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-sm font-semibold transition-all ${
+                    isContractor
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <HardHat className="h-4 w-4" />
+                  <span>Contractor</span>
+                </button>
+              </div>
+            )}
+
             <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-400">
-              {t("login.formTitle")}
+              {isContractor
+                ? isSignup
+                  ? "NEW REGISTRATION"
+                  : "CONTRACTOR LOGIN"
+                : t("login.formTitle")}
             </p>
             <h2 className="mt-2 text-3xl font-semibold text-slate-900">
-              {t("login.welcome")}
+              {isContractor
+                ? isSignup
+                  ? "Create Account"
+                  : "Welcome Partner"
+                : t("login.welcome")}
             </h2>
-            <p className="text-sm text-slate-500">{t("login.formSubtitle")}</p>
+            <p className="text-sm text-slate-500">
+              {isContractor
+                ? isSignup
+                  ? "Fill in the details below to register."
+                  : "Enter your registered credentials."
+                : t("login.formSubtitle")}
+            </p>
 
-            <div className="mt-8 space-y-6">
+            <div className="mt-8 space-y-4">
+              {/* Extra Field: Full Name (Only for Signup) */}
+              {isContractor && isSignup && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">
+                    Full Name
+                  </label>
+                  <div className="flex items-center gap-2 rounded-2xl border border-slate-300 px-4 py-3 focus-within:border-sky-500">
+                    <User className="h-4 w-4 text-slate-400" />
+                    <input
+                      name="fullName"
+                      type="text"
+                      value={formState.fullName}
+                      onChange={handleChange}
+                      placeholder="John Doe"
+                      className="w-full border-none bg-transparent text-base outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Standard Field: Phone Number */}
               <div className="space-y-2">
-                <label
-                  htmlFor="phoneNumber"
-                  className="text-sm font-medium text-slate-600"
-                >
-                  {t("login.phoneLabel")}
+                <label className="text-sm font-medium text-slate-600">
+                  {isContractor ? "Phone Number" : t("login.phoneLabel")}
                 </label>
                 <div className="flex items-center gap-2 rounded-2xl border border-slate-300 px-4 py-3 focus-within:border-sky-500">
-                  <Phone
-                    className="h-4 w-4 text-slate-400"
-                    aria-hidden="true"
-                  />
+                  <Phone className="h-4 w-4 text-slate-400" />
                   <input
-                    id="phoneNumber"
                     name="phoneNumber"
                     type="tel"
                     inputMode="tel"
-                    pattern="^[0-9+\-\s]{6,}$"
                     value={formState.phoneNumber}
                     onChange={handleChange}
-                    autoComplete="tel"
-                    placeholder={t("login.phonePlaceholder")}
+                    placeholder={
+                      isContractor
+                        ? "Enter phone number"
+                        : t("login.phonePlaceholder")
+                    }
                     className="w-full border-none bg-transparent text-base outline-none"
-                    aria-required="true"
                   />
                 </div>
               </div>
 
+              {/* Standard Field: Password */}
               <div className="space-y-2">
-                <label
-                  htmlFor="password"
-                  className="text-sm font-medium text-slate-600"
-                >
-                  {t("login.passwordLabel")}
+                <label className="text-sm font-medium text-slate-600">
+                  {isContractor ? "Password" : t("login.passwordLabel")}
                 </label>
                 <div className="flex items-center gap-2 rounded-2xl border border-slate-300 px-4 py-3 focus-within:border-sky-500">
-                  <LockKeyhole
-                    className="h-4 w-4 text-slate-400"
-                    aria-hidden="true"
-                  />
+                  <LockKeyhole className="h-4 w-4 text-slate-400" />
                   <input
-                    id="password"
                     name="password"
                     type="password"
                     value={formState.password}
                     onChange={handleChange}
-                    autoComplete="current-password"
-                    placeholder={t("login.passwordPlaceholder")}
+                    placeholder={
+                      isContractor
+                        ? "Enter password"
+                        : t("login.passwordPlaceholder")
+                    }
                     className="w-full border-none bg-transparent text-base outline-none"
-                    aria-required="true"
                   />
                 </div>
               </div>
+
+              {/* Extra Field: Confirm Password (Only for Signup) */}
+              {isContractor && isSignup && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">
+                    Confirm Password
+                  </label>
+                  <div className="flex items-center gap-2 rounded-2xl border border-slate-300 px-4 py-3 focus-within:border-sky-500">
+                    <LockKeyhole className="h-4 w-4 text-slate-400" />
+                    <input
+                      name="confirmPassword"
+                      type="password"
+                      value={formState.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Re-enter password"
+                      className="w-full border-none bg-transparent text-base outline-none"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {showError && (
-              <p
-                className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
-                role="alert"
-                aria-live="assertive"
-              >
+              <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                 {localError || error}
               </p>
             )}
@@ -166,22 +327,56 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="mt-6 w-full rounded-2xl bg-slate-900 px-4 py-3 text-base font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              aria-busy={loading}
             >
-              {loading ? t("login.signingIn") : t("login.signIn")}
+              {loading
+                ? isSignup
+                  ? "Creating Account..."
+                  : isContractor
+                  ? "Signing In..."
+                  : t("login.signingIn")
+                : isSignup
+                ? "Register Contractor"
+                : isContractor
+                ? "Sign In"
+                : t("login.signIn")}
             </button>
           </div>
 
+          {/* Bottom Section: Footer Actions */}
           <div className="mt-10 border-t border-slate-100 pt-6 text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
-              {t("language.prompt")}
-            </p>
-            <div className="mt-3 flex justify-center">
-              <LanguageSwitcher
-                ariaLabel={t("language.prompt")}
-                className="bg-slate-100 text-slate-900"
-              />
-            </div>
+            {isContractor ? (
+              // CONTRACTOR: Toggle between Signup and Login
+              <div>
+                <p className="text-sm text-slate-600">
+                  {isSignup
+                    ? "Already have an account?"
+                    : "Don't have a contractor account?"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignup(!isSignup);
+                    setLocalError(null);
+                  }}
+                  className="mt-2 text-sm font-bold text-slate-900 transition hover:text-slate-700 hover:underline"
+                >
+                  {isSignup ? "Sign In" : "Create Account"}
+                </button>
+              </div>
+            ) : (
+              // USER: Show Language Switcher
+              <>
+                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
+                  {t("language.prompt")}
+                </p>
+                <div className="mt-3 flex justify-center">
+                  <LanguageSwitcher
+                    ariaLabel={t("language.prompt")}
+                    className="bg-slate-100 text-slate-900"
+                  />
+                </div>
+              </>
+            )}
           </div>
         </form>
       </div>
