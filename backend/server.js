@@ -22,9 +22,9 @@ import translateRoute from "./routes/translateRoute.js"; // <-- NEW ROUTE
 
 dotenv.config();
 
-// ---------------------------------------------------
-// 1) CREATE APP FIRST (THIS MUST COME BEFORE app.use())
-// ---------------------------------------------------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const TTS_STATIC_DIR = path.join(__dirname, "tts-files");
 const app = express();
 const port = 3030;
 
@@ -58,6 +58,8 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+app.use("/tts-files", express.static(TTS_STATIC_DIR));
+// app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
 
 if (process.env.NODE_ENV === "development") {
