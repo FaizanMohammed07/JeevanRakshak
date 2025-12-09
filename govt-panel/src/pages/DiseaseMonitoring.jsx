@@ -707,6 +707,11 @@ function DiseaseMonitoring() {
         </div>
       )}
 
+      {/* Heat Map */}
+      <div className="mb-12">
+        <KeralaHeatMap refreshKey={refreshTick} />
+      </div>
+
       <div className="space-y-8 mb-12">
         {/* District-wise Cases Chart */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
@@ -865,7 +870,7 @@ function DiseaseMonitoring() {
         </div>
 
         {/* Disease Trend Chart */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+        {/* <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
@@ -1007,13 +1012,13 @@ function DiseaseMonitoring() {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Heat Map */}
-      <div className="mb-12">
+      {/* <div className="mb-12">
         <KeralaHeatMap refreshKey={refreshTick} />
-      </div>
+      </div> */}
 
       {/* Active Disease Cases Table */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200">

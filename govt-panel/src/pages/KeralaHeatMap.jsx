@@ -237,7 +237,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-gray-500">Window</span>
+          {/* <span className="text-xs text-gray-500">Window</span>
           {heatmapRangeOptions.map((option) => (
             <button
               key={option.value}
@@ -262,7 +262,22 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
             }`}
           >
             Custom range
-          </button>
+          </button> */}
+          <span className="text-xs text-gray-500">Map</span>
+
+          {["district", "taluk"].map((layer) => (
+            <button
+              key={layer}
+              onClick={() => setMapLayer(layer)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                mapLayer === layer
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-gray-700 border-gray-200"
+              }`}
+            >
+              {layer === "district" ? "Districts" : "Taluks"}
+            </button>
+          ))}
         </div>
       </div>
       {customRangeOpen && (
@@ -293,7 +308,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        <span className="text-xs text-gray-500">Map</span>
+        {/* <span className="text-xs text-gray-500">Map</span>
 
         {["district", "taluk"].map((layer) => (
           <button
@@ -307,7 +322,7 @@ function KeralaHeatMap({ compact = false, refreshKey }) {
           >
             {layer === "district" ? "Districts" : "Taluks"}
           </button>
-        ))}
+        ))} */}
       </div>
 
       {error && (

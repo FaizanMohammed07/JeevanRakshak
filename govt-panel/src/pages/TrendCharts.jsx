@@ -91,7 +91,13 @@ const getWeekRange = (offsetWeeks = 0) => {
 
 const TrendTooltip = ({ active, payload, label }) => {
   if (!active || !payload || payload.length === 0) return null;
-  const sorted = [...payload]
+
+  // Filter values > 0 only
+  const filtered = payload.filter((p) => Number(p.value) > 0);
+
+  // If all values are zero → show nothing
+  if (filtered.length === 0) return null;
+  const sorted = [...filtered]
     .filter((entry) => typeof entry.value === "number")
     .sort((a, b) => b.value - a.value);
   return (
