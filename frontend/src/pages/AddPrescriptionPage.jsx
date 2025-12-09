@@ -722,7 +722,7 @@ function AddPrescriptionPage() {
               {/* Section 4: Follow Up & Notes */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                     <Calendar className="w-4 h-4" /> Follow-up Date
                   </label>
                   <input
