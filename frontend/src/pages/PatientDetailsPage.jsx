@@ -410,7 +410,6 @@ function PatientDetailsPage() {
                           <div className="flex gap-3 mt-2">
                             {rx.images.map((img, idx) => (
                               <button
-                          {/* Contractor / Employer info */}
                                 key={idx}
                                 onClick={() => {
                                   setSelectedFile(img);
