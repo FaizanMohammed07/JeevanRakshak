@@ -22,15 +22,20 @@ import {
 } from "lucide-react";
 import { PatientsProvider } from "./context/PatientsContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ContractorProvider } from "./context/ContractorContext";
 import Dashboard from "./pages/Dashboard";
 import ProfilePage from "./pages/ProfilePage";
 import PrescriptionsPage from "./pages/PrescriptionsPage";
 import LabReportsPage from "./pages/LabReportsPage";
 import LoginPage from "./pages/Login";
+import SignupPage from "./pages/Signup";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import NearbyHospitals from "./pages/NearbyHospitals";
 import DemoVideoPage from "./pages/DemoVideoPage";
 import { translateLocationField } from "./utils/locationTranslations";
+import ContractorDashboard from "./pages/ContractorDashboard";
+import ContractorPatients from "./pages/ContractorPatients";
+import ContractorPatientStatus from "./pages/ContractorPatientStatus";
 
 const navItems = [
   {
@@ -74,6 +79,7 @@ function App() {
         <PatientsProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
             <Route
               path="/"
               element={
@@ -88,6 +94,21 @@ function App() {
               <Route path="lab-reports" element={<LabReportsPage />} />
               <Route path="nearby-hospitals" element={<NearbyHospitals />} />
               <Route path="demo-video" element={<DemoVideoPage />} />
+            </Route>
+            {/* Contractor routes - protected and restricted to contractor role */}
+            <Route
+              path="/contractor"
+              element={
+                <ContractorProtectedRoute>
+                  <ContractorProvider>
+                    <ContractorLayout />
+                  </ContractorProvider>
+                </ContractorProtectedRoute>
+              }
+            >
+              <Route index element={<ContractorDashboard />} />
+              <Route path="patients" element={<ContractorPatients />} />
+              <Route path="status" element={<ContractorPatientStatus />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -356,6 +377,24 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function ContractorProtectedRoute({ children }) {
+  const { isAuthenticated, loading, role } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">
+        Checking session...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || role !== "contractor") {
     return <Navigate to="/login" replace />;
   }
 

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import {
-  ShieldCheck,
-  LockKeyhole,
-  Phone,
+  // ShieldCheck,
+  // LockKeyhole,
+  // Phone,
   HardHat,
   User,
   UserPlus,
@@ -16,7 +16,7 @@ import LanguageSwitcher from "../components/LanguageSwitcher";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, register, loading, error, isAuthenticated } = useAuth(); // Assuming register exists in context
+  const { login, register, loading, error, isAuthenticated, role } = useAuth(); // Assuming register exists in context
 
   // State for toggling between User and Contractor
   const [isContractor, setIsContractor] = useState(false);
@@ -42,10 +42,16 @@ export default function LoginPage() {
   }, [isContractor]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isAuthenticated) return;
+
+    // Redirect according to authenticated user's role to avoid
+    // sending contractors into the patient panel.
+    if (role === "contractor") {
+      navigate("/contractor", { replace: true });
+    } else {
       navigate("/", { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, role, navigate]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -100,18 +106,12 @@ export default function LoginPage() {
           console.warn("Register function not found in AuthContext");
         }
       } else {
-        // Handle Login
+        // Handle Login - rely on AuthContext role + redirect effect
         await login({
           phoneNumber: formState.phoneNumber,
           password: formState.password,
           role: isContractor ? "contractor" : "user",
         });
-      }
-      // Redirect based on role
-      if (isContractor) {
-        navigate("/contractor", { replace: true });
-      } else {
-        navigate("/", { replace: true });
       }
     } catch (err) {
       console.error("Authentication failed", err);
@@ -342,12 +342,14 @@ export default function LoginPage() {
                 ? "Sign In"
                 : t("login.signIn")}
             </button>
-            <p className="mt-4 text-center text-sm text-slate-500">
-              {t("login.createAccountPrompt")}{" "}
-              <Link className="font-semibold text-slate-900" to="/signup">
-                {t("login.signUpLink")}
-              </Link>
-            </p>
+            {!isContractor && (
+              <p className="mt-4 text-center text-sm text-slate-500">
+                {t("login.createAccountPrompt")}{" "}
+                <Link className="font-semibold text-slate-900" to="/signup">
+                  {t("login.signUpLink")}
+                </Link>
+              </p>
+            )}
           </div>
 
           {/* Bottom Section: Footer Actions */}
