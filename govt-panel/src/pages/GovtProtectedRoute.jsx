@@ -9,7 +9,7 @@ function GovtProtectedRoute({ children }) {
   useEffect(() => {
     const check = async () => {
       try {
-        await axios.get("http://localhost:3030/api/govt/check", {
+        await axios.get("http://localhost:8080/api/govt/check", {
           withCredentials: true,
         });
         setAllowed(true);

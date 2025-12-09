@@ -27,7 +27,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TTS_STATIC_DIR = path.join(__dirname, "tts-files");
 const app = express();
-const port = 3030;
+const port = process.env.PORT || 8080;
 
 // ---------------------------------------------
 // 2) CORS SETTINGS
