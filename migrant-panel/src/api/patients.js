@@ -17,3 +17,8 @@ export const fetchMyLabReports = async () => {
   const { data } = await api.get("/patients/me/labs");
   return data.documents || [];
 };
+
+export const signupPatient = async (patientData) => {
+  const { data } = await api.post("/patients/signup", patientData);
+  return data;
+};
