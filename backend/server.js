@@ -19,6 +19,7 @@ import campRoutes from "./routes/campRoutes.js";
 import govtRoutes from "./routes/govtRoutes.js";
 
 import translateRoute from "./routes/translateRoute.js"; // <-- NEW ROUTE
+import ttsRoute from "./routes/ttsRoute.js";
 
 dotenv.config();
 
@@ -89,6 +90,14 @@ app.get("/", (req, res) => {
 // 6) TRANSLATION ROUTE (MUST BE BEFORE OTHER /api ROUTES)
 // ---------------------------------------------
 app.use("/api/translate", translateRoute);
+// TTS endpoint (server-side fallback)
+app.use("/api/tts", ttsRoute);
+
+// serve generated tts audio files
+app.use(
+  "/tts-audio",
+  express.static(path.join(process.cwd(), "storage", "tts"))
+);
 
 // ---------------------------------------------
 // 7) ALL OTHER ROUTES

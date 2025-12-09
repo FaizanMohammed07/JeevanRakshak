@@ -8,7 +8,6 @@ import {
   Routes,
 } from "react-router-dom";
 
-
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
@@ -18,7 +17,8 @@ import {
   LogOut,
   Hospital,
   MapPin,
-  Languages,PlayCircle
+  Languages,
+  PlayCircle,
 } from "lucide-react";
 import { PatientsProvider } from "./context/PatientsContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -30,6 +30,7 @@ import LoginPage from "./pages/Login";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import NearbyHospitals from "./pages/NearbyHospitals";
 import DemoVideoPage from "./pages/DemoVideoPage";
+import { translateLocationField } from "./utils/locationTranslations";
 
 const navItems = [
   {
@@ -39,10 +40,10 @@ const navItems = [
     end: true,
   },
   {
-  labelKey: "DemoVideo",
-  to: "/demo-video",
-  icon: PlayCircle,   // You can import any icon
-},
+    labelKey: "DemoVideo",
+    to: "/demo-video",
+    icon: PlayCircle, // You can import any icon
+  },
 
   {
     labelKey: "nav.profile",
@@ -102,16 +103,28 @@ import { useNavigate } from "react-router-dom";
 function ShellLayout() {
   const navigate = useNavigate();
   const { patient, logout } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang = (i18n.language || "en").split("-")[0];
+  // prefer mapped village if available, otherwise fall back to taluk
+  const mappedDistrictHeader = translateLocationField(
+    currentLang,
+    "district",
+    patient?.district
+  );
+  const mappedVillageHeader = translateLocationField(
+    currentLang,
+    "village",
+    patient?.village || patient?.taluk
+  );
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  
+
   const handleLogoutClick = () => setShowLogoutConfirm(true);
   const handleCancelLogout = () => setShowLogoutConfirm(false);
   const handleConfirmLogout = () => {
     setShowLogoutConfirm(false);
     logout();
   };
-  
+
   return (
     <div className="min-h-screen bg-sky-50/70">
       <header className="sticky top-0 z-30 border-b border-sky-100/70 bg-white/95 shadow-sm backdrop-blur">
@@ -132,12 +145,12 @@ function ShellLayout() {
 
           <div className="flex flex-wrap items-center justify-end gap-3 text-right">
             <button
-  onClick={() => navigate("/demo-video")}
-  className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-sky-50 transition"
->
-  <PlayCircle className="h-4 w-4 text-sky-600" />
-  {t("app.idDemoVideo")}
-</button>
+              onClick={() => navigate("/demo-video")}
+              className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-sky-50 transition"
+            >
+              <PlayCircle className="h-4 w-4 text-sky-600" />
+              {t("app.idDemoVideo")}
+            </button>
 
             <span className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800">
               <UserRound className="h-4 w-4 text-sky-500" />
@@ -145,7 +158,10 @@ function ShellLayout() {
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-600">
               <MapPin className="h-3.5 w-3.5 text-sky-500" />
-              {[patient?.district, patient?.taluk]
+              {[
+                mappedDistrictHeader || patient?.district,
+                mappedVillageHeader || patient?.taluk,
+              ]
                 .filter(Boolean)
                 .join(" · ") || t("app.locationFallback")}
             </span>

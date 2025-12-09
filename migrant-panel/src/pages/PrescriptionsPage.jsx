@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { ClipboardList } from "lucide-react";
 import { usePatientData } from "../context/PatientsContext";
 import useTranslateData from "../hooks/useTranslateData";
+import { translateBatch } from "../utils/translate"; // used to translate static labels
+import useTts from "../hooks/useTts";
 
 const TIME_SLOT_LABELS = {
   morning: "Morning",
@@ -483,13 +485,60 @@ function PrescriptionCard({ rx, onSelect, isActive }) {
         isActive ? "border-sky-400 bg-sky-100/60" : "border-sky-50 bg-sky-50/40"
       }`}
     >
-      <div className="flex-1">
-        <p className="text-lg font-semibold text-slate-900">
-          {
-            rx.confirmedDisease ||
-              rx.suspectedDisease ||
-              t("common.diagnosisPending") /* Diagnosis pending */
-          }
+      <p className="text-lg font-semibold text-slate-900">
+        {rx.confirmedDisease ||
+          rx.suspectedDisease ||
+          t("common.diagnosisPending")}
+      </p>
+
+      <p className="text-sm text-slate-500">
+        {t("common.symptoms")}: {rx.symptoms || "—"}
+      </p>
+
+      <p className="text-sm text-slate-500">
+        {t("common.medicines")}:{" "}
+        {(rx.medicinesIssued || []).map((m) => m.name).join(", ") || "—"}
+      </p>
+
+      <p className="text-sm text-slate-500 mt-2 font-semibold text-slate-600">
+        {t("common.issued")} {formatDate(rx.dateOfIssue)}
+      </p>
+
+      <span className="text-xs uppercase tracking-widest text-sky-600 block mt-2">
+        {t("prescriptions.detail.tapHint")}
+      </span>
+    </button>
+  );
+}
+
+/* -----------------------------
+   DETAIL PANEL
+----------------------------- */
+function PrescriptionDetailPanel({ rx, describeSchedule }) {
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.language || "en").split("-")[0];
+  const { speak, speakSequence } = useTts();
+
+  if (!rx) {
+    return (
+      <div className="rounded-2xl border bg-slate-50/70 p-5 text-center text-sm text-slate-500">
+        {t("common.selectPrescription")}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-sky-100 bg-sky-50/40 p-5 space-y-4">
+      {/* Condition */}
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">
+          {t("prescriptions.detail.condition")}
+        </p>
+
+        <p className="text-xl font-semibold text-slate-900">
+          {rx.confirmedDisease ||
+            rx.suspectedDisease ||
+            t("common.diagnosisPending")}
         </p>
         <p className="text-sm text-slate-500">
           {t("common.symptoms") /* Symptoms */}: {rx.symptoms || "—"}
@@ -498,6 +547,70 @@ function PrescriptionCard({ rx, onSelect, isActive }) {
           {t("common.medicines") /* Medicines */}:{" "}
           {(rx.medicinesIssued || []).join(", ") || "—"}
         </p>
+
+        {(rx.medicinesIssued || []).length === 0 ? (
+          <p className="text-sm text-slate-500">{t("common.noMedicines")}</p>
+        ) : (
+          <div className="space-y-3 mt-3">
+            {(rx.medicinesIssued || []).map((medicine, idx) => {
+              const scheduleLabel = describeSchedule(medicine.schedule);
+              return (
+                <div
+                  key={`${medicine.name || idx}-${idx}`}
+                  className="rounded-xl border bg-white/90 px-4 py-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold">{medicine.name}</p>
+
+                    {medicine.dosage && (
+                      <span className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-500">
+                        {medicine.dosage}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-2 text-xs text-slate-500">
+                    {scheduleLabel || (
+                      <span className="text-slate-400">
+                        {t("prescriptions.detail.noSchedule")}
+                      </span>
+                    )}
+                  </div>
+                  {/* Listen button: speaks medicine name + dosage + schedule in selected language */}
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        // Build deterministic chunks: name, dosage, schedule
+                        const chunks = [];
+                        if (medicine.name) chunks.push(medicine.name);
+                        if (medicine.dosage) chunks.push(medicine.dosage);
+                        if (scheduleLabel) chunks.push(scheduleLabel);
+
+                        try {
+                          // play chunks sequentially (will prefer server TTS for non-English if needed)
+                          await speakSequence(chunks, lang, { pauseMs: 350 });
+                        } catch (e) {
+                          console.error("TTS sequence failed:", e);
+                          // final fallback: try single utterance
+                          try {
+                            const textToSpeak = chunks.join(". ");
+                            await speak(textToSpeak, lang);
+                          } catch (e2) {
+                            console.error("TTS fallback failed:", e2);
+                          }
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 rounded-md border border-sky-100 bg-white px-3 py-1 text-xs font-semibold text-sky-600 hover:bg-sky-50"
+                    >
+                      {t("prescriptions.detail.listen", "Listen")}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
       <div className="text-sm text-slate-500">
         <p className="font-semibold text-slate-600">
