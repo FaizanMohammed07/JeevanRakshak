@@ -50,7 +50,7 @@ const hotspotRangeOptions = [
 const activeCaseRangeOptions = [
   { label: "Today", value: "today", rangeDays: 1, offsetDays: 0 },
   { label: "Yesterday", value: "yesterday", rangeDays: 1, offsetDays: 1 },
-  { label: "5 Days", value: "5d", rangeDays: 5, offsetDays: 0 },
+  { label: "7 Days", value: "7d", rangeDays: 7, offsetDays: 0 },
   { label: "10 Days", value: "10d", rangeDays: 10, offsetDays: 0 },
   { label: "30 Days", value: "30d", rangeDays: 30, offsetDays: 0 },
 ];
@@ -58,7 +58,7 @@ const activeCaseRangeOptions = [
 const districtCasesRangeOptions = [
   { label: "Today", value: "today", rangeDays: 1, offsetDays: 0 },
   { label: "Yesterday", value: "yesterday", rangeDays: 1, offsetDays: 1 },
-  { label: "5 Days", value: "5d", rangeDays: 5, offsetDays: 0 },
+  { label: "7 Days", value: "7d", rangeDays: 7, offsetDays: 0 },
   { label: "10 Days", value: "10d", rangeDays: 10, offsetDays: 0 },
   { label: "15 Days", value: "15d", rangeDays: 15, offsetDays: 0 },
 ];
@@ -210,12 +210,38 @@ function DiseaseMonitoring() {
     if (normalizedDiseaseKeys.length) return normalizedDiseaseKeys;
     return [{ key: "totalCases", label: "Total Cases" }];
   }, [normalizedDiseaseKeys]);
+const aggregatedDistrictCases = useMemo(() => {
+  return districtCases.map(entry => {
+    const aggregated = { ...entry };
 
+    // If backend gives daily data under some name
+    const days = entry.dailyBreakdown || entry.trendData || entry.records || [];
+
+    days.forEach(day => {
+      Object.keys(day).forEach(key => {
+        if (key !== "day" && typeof day[key] === "number") {
+          aggregated[key] = (aggregated[key] || 0) + day[key];
+        }
+      });
+    });
+
+    return aggregated;
+  });
+}, [districtCases]);
+
+
+
+  // const horizontalChartData = useMemo(() => {
+  //   return [...districtCases]
+  //     .map((entry) => ({ ...entry }))
+  //     .sort((a, b) => (b.totalCases ?? 0) - (a.totalCases ?? 0));
+  // }, [districtCases]);
   const horizontalChartData = useMemo(() => {
-    return [...districtCases]
-      .map((entry) => ({ ...entry }))
-      .sort((a, b) => (b.totalCases ?? 0) - (a.totalCases ?? 0));
-  }, [districtCases]);
+  return [...aggregatedDistrictCases]
+    .map(entry => ({ ...entry }))
+    .sort((a, b) => (b.totalCases ?? 0) - (a.totalCases ?? 0));
+}, [aggregatedDistrictCases]);
+
 
   const horizontalChartSummary = useMemo(() => {
     if (!horizontalChartData.length) {
@@ -390,14 +416,25 @@ function DiseaseMonitoring() {
     };
   };
 
+  // const getStatusFromCases = (caseCount) => {
+  //   if (caseCount >= 6) {
+  //     return "Critical";
+  //   } else if (caseCount >= 3) {
+  //     return "Moderate";
+  //   }
+  //   return "Normal";
+  // };
   const getStatusFromCases = (caseCount) => {
-    if (caseCount >= 6) {
-      return "Critical";
-    } else if (caseCount >= 3) {
-      return "Moderate";
-    }
-    return "Normal";
-  };
+  const cases = Number(caseCount) || 0;
+
+  if (cases >= 6) return "Critical";              // 6 or more
+  if (cases > 4 && cases < 6) return "Moderate";  // exactly 5
+  if (cases > 2 && cases <= 4) return "Observe";  // 3 or 4
+  if (cases <= 1) return "Normal";                // 0 or 1
+
+  return "Normal";
+};
+
 
   const renderDistrictTooltip = ({ active, label, payload }) => {
     if (!active || !payload?.length) return null;
@@ -781,11 +818,15 @@ function DiseaseMonitoring() {
                 </div>
               </div>
             </div>
-            <div className="relative mt-6 h-[460px] rounded-xl bg-gradient-to-b from-white to-slate-50 border border-gray-100 shadow-inner">
+            <div className="relative mt-6 h-[460px] rounded-xl bg-gradient-to-b from-white to-slate-50 border border-red-100 shadow-inner">
               {horizontalChartData.length ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartBarChart
-                    data={horizontalChartData}
+                    // data={horizontalChartData}
+                   data={aggregatedDistrictCases}
+
+
+
                     margin={{ top: 24, right: 30, left: 24, bottom: 60 }}
                   >
                     <defs>
@@ -1180,7 +1221,7 @@ function DiseaseMonitoring() {
                         {/* Status */}
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            <span
+                            {/* <span
                               className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                 status === "Critical"
                                   ? "bg-red-100 text-red-800"
@@ -1192,7 +1233,23 @@ function DiseaseMonitoring() {
                               }`}
                             >
                               {status}
-                            </span>
+                            </span> */}
+                            <span
+  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+    status === "Critical"
+      ? "bg-red-100 text-red-800"
+      : status === "Moderate"
+      ? "bg-yellow-100 text-yellow-800"
+      : status === "Observe"
+      ? "bg-blue-100 text-blue-800"
+      : status === "Normal"
+      ? "bg-green-100 text-green-800"
+      : "bg-gray-100 text-gray-800"
+  }`}
+>
+  {status}
+</span>
+
                             {row.activeCamps && (
                               <p className="text-xs text-gray-500 mt-1">
                                 {row.activeCamps} active camps
