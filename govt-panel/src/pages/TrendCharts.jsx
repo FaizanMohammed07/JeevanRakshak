@@ -91,7 +91,13 @@ const getWeekRange = (offsetWeeks = 0) => {
 
 const TrendTooltip = ({ active, payload, label }) => {
   if (!active || !payload || payload.length === 0) return null;
-  const sorted = [...payload]
+
+  // Filter values > 0 only
+  const filtered = payload.filter((p) => Number(p.value) > 0);
+
+  // If all values are zero → show nothing
+  if (filtered.length === 0) return null;
+  const sorted = [...filtered]
     .filter((entry) => typeof entry.value === "number")
     .sort((a, b) => b.value - a.value);
   return (
@@ -220,7 +226,7 @@ function TrendCharts({ district, refreshKey }) {
         <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h3 className="text-xl font-bold text-gray-900">
-              District-wise Disease Activity
+              Weekly Disease Activity
             </h3>
             <p className="text-sm text-gray-500">
               Comparative line chart of active cases

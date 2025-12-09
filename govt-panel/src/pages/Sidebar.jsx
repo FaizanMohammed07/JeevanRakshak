@@ -177,14 +177,16 @@ function Sidebar() {
       </div>
 
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+        // <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="logout-confirm-title"
             className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl"
           >
-            <div className="flex flex-col gap-4 text-center">
+            <div className="flex flex-col gap-4 text-center ">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-red-600">
                 <LogOut size={24} />
               </div>

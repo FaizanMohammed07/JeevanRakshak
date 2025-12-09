@@ -56,7 +56,7 @@ const sdgIconMap = {
 const hotspotRangeOptions = [
   { label: "Today", value: "today", rangeDays: 1, offsetDays: 0 },
   { label: "Yesterday", value: "yesterday", rangeDays: 1, offsetDays: 1 },
-  { label: "5 Days", value: "5d", rangeDays: 5, offsetDays: 0 },
+  { label: "7 Days", value: "7d", rangeDays: 7, offsetDays: 0 },
   { label: "10 Days", value: "10d", rangeDays: 10, offsetDays: 0 },
 ];
 
