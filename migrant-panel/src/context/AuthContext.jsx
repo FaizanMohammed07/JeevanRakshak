@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
         });
       }
     } catch (e) {
-      // Optionally log error
+      console.error("Logout failed", e);
     } finally {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(ROLE_KEY);
@@ -107,6 +107,8 @@ export function AuthProvider({ children }) {
 
   // 2. Unified Login Logic
   const clearError = useCallback(() => setError(null), []);
+  console.log(clearError);
+
   const login = useCallback(async (credentials) => {
     setLoading(true);
     const isContractorLogin = credentials.role === "contractor";
