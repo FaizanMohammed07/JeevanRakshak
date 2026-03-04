@@ -133,17 +133,11 @@ function DiseaseMonitoring() {
   const [customEndDate, setCustomEndDate] = useState("");
 
   // Range selections
-  const [hotspotRangeKey, setHotspotRangeKey] = useState(
-    hotspotRangeOptions[0].value
-  );
-  const [activeCasesRangeKey, setActiveCasesRangeKey] = useState(
-    activeCaseRangeOptions[0].value
-  );
-  const [districtCasesRangeKey, setDistrictCasesRangeKey] = useState(
-    districtCasesRangeOptions[0].value
-  );
-  const [timelineRange, setTimelineRange] = useState(timelineOptions[0].value);
-  const [trendRange, setTrendRange] = useState(trendRangeOptions[0].value);
+  const [hotspotRangeKey, setHotspotRangeKey] = useState("10d");
+  const [activeCasesRangeKey, setActiveCasesRangeKey] = useState("10d");
+  const [districtCasesRangeKey, setDistrictCasesRangeKey] = useState("10d");
+  const [timelineRange, setTimelineRange] = useState("10d");
+  const [trendRange, setTrendRange] = useState("10d");
 
   // UI state
   const [selectedDistrict, setSelectedDistrict] = useState("");
@@ -215,26 +209,25 @@ function DiseaseMonitoring() {
     if (normalizedDiseaseKeys.length) return normalizedDiseaseKeys;
     return [{ key: "totalCases", label: "Total Cases" }];
   }, [normalizedDiseaseKeys]);
-const aggregatedDistrictCases = useMemo(() => {
-  return districtCases.map(entry => {
-    const aggregated = { ...entry };
+  const aggregatedDistrictCases = useMemo(() => {
+    return districtCases.map((entry) => {
+      const aggregated = { ...entry };
 
-    // If backend gives daily data under some name
-    const days = entry.dailyBreakdown || entry.trendData || entry.records || [];
+      // If backend gives daily data under some name
+      const days =
+        entry.dailyBreakdown || entry.trendData || entry.records || [];
 
-    days.forEach(day => {
-      Object.keys(day).forEach(key => {
-        if (key !== "day" && typeof day[key] === "number") {
-          aggregated[key] = (aggregated[key] || 0) + day[key];
-        }
+      days.forEach((day) => {
+        Object.keys(day).forEach((key) => {
+          if (key !== "day" && typeof day[key] === "number") {
+            aggregated[key] = (aggregated[key] || 0) + day[key];
+          }
+        });
       });
+
+      return aggregated;
     });
-
-    return aggregated;
-  });
-}, [districtCases]);
-
-
+  }, [districtCases]);
 
   // const horizontalChartData = useMemo(() => {
   //   return [...districtCases]
@@ -242,11 +235,10 @@ const aggregatedDistrictCases = useMemo(() => {
   //     .sort((a, b) => (b.totalCases ?? 0) - (a.totalCases ?? 0));
   // }, [districtCases]);
   const horizontalChartData = useMemo(() => {
-  return [...aggregatedDistrictCases]
-    .map(entry => ({ ...entry }))
-    .sort((a, b) => (b.totalCases ?? 0) - (a.totalCases ?? 0));
-}, [aggregatedDistrictCases]);
-
+    return [...aggregatedDistrictCases]
+      .map((entry) => ({ ...entry }))
+      .sort((a, b) => (b.totalCases ?? 0) - (a.totalCases ?? 0));
+  }, [aggregatedDistrictCases]);
 
   const horizontalChartSummary = useMemo(() => {
     if (!horizontalChartData.length) {
@@ -430,16 +422,15 @@ const aggregatedDistrictCases = useMemo(() => {
   //   return "Normal";
   // };
   const getStatusFromCases = (caseCount) => {
-  const cases = Number(caseCount) || 0;
+    const cases = Number(caseCount) || 0;
 
-  if (cases >= 6) return "Critical";              // 6 or more
-  if (cases > 4 && cases < 6) return "Moderate";  // exactly 5
-  if (cases > 2 && cases <= 4) return "Observe";  // 3 or 4
-  if (cases <= 1) return "Normal";                // 0 or 1
+    if (cases >= 6) return "Critical"; // 6 or more
+    if (cases > 4 && cases < 6) return "Moderate"; // exactly 5
+    if (cases > 2 && cases <= 4) return "Observe"; // 3 or 4
+    if (cases <= 1) return "Normal"; // 0 or 1
 
-  return "Normal";
-};
-
+    return "Normal";
+  };
 
   const renderDistrictTooltip = ({ active, label, payload }) => {
     if (!active || !payload?.length) return null;
@@ -750,7 +741,9 @@ const aggregatedDistrictCases = useMemo(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetchEmployerAnalysis(selectedEmployer, { rangeDays: 30 });
+        const res = await fetchEmployerAnalysis(selectedEmployer, {
+          rangeDays: 30,
+        });
         if (cancelled) return;
         setEmployerAnalysis(res);
       } catch (err) {
@@ -816,93 +809,137 @@ const aggregatedDistrictCases = useMemo(() => {
             </div>
           </div>
 
-              {/* Employer-wise Analysis */}
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-indigo-600 rounded-xl shadow">
-                      <Activity className="text-white" size={26} />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-semibold text-gray-900 mb-0">
-                        Employer-wise Analysis
-                      </h3>
-                      <p className="text-sm text-gray-500">Visual disease & district breakdown for migrant workers under the employer's contractors.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <select
-                      value={selectedEmployer}
-                      onChange={(e) => setSelectedEmployer(e.target.value)}
-                      className="rounded border px-3 py-2"
-                    >
-                      <option value="">Select employer</option>
-                      {employers.map((em) => (
-                        <option key={em.id} value={em.id}>{em.name}</option>
-                      ))}
-                    </select>
-                  </div>
+          {/* Employer-wise Analysis */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-indigo-600 rounded-xl shadow">
+                  <Activity className="text-white" size={26} />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="rounded-2xl border border-gray-100 p-4 bg-white">
-                    <h4 className="text-sm font-semibold text-slate-600">Diseases</h4>
-                    <div className="mt-4 h-64">
-                      {employerAnalysis?.diseases?.length ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RechartBarChart data={employerAnalysis.diseases} margin={{ top: 8, right: 12, left: 8, bottom: 30 }}>
-                            <XAxis dataKey="disease" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" height={60} />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="count" fill="#ef4444" />
-                          </RechartBarChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <div className="h-full flex items-center justify-center text-slate-500">Select an employer to view disease breakdown</div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-gray-100 p-4 bg-white">
-                    <h4 className="text-sm font-semibold text-slate-600">Districts</h4>
-                    <div className="mt-4 h-64">
-                      {employerAnalysis?.districts?.length ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RechartBarChart data={employerAnalysis.districts} margin={{ top: 8, right: 12, left: 8, bottom: 30 }}>
-                            <XAxis dataKey="district" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" height={60} />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="count" fill="#0ea5e9" />
-                          </RechartBarChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <div className="h-full flex items-center justify-center text-slate-500">District breakdown will appear here.</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <h4 className="text-sm font-semibold">Top Contractors</h4>
-                  <div className="mt-3 grid gap-2">
-                    {employerAnalysis?.contractors?.length ? (
-                      employerAnalysis.contractors.map((c) => (
-                        <div key={c.id} className="rounded border p-3 bg-white flex justify-between items-center">
-                          <div>
-                            <div className="font-semibold">{c.name}</div>
-                            <div className="text-sm text-slate-600">{c.patientsCount} migrants</div>
-                          </div>
-                          <div className="text-right">
-                            {c.activeAlerts ? <div className="text-red-600 font-semibold">{c.activeAlerts} alerts</div> : <div className="text-green-600">No alerts</div>}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-sm text-slate-500">No contractors to display.</div>
-                    )}
-                  </div>
+                <div>
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-0">
+                    Employer-wise Analysis
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Visual disease & district breakdown for migrant workers
+                    under the employer's contractors.
+                  </p>
                 </div>
               </div>
+              <div className="flex items-center gap-3">
+                <select
+                  value={selectedEmployer}
+                  onChange={(e) => setSelectedEmployer(e.target.value)}
+                  className="rounded border px-3 py-2"
+                >
+                  <option value="">Select employer</option>
+                  {employers.map((em) => (
+                    <option key={em.id} value={em.id}>
+                      {em.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="rounded-2xl border border-gray-100 p-4 bg-white">
+                <h4 className="text-sm font-semibold text-slate-600">
+                  Diseases
+                </h4>
+                <div className="mt-4 h-64">
+                  {employerAnalysis?.diseases?.length ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartBarChart
+                        data={employerAnalysis.diseases}
+                        margin={{ top: 8, right: 12, left: 8, bottom: 30 }}
+                      >
+                        <XAxis
+                          dataKey="disease"
+                          tick={{ fontSize: 12 }}
+                          angle={-30}
+                          textAnchor="end"
+                          height={60}
+                        />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#ef4444" />
+                      </RechartBarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-slate-500">
+                      Select an employer to view disease breakdown
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-gray-100 p-4 bg-white">
+                <h4 className="text-sm font-semibold text-slate-600">
+                  Districts
+                </h4>
+                <div className="mt-4 h-64">
+                  {employerAnalysis?.districts?.length ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartBarChart
+                        data={employerAnalysis.districts}
+                        margin={{ top: 8, right: 12, left: 8, bottom: 30 }}
+                      >
+                        <XAxis
+                          dataKey="district"
+                          tick={{ fontSize: 12 }}
+                          angle={-30}
+                          textAnchor="end"
+                          height={60}
+                        />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#0ea5e9" />
+                      </RechartBarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-slate-500">
+                      District breakdown will appear here.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold">Top Contractors</h4>
+              <div className="mt-3 grid gap-2">
+                {employerAnalysis?.contractors?.length ? (
+                  employerAnalysis.contractors.map((c) => (
+                    <div
+                      key={c.id}
+                      className="rounded border p-3 bg-white flex justify-between items-center"
+                    >
+                      <div>
+                        <div className="font-semibold">{c.name}</div>
+                        <div className="text-sm text-slate-600">
+                          {c.patientsCount} migrants
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {c.activeAlerts ? (
+                          <div className="text-red-600 font-semibold">
+                            {c.activeAlerts} alerts
+                          </div>
+                        ) : (
+                          <div className="text-green-600">No alerts</div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-slate-500">
+                    No contractors to display.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
           <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5 mt-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex-1">
@@ -940,10 +977,7 @@ const aggregatedDistrictCases = useMemo(() => {
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartBarChart
                     // data={horizontalChartData}
-                   data={aggregatedDistrictCases}
-
-
-
+                    data={aggregatedDistrictCases}
                     margin={{ top: 24, right: 30, left: 24, bottom: 60 }}
                   >
                     <defs>
@@ -1352,20 +1386,20 @@ const aggregatedDistrictCases = useMemo(() => {
                               {status}
                             </span> */}
                             <span
-  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-    status === "Critical"
-      ? "bg-red-100 text-red-800"
-      : status === "Moderate"
-      ? "bg-yellow-100 text-yellow-800"
-      : status === "Observe"
-      ? "bg-blue-100 text-blue-800"
-      : status === "Normal"
-      ? "bg-green-100 text-green-800"
-      : "bg-gray-100 text-gray-800"
-  }`}
->
-  {status}
-</span>
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                status === "Critical"
+                                  ? "bg-red-100 text-red-800"
+                                  : status === "Moderate"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : status === "Observe"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : status === "Normal"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {status}
+                            </span>
 
                             {row.activeCamps && (
                               <p className="text-xs text-gray-500 mt-1">

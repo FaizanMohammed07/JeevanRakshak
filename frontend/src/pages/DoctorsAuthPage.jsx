@@ -22,12 +22,13 @@ function DoctorAuthPage() {
 
   // Form States
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
     name: "",
-    phone: "",
-    license_number: "",
-    specialization: "",
+    licenseNumber: "",
+    qualification: "",
+    email: "",
+    phoneNumber: "",
+    password: "",
+    passwordConfirm: "",
   });
 
   // Redirect if already logged in
@@ -53,11 +54,21 @@ function DoctorAuthPage() {
     let success = false;
 
     if (isLoginMode) {
-      success = await login(formData.phone, formData.password);
+      success = await login(formData.phoneNumber, formData.password);
     } else {
       // Basic validation for signup
-      if (!formData.name || !formData.license_number) {
+      if (
+        !formData.name ||
+        !formData.licenseNumber ||
+        !formData.qualification ||
+        !formData.email ||
+        !formData.phoneNumber ||
+        !formData.password ||
+        !formData.passwordConfirm
+      ) {
         // You can add local validation error handling here
+        setIsLoading(false);
+        return;
       }
       success = await register(formData);
     }
@@ -127,9 +138,9 @@ function DoctorAuthPage() {
                     <FileBadge className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
-                      name="license_number"
+                      name="licenseNumber"
                       placeholder="License No."
-                      value={formData.license_number}
+                      value={formData.licenseNumber}
                       onChange={handleChange}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                       required
@@ -138,11 +149,12 @@ function DoctorAuthPage() {
                   <div className="relative">
                     <input
                       type="text"
-                      name="specialization"
-                      placeholder="Specialization"
-                      value={formData.specialization}
+                      name="qualification"
+                      placeholder="Qualification"
+                      value={formData.qualification}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      required
                     />
                   </div>
                 </div>
@@ -156,6 +168,20 @@ function DoctorAuthPage() {
                     value={formData.email}
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    required
+                  />
+                </div>
+
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                  <input
+                    type="password"
+                    name="passwordConfirm"
+                    placeholder="Confirm Password"
+                    value={formData.passwordConfirm}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    required
                   />
                 </div>
               </>
@@ -166,9 +192,9 @@ function DoctorAuthPage() {
               <Phone className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
               <input
                 type="tel"
-                name="phone"
+                name="phoneNumber"
                 placeholder="Phone Number"
-                value={formData.phone}
+                value={formData.phoneNumber}
                 onChange={handleChange}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 required
@@ -220,13 +246,13 @@ function DoctorAuthPage() {
             </p>
           </div>
           <div className="mt-4 text-center">
-  <button
-    onClick={() => navigate("/lab-assistant/login")}
-    className="text-purple-600 font-semibold hover:underline focus:outline-none"
-  >
-    Lab Assistant Login →
-  </button>
-</div>
+            <button
+              onClick={() => navigate("/lab-assistant/login")}
+              className="text-purple-600 font-semibold hover:underline focus:outline-none"
+            >
+              Lab Assistant Login →
+            </button>
+          </div>
         </div>
       </div>
     </div>

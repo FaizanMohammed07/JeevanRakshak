@@ -27,7 +27,7 @@ export function DoctorsProvider({ children }) {
       } catch (err) {
         // If 401 (Unauthorized), it means no valid cookie.
         // We stay logged out (doctor is null).
-        
+
         setDoctor(null);
       } finally {
         // 3. STOP LOADING regardless of success or failure
@@ -70,7 +70,7 @@ export function DoctorsProvider({ children }) {
     setLoading(true);
     setError("");
     try {
-      const response = await api.post(`/doctors/signup`, { doctorData });
+      const response = await api.post(`/doctors/signup`, doctorData);
 
       const data = response.data;
 
@@ -123,7 +123,7 @@ export function DoctorsProvider({ children }) {
       updateDoctor,
       clearError,
     }),
-    [doctor, loading, error, login, register, logout, updateDoctor, clearError]
+    [doctor, loading, error, login, register, logout, updateDoctor, clearError],
   );
 
   return (

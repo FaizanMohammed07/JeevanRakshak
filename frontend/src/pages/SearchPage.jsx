@@ -103,17 +103,37 @@ function SearchPage() {
         qrbox: 250,
         aspectRatio: 2.0,
       },
-      false
+      false,
     );
 
     scanner.render(
-      (decodedText) => {
+      async (decodedText) => {
         setScannerOpen(false);
-        window.location.href = decodedText;
+        // Extract patient ID from URL if present
+        let id = decodedText;
+        const match = id.match(/patients\/(\w+)$/);
+        if (match) {
+          id = match[1];
+        }
+        try {
+          let patient = findPatientByHealthId(id);
+          if (!patient) {
+            patient = await fetchPatient(id);
+          }
+          if (patient) {
+            navigate(`/patients/${id}`);
+          } else {
+            setError("Patient not found for scanned QR code");
+          }
+        } catch (err) {
+          setError(
+            "Error finding patient: " + (err.message || "Unknown error"),
+          );
+        }
       },
       (errorMessage) => {
         // ignore scan errors
-      }
+      },
     );
 
     return () => scanner.clear();

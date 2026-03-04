@@ -87,12 +87,17 @@ export const getPatientProfile = async (req, res) => {
       return res.status(400).json({ msg: "Patient identifier is required" });
     }
 
-    const query = mongoose.isValidObjectId(identifier)
-      ? { _id: identifier }
-      : { phoneNumber: identifier };
+    // Robust lookup by ObjectId, phoneNumber, or Smart Health ID
+    const orConditions = [];
+    if (mongoose.isValidObjectId(identifier)) {
+      orConditions.push({ _id: identifier });
+    }
+    orConditions.push({ phoneNumber: identifier });
+    orConditions.push({ migrant_health_id: identifier });
 
-    // Populate contractor and contractor.employer so frontend can display employer/contractor metadata
-    const patient = await Patient.findOne(query)
+    const patient = await Patient.findOne({
+      $or: orConditions,
+    })
       .select("-password -passwordConfirm")
       .populate({
         path: "contractor",
@@ -114,7 +119,7 @@ export const getPatientProfile = async (req, res) => {
 export const getMyProfile = async (req, res) => {
   try {
     const patient = await Patient.findById(req.user._id).select(
-      "-password -passwordConfirm"
+      "-password -passwordConfirm",
     );
 
     if (!patient) {
@@ -154,7 +159,7 @@ export const getPatientDiseases = async (req, res) => {
     // Fetch all prescriptions of the patient
     const prescriptions = await Prescription.find(
       { patient: patientId },
-      { confirmedDisease: 1 }
+      { confirmedDisease: 1 },
     ).lean();
 
     // Extract confirmed diseases only (no suspected)
@@ -165,7 +170,7 @@ export const getPatientDiseases = async (req, res) => {
     // Deduplicate
     const uniqueDiseases = [
       ...new Set(
-        diseases.map((d) => d.toLowerCase()) // normalize
+        diseases.map((d) => d.toLowerCase()), // normalize
       ),
     ];
 

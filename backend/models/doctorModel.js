@@ -8,6 +8,21 @@ const doctorSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please enter your name"],
   },
+  licenseNumber: {
+    type: String,
+    required: [true, "Please provide your medical license number"],
+    unique: true,
+  },
+  qualification: {
+    type: String,
+    required: [true, "Please provide your qualification"],
+  },
+  email: {
+    type: String,
+    required: [true, "Please provide your email address"],
+    unique: true,
+    match: [/.+@.+\..+/, "Please provide a valid email address"],
+  },
   phoneNumber: {
     type: String,
     unique: true,
@@ -20,7 +35,6 @@ const doctorSchema = new mongoose.Schema({
       message: "Phone number must be exactly 10 digits",
     },
   },
-  //   age: { type: Number, required: [true, "Please enter your age"] },
   password: {
     type: String,
     required: [true, "Please provide a password"],

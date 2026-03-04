@@ -23,8 +23,11 @@ export default function LanguageSwitcher({ className = "", ariaLabel }) {
     .split("-")[0]
     .toLowerCase();
 
+  const baseClasses =
+    "px-3 py-2 rounded-lg border shadow-sm focus:ring-blue-500 focus:outline-none";
+  const themedClasses = className ? "" : "border-gray-300 bg-white text-black";
   const combinedClassName =
-    `px-3 py-2 rounded-lg border border-gray-300 bg-white text-black shadow-sm focus:ring-blue-500 focus:outline-none ${className}`.trim();
+    `${baseClasses} ${themedClasses} ${className}`.trim();
 
   return (
     <select

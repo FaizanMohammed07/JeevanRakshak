@@ -61,20 +61,40 @@ export const login = async (req, res) => {
 
 export const signup = async (req, res) => {
   try {
-    const { name, age, phoneNumber, password, passwordConfirm } = req.body;
+    const {
+      name,
+      licenseNumber,
+      qualification,
+      email,
+      phoneNumber,
+      password,
+      passwordConfirm,
+    } = req.body;
 
-    if (!name || !phoneNumber || !password || !passwordConfirm)
+    if (
+      !name ||
+      !licenseNumber ||
+      !qualification ||
+      !email ||
+      !phoneNumber ||
+      !password ||
+      !passwordConfirm
+    ) {
       return res.status(400).json({ msg: "Please fill all fields" });
+    }
 
-    if (password !== passwordConfirm)
+    if (password !== passwordConfirm) {
       return res.status(400).json({ msg: "Passwords do not match" });
+    }
 
     // Hash password manually
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const newDoctor = await Doctor.create({
       name,
-      age,
+      licenseNumber,
+      qualification,
+      email,
       phoneNumber,
       password: hashedPassword, // hashed value stored
       passwordConfirm: undefined, // remove confirm field
@@ -82,10 +102,6 @@ export const signup = async (req, res) => {
 
     newDoctor.password = undefined;
 
-    // res.status(201).json({
-    //   msg: "Signup successful",
-    //   doctor: newDoctor,
-    // });
     createAndSendToken(newDoctor, 201, res);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -153,7 +169,7 @@ export const getDoctorPrescriptions = async (req, res) => {
         followUpDate: 1,
         contagious: 1,
         notes: 1,
-      }
+      },
     )
       .populate({
         path: "patient",
@@ -163,7 +179,7 @@ export const getDoctorPrescriptions = async (req, res) => {
       .lean();
 
     const uniquePatients = new Set(
-      prescriptions.map((p) => p.patient?._id?.toString())
+      prescriptions.map((p) => p.patient?._id?.toString()),
     ).size;
 
     return res.status(200).json({

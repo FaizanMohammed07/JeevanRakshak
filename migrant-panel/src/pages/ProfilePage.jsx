@@ -15,6 +15,7 @@ import { useAuth } from "../context/AuthContext";
 import { usePatientData } from "../context/PatientsContext";
 import useTranslateData from "../hooks/useTranslateData";
 import { translateLocationField } from "../utils/locationTranslations";
+import HealthCard from "../components/HealthCard";
 
 // ======================================================
 //              FULLY FIXED PROFILE PAGE
@@ -45,7 +46,7 @@ export default function ProfilePage() {
     useTranslateData(
       (list || []).map((v) => ({ text: v })),
       currentLang === "en" ? [] : ["text"],
-      currentLang
+      currentLang,
     ).map((obj) => obj.text);
 
   // 1) Translate LOCATION fields (object)
@@ -61,7 +62,7 @@ export default function ProfilePage() {
         ]
       : [],
     currentLang === "en" ? [] : ["district", "taluk", "village", "address"],
-    currentLang
+    currentLang,
   );
 
   const translatedLoc =
@@ -73,12 +74,12 @@ export default function ProfilePage() {
   const mappedDistrict = translateLocationField(
     currentLang,
     "district",
-    translatedLoc.district || patient?.district
+    translatedLoc.district || patient?.district,
   );
   const mappedVillage = translateLocationField(
     currentLang,
     "village",
-    translatedLoc.village || patient?.village
+    translatedLoc.village || patient?.village,
   );
 
   // 2) Translate arrays of strings
@@ -93,7 +94,7 @@ export default function ProfilePage() {
       date_administered: v.date_administered,
     })),
     currentLang === "en" ? [] : ["vaccine_name"],
-    currentLang
+    currentLang,
   );
 
   // ---------------- QUICK FACTS ----------------
@@ -306,36 +307,15 @@ export default function ProfilePage() {
           items={translatedVaccinations.map((v) =>
             v?.vaccine_name
               ? `${v.vaccine_name} • ${formatDate(v.date_administered)}`
-              : ""
+              : "",
           )}
           empty={t("profile.lists.vaccinations.empty")}
         />
       </div>
 
-      {/* QR MODAL */}
+      {/* HEALTH CARD MODAL */}
       {showQR && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          onClick={() => setShowQR(false)}
-        >
-          <div
-            className="relative bg-white p-6 rounded-3xl shadow-xl border border-sky-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="absolute top-3 right-3 text-slate-500 hover:text-slate-700"
-              onClick={() => setShowQR(false)}
-            >
-              <X className="h-6 w-6" />
-            </button>
-
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://motorzan.com/patients/${patient.phoneNumber}`}
-              alt="QR Code"
-              className="rounded-xl"
-            />
-          </div>
-        </div>
+        <HealthCard patient={patient} onClose={() => setShowQR(false)} />
       )}
     </section>
   );

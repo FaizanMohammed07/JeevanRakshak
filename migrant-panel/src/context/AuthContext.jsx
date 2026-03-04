@@ -22,7 +22,7 @@ const AuthContext = createContext(undefined);
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [role, setRole] = useState(
-    () => localStorage.getItem(ROLE_KEY) || "user"
+    () => localStorage.getItem(ROLE_KEY) || "user",
   ); // Default to user
 
   const [patient, setPatient] = useState(null);
@@ -31,15 +31,32 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(Boolean(token));
   const [error, setError] = useState(null);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(ROLE_KEY);
-    setToken(null);
-    setPatient(null);
-    setContractor(null);
-    setRole(null);
-    setError(null);
-  }, []);
+  const logout = useCallback(async () => {
+    try {
+      // Call backend logout for both contractor and patient
+      if (role === "contractor") {
+        await fetch("/api/contractors/logout", {
+          method: "GET",
+          credentials: "include",
+        });
+      } else {
+        await fetch("/api/patients/logout", {
+          method: "GET",
+          credentials: "include",
+        });
+      }
+    } catch (e) {
+      // Optionally log error
+    } finally {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(ROLE_KEY);
+      setToken(null);
+      setPatient(null);
+      setContractor(null);
+      setRole(null);
+      setError(null);
+    }
+  }, [role]);
 
   // 1. Hydration Logic (Restore session on refresh)
   useEffect(() => {
@@ -89,6 +106,7 @@ export function AuthProvider({ children }) {
   }, [token, role, logout]);
 
   // 2. Unified Login Logic
+  const clearError = useCallback(() => setError(null), []);
   const login = useCallback(async (credentials) => {
     setLoading(true);
     const isContractorLogin = credentials.role === "contractor";
@@ -134,6 +152,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   // 3. Registration Logic (Specifically for Contractors based on request)
+  // Only clear error inside event handlers or useEffect, not directly in context body
   const register = useCallback(async (data) => {
     setLoading(true);
     const isContractorSignup = data.role === "contractor";
@@ -160,7 +179,7 @@ export function AuthProvider({ children }) {
       } else {
         // Placeholder if you add patient signup later
         throw new Error(
-          "Patient registration not implemented in this context yet."
+          "Patient registration not implemented in this context yet.",
         );
       }
     } catch (err) {
@@ -221,7 +240,7 @@ export function AuthProvider({ children }) {
       register,
       logout,
       refreshProfile,
-    ]
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
